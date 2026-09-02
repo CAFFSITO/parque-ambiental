@@ -1,0 +1,2017 @@
+<title>Invernaderos del Parque Ambiental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+  :root {
+    --papel:        #f1f1ec;
+    --hoja:         #fffefa;
+    --tinta:        #1a211c;
+    --tinta-media:  #4e5a53;
+    --tinta-tenue:  #7a857e;
+    --regla:        #d6dad1;
+    --regla-viva:   #345348;
+    --acento:       #345348;
+    --verde:        #5f7038;
+    --ambar:        #96701f;
+    --terracota:    #9d4732;
+    --sombra:       rgba(26, 33, 28, .09);
+    --realce:       #eceee5;
+
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans:  "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+    --mono:  "IBM Plex Mono", "Consolas", "Courier New", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --papel:       #0e120f;
+      --hoja:        #161c18;
+      --tinta:       #e6ebe4;
+      --tinta-media: #a2ada6;
+      --tinta-tenue: #7b867f;
+      --regla:       #2a332e;
+      --regla-viva:  #92a05b;
+      --acento:      #92a05b;
+      --verde:       #9bb063;
+      --ambar:       #d7ae67;
+      --terracota:   #cf8168;
+      --sombra:      rgba(0, 0, 0, .45);
+      --realce:      #1d241f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --papel:       #0e120f;
+    --hoja:        #161c18;
+    --tinta:       #e6ebe4;
+    --tinta-media: #a2ada6;
+    --tinta-tenue: #7b867f;
+    --regla:       #2a332e;
+    --regla-viva:  #92a05b;
+    --acento:      #92a05b;
+    --verde:       #9bb063;
+    --ambar:       #d7ae67;
+    --terracota:   #cf8168;
+    --sombra:      rgba(0, 0, 0, .45);
+    --realce:      #1d241f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .documento {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    padding: 26px 16px 60px;
+  }
+
+  /* ---------- la hoja ---------- */
+  .hoja {
+    width: 100%;
+    max-width: 820px;
+    background: var(--hoja);
+    border: 1px solid var(--regla);
+    box-shadow: 0 1px 3px var(--sombra);
+    padding: 44px 56px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  .encabezado-corriente {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid var(--regla);
+    padding-bottom: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+  }
+
+  .folio {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--regla);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--tinta-tenue);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- secciones ---------- */
+  .seccion {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    column-gap: 1.4rem;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  .seccion > .numeral {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--acento);
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .seccion > .cuerpo { min-width: 0; }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+  h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.15;
+    letter-spacing: -.005em;
+    color: var(--tinta);
+    margin-bottom: 14px;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: .01em;
+    color: var(--acento);
+    margin: 26px 0 8px;
+  }
+
+  h4 {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+    margin: 20px 0 6px;
+  }
+
+  p { margin: 0 0 11px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  .cuerpo > ul, .cuerpo > ol, .bloque ul, .bloque ol {
+    max-width: 68ch;
+    margin: 0 0 12px;
+    padding-left: 1.15rem;
+  }
+  li { margin-bottom: 6px; }
+  li:last-child { margin-bottom: 0; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code, .cod {
+    font-family: var(--mono);
+    font-size: .86em;
+    background: var(--realce);
+    padding: .06em .32em;
+    border-radius: 2px;
+  }
+
+  .lede {
+    font-size: 16px;
+    color: var(--tinta-media);
+    border-left: 2px solid var(--regla-viva);
+    padding-left: 14px;
+    margin-bottom: 18px;
+    max-width: 66ch;
+  }
+
+  /* ---------- portada ---------- */
+  .portada {
+    min-height: 78vh;
+    justify-content: space-between;
+    padding: 56px 56px 40px;
+  }
+
+  .portada-marca {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--tinta-media);
+    line-height: 2;
+  }
+
+  .portada-titulo {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 42px;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    max-width: 16ch;
+  }
+
+  .portada-subtitulo {
+    font-size: 18px;
+    color: var(--tinta-media);
+    max-width: 44ch;
+    margin: 0;
+  }
+
+  .portada-regla {
+    height: 3px;
+    background: var(--regla-viva);
+    width: 96px;
+    margin: 0 0 22px;
+  }
+
+  .ficha {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 6px 18px;
+    border-top: 1px solid var(--regla);
+    padding-top: 16px;
+    font-size: 14px;
+  }
+  .ficha dt {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    padding-top: 4px;
+  }
+  .ficha dd { margin: 0; }
+
+  /* ---------- índice ---------- */
+  .indice { list-style: none; margin: 0; padding: 0; }
+  .indice li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px dotted var(--regla);
+    margin: 0;
+  }
+  .indice .idx-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--acento);
+    width: 2rem;
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .indice .idx-tit { flex: 1 1 auto; }
+  .indice .idx-pag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--tinta-tenue);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- tablas ---------- */
+  .marco-tabla {
+    overflow-x: auto;
+    margin: 0 0 14px;
+    border-top: 2px solid var(--regla-viva);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--tinta-media);
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid var(--regla);
+    vertical-align: bottom;
+  }
+
+  td {
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid var(--regla);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  th:last-child, td:last-child { padding-right: 0; }
+
+  td.m, th.m, .m { font-family: var(--mono); font-size: 12px; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  .tabla-fuentes td:first-child { font-weight: 600; }
+
+  /* ---------- diagrama y bloques de código ---------- */
+  .diagrama, pre.cod-bloque {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.42;
+    background: var(--realce);
+    border: 1px solid var(--regla);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 12px;
+    color: var(--tinta);
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  figcaption {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    margin-top: 6px;
+  }
+  figure { margin: 0 0 18px; }
+
+  /* ---------- bloque de decisión ---------- */
+  .decision {
+    border-top: 1px solid var(--regla);
+    padding-top: 16px;
+    margin-top: 22px;
+  }
+  .decision:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+  .decision > h3 { margin-top: 0; }
+
+  .decision-grid {
+    display: grid;
+    grid-template-columns: 10.5rem 1fr;
+    gap: 9px 16px;
+    max-width: 68ch;
+  }
+
+  .decision-grid dt {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    padding-top: 4px;
+  }
+  .decision-grid dd { margin: 0; font-size: 14px; }
+
+  .decision-grid dt.favor { color: var(--verde); }
+  .decision-grid dt.contra { color: var(--terracota); }
+
+  /* ---------- listas etiquetadas ---------- */
+  .fuera {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    max-width: 68ch;
+  }
+  .fuera > li {
+    padding: 10px 0 10px 14px;
+    border-left: 2px solid var(--regla);
+    margin-bottom: 10px;
+  }
+  .fuera > li > span.rotulo-item {
+    display: block;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--tinta);
+    margin-bottom: 2px;
+  }
+
+  .numerada {
+    counter-reset: item;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    max-width: 68ch;
+  }
+  .numerada > li {
+    counter-increment: item;
+    position: relative;
+    padding-left: 2.1rem;
+    margin-bottom: 10px;
+  }
+  .numerada > li::before {
+    content: counter(item, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: .1em;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--acento);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nota {
+    font-size: 13px;
+    color: var(--tinta-media);
+    background: var(--realce);
+    border-left: 2px solid var(--regla-viva);
+    padding: 11px 14px;
+    max-width: 68ch;
+    margin: 0 0 12px;
+  }
+
+  /* ---------- espacio de captura ---------- */
+  .captura {
+    border: 1px dashed var(--regla-viva);
+    background: var(--realce);
+    padding: 26px 18px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .captura .captura-rotulo {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--acento);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .captura .captura-texto {
+    font-size: 13px;
+    color: var(--tinta-media);
+    max-width: 54ch;
+    margin: 0 auto;
+  }
+
+  a { color: var(--acento); text-decoration: underline; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 680px) {
+    .hoja { padding: 28px 22px 24px; }
+    .portada { padding: 34px 22px 26px; }
+    .portada-titulo { font-size: 30px; }
+    .seccion { grid-template-columns: 1fr; row-gap: 4px; }
+    .seccion > .numeral { font-size: 18px; }
+    .decision-grid, .ficha { grid-template-columns: 1fr; gap: 3px; }
+    .decision-grid dd, .ficha dd { margin-bottom: 8px; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 16mm 15mm; }
+    body { background: #fff; font-size: 10.5pt; }
+    .documento { gap: 0; padding: 0; }
+    .hoja {
+      max-width: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      break-after: page;
+      min-height: 0;
+    }
+    .hoja:last-child { break-after: auto; }
+    .portada { min-height: 0; }
+    .marco-tabla, .diagrama, .decision, figure { break-inside: avoid; }
+    h2, h3 { break-after: avoid; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="documento">
+
+  <!-- ============ PORTADA ============ -->
+  <article class="hoja portada">
+    <div class="portada-marca">
+      Escuela de Educación Secundaria Técnica N.º 2<br>
+      Berisso · Provincia de Buenos Aires<br>
+      Olimpíada de Educación Técnico Profesional
+    </div>
+
+    <div>
+      <div class="portada-regla"></div>
+      <h1 class="portada-titulo">Invernaderos del Parque Ambiental</h1>
+      <p class="portada-subtitulo">
+        Sistema de automatización e informatización de los invernaderos del
+        Parque Ambiental Municipal de Berisso. Informe final.
+      </p>
+    </div>
+
+    <dl class="ficha">
+      <dt>Equipo</dt>
+      <dd>Thiago Ibañez · Matías Grau · Sofia Coria</dd>
+
+      <dt>Curso</dt>
+      <dd>7.º año</dd>
+
+      <dt>Profesor asesor</dt>
+      <dd>Daniel Serganzukc</dd>
+
+      <dt>Comitente</dt>
+      <dd>Parque Ambiental Municipal — Municipalidad de Berisso</dd>
+
+      <dt>Sistema en línea</dt>
+      <dd class="m">https://parque-ambiental.vercel.app</dd>
+
+      <dt>Nodo instalado</dt>
+      <dd class="m">NODO-INV-N-01 · área INV-N (Invernadero Norte)</dd>
+
+      <dt>Fecha</dt>
+      <dd>Berisso, septiembre de 2026</dd>
+    </dl>
+  </article>
+
+  <!-- ============ ÍNDICE ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>Índice</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">1</div>
+      <div class="cuerpo">
+        <h2>Índice</h2>
+        <ul class="indice">
+          <li><span class="idx-num">2</span><span class="idx-tit">Planteo del problema y alcance definido</span><span class="idx-pag">3</span></li>
+          <li><span class="idx-num">3</span><span class="idx-tit">Arquitectura de la solución</span><span class="idx-pag">5</span></li>
+          <li><span class="idx-num">4</span><span class="idx-tit">Criterios técnicos de selección de herramientas</span><span class="idx-pag">6</span></li>
+          <li><span class="idx-num">5</span><span class="idx-tit">Diseño de la base de datos</span><span class="idx-pag">8</span></li>
+          <li><span class="idx-num">6</span><span class="idx-tit">Hardware: componentes, conexionado y protocolo</span><span class="idx-pag">10</span></li>
+          <li><span class="idx-num">7</span><span class="idx-tit">Seguridad y limitaciones remanentes</span><span class="idx-pag">11</span></li>
+          <li><span class="idx-num">8</span><span class="idx-tit">Pruebas realizadas y resultados</span><span class="idx-pag">12</span></li>
+          <li><span class="idx-num">9</span><span class="idx-tit">Ventajas y desventajas operativas del sistema</span><span class="idx-pag">13</span></li>
+          <li><span class="idx-num">10</span><span class="idx-tit">Limitaciones conocidas y trabajo futuro</span><span class="idx-pag">14</span></li>
+          <li><span class="idx-num">11</span><span class="idx-tit">Metodología de trabajo del equipo</span><span class="idx-pag">14</span></li>
+          <li><span class="idx-num">12</span><span class="idx-tit">Bibliografía y criterios de selección</span><span class="idx-pag">15</span></li>
+          <li><span class="idx-num">13</span><span class="idx-tit">Anexo: acceso, URL y capturas</span><span class="idx-pag">16</span></li>
+        </ul>
+
+        <h4>Cómo leer este informe</h4>
+        <p>
+          Las secciones 2 y 3 delimitan el problema y describen la solución. La
+          sección 4 es el núcleo de la fundamentación: cada herramienta elegida
+          se presenta con sus alternativas, el criterio que definió la elección y
+          las dos caras operativas de esa elección. Las secciones 7, 9 y 10
+          reúnen lo que el sistema no resuelve; están escritas para ser leídas
+          junto con las anteriores y no como un apéndice de cortesía.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">2</div>
+  </article>
+
+  <!-- ============ 2. PROBLEMA Y ALCANCE ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>2 · Problema y alcance</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">2</div>
+      <div class="cuerpo">
+        <h2>Planteo del problema y alcance definido</h2>
+
+        <p class="lede">
+          El parque no tiene registro continuo del ambiente de sus sectores
+          productivos ni un canal único y trazable para los pedidos de
+          intervención. Todo depende de que alguien pase, mire y avise.
+        </p>
+
+        <h3>Situación de partida</h3>
+        <p>
+          El Parque Ambiental Municipal de Berisso opera ocho sectores entre
+          producción y servicios: tres invernaderos (<span class="cod">INV-N</span>,
+          <span class="cod">INV-S</span> y el de germinación <span class="cod">INV-G</span>),
+          una sala de hidroponía, la playa de compostaje, el vivero forestal, la
+          sala de bombas y riego, y el depósito con taller. Cada sector tiene un
+          rango de temperatura y humedad en el que el cultivo o el proceso se
+          comporta bien, y ese rango no es el mismo en todos: el invernadero de
+          germinación necesita más humedad que el vivero, y la playa de
+          compostaje tolera un rango térmico mucho más amplio que la hidroponía.
+        </p>
+        <p>
+          El control de esos rangos se hacía por recorrida. Un operario pasaba,
+          leía un termohigrómetro de pared y, si algo estaba mal, avisaba por
+          teléfono. De ahí se desprenden tres problemas concretos. El primero es
+          de cobertura: entre una recorrida y la siguiente, y sobre todo de noche
+          y los fines de semana, nadie sabe qué pasa adentro de un invernadero.
+          El segundo es de trazabilidad: el pedido de asistencia viaja por un
+          canal personal y no queda registrado, de modo que nadie puede decir
+          después cuántas veces se pidió ayuda, por qué motivo ni cuánto tardó en
+          resolverse. El tercero es de evidencia: sin serie histórica no se puede
+          fundamentar una inversión, ni demostrar que un sector tiene un problema
+          recurrente, ni comparar dos períodos.
+        </p>
+
+        <h3>Objetivo del proyecto</h3>
+        <p>
+          Instrumentar los sectores con nodos que midan y reporten; concentrar la
+          decisión y el registro en un servidor accesible desde cualquier
+          navegador; convertir cada desvío del rango y cada pedido de asistencia
+          en un <em>llamado</em> con tipo, motivo, estado, responsable de
+          atención y fecha; y dejar toda esa información en condiciones de ser
+          consultada, graficada y exportada por el personal administrativo del
+          parque sin intervención técnica.
+        </p>
+
+        <h3>Alcance: qué entra</h3>
+        <ul>
+          <li>
+            Nodo de medición y actuación sobre ESP32-S3 con sensor de temperatura
+            y humedad, salida a relé, sirena y botón de llamado. Se construyó y
+            puso en funcionamiento <strong>un</strong> nodo físico,
+            <span class="cod">NODO-INV-N-01</span>, asignado al Invernadero Norte.
+          </li>
+          <li>
+            Endpoint de ingesta por HTTPS autenticado con clave de dispositivo, y
+            persistencia de <em>todas</em> las lecturas recibidas, estén dentro o
+            fuera de rango.
+          </li>
+          <li>
+            Evaluación de umbrales por área hecha en el servidor, con dos niveles
+            de gravedad (<span class="cod">NORMAL</span> y
+            <span class="cod">EMERGENCIA</span>) y con antirrebote para no
+            duplicar llamados mientras la condición persiste.
+          </li>
+          <li>
+            Vigilancia de nodos: un nodo que deja de reportar genera por sí solo
+            un llamado de emergencia.
+          </li>
+          <li>
+            Altas, bajas y modificaciones de áreas (incluidos sus umbrales),
+            empleados y usuarios; gestión de llamados; tablero operativo con
+            semáforo por área.
+          </li>
+          <li>
+            Dos interfaces sobre el mismo servidor y la misma lógica: una de
+            escritorio para administración y una vista de campo pensada para
+            teléfono.
+          </li>
+          <li>
+            Reportes con filtros de área, origen y rango de fechas; cuatro
+            indicadores, tres gráficos, tabla de detalle paginada, exportación a
+            CSV y vista de impresión para obtener el PDF.
+          </li>
+          <li>
+            Aviso automático a un grupo de Telegram en el momento en que se abre
+            un llamado.
+          </li>
+          <li>
+            Dos roles (<span class="cod">ADMINISTRADOR</span> y
+            <span class="cod">EMPLEADO</span>) con permisos verificados en el
+            servidor, y confinamiento de cada empleado a su área.
+          </li>
+        </ul>
+
+        <p class="nota">
+          Las siete áreas restantes están modeladas en el sistema con sus
+          umbrales reales y se ejercitan desde la pantalla de Dispositivos, que
+          envía lecturas al mismo endpoint, con la misma clave y por el mismo
+          camino HTTP que usaría un nodo físico. Es un simulador del hardware, no
+          un atajo del software: lo que se demuestra es el circuito real.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">3</div>
+  </article>
+
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>2 · Problema y alcance</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral"></div>
+      <div class="cuerpo">
+        <h3>Alcance: qué se dejó deliberadamente afuera, y por qué</h3>
+        <p>
+          Las exclusiones que siguen no son funciones que faltaron por tiempo
+          sino decisiones tomadas al definir el alcance. En cada caso se indica
+          el motivo.
+        </p>
+
+        <ul class="fuera">
+          <li>
+            <span class="rotulo-item">Control en lazo cerrado de la climatización</span>
+            El relé abre o cierra un circuito; no regula. No se implementó un
+            controlador proporcional porque el parque no dispone hoy de
+            actuadores modulantes: la ventilación y el riego son de encendido y
+            apagado. Un lazo de control sobre un actuador todo o nada no aporta
+            precisión y sí agrega riesgo de oscilación. Se prefirió una regla de
+            umbral simple, auditable y explicable ante el personal.
+          </li>
+          <li>
+            <span class="rotulo-item">Almacenamiento local en el nodo y sincronización diferida</span>
+            Si el enlace se cae, la lectura de ese ciclo se pierde. El nodo no
+            tiene reloj respaldado por batería ni memoria no volátil prevista en
+            el diseño, y una lectura enviada después con una marca de tiempo
+            reconstruida ensucia la serie histórica sin que se note. Se prefirió
+            que el hueco sea visible —el sistema abre un llamado
+            <em>Sensor sin señal</em>— antes que rellenarlo con datos de origen
+            dudoso.
+          </li>
+          <li>
+            <span class="rotulo-item">Actualización de firmware por aire</span>
+            Con un único nodo físico, implementar y probar OTA cuesta más de lo
+            que ahorra. La reprogramación se hace por USB. La decisión se
+            revisaría a partir del tercer o cuarto nodo instalado.
+          </li>
+          <li>
+            <span class="rotulo-item">Recuperación de contraseña, segundo factor y bloqueo por intentos</span>
+            Requieren un proveedor de correo o de mensajería asociado a la cuenta
+            y una política de cuentas que el parque no tiene definida. Se dejaron
+            afuera de forma explícita y se documentan en la sección 7 como
+            limitación de seguridad, no como detalle pendiente.
+          </li>
+          <li>
+            <span class="rotulo-item">Gestión de stock, insumos y órdenes de trabajo</span>
+            El problema planteado es el monitoreo ambiental y la trazabilidad de
+            los llamados. Un módulo de inventario habría duplicado el tamaño del
+            sistema sin responder a ese problema, y habría exigido relevar
+            circuitos administrativos que exceden al parque.
+          </li>
+          <li>
+            <span class="rotulo-item">Medición de pH y conductividad en hidroponía, y temperatura de pila en compostaje</span>
+            Son las variables que faltan para cerrar el control de esos dos
+            sectores, pero exigen sondas específicas, acondicionamiento de señal
+            y calibración periódica con soluciones patrón. El sistema las
+            contempla estructuralmente —el área existe y sus umbrales son
+            editables— pero no se instrumentaron.
+          </li>
+          <li>
+            <span class="rotulo-item">Cámaras y video</span>
+            Fuera del problema planteado, y con implicancias sobre la privacidad
+            del personal que exceden lo que este proyecto puede resolver por su
+            cuenta.
+          </li>
+          <li>
+            <span class="rotulo-item">Aplicación móvil nativa</span>
+            Se resolvió con una vista web específica para pantalla chica. El
+            personal no tiene que instalar nada, no hay que mantener dos ciclos
+            de publicación en tiendas ni firmar paquetes, y la lógica de permisos
+            no se duplica.
+          </li>
+          <li>
+            <span class="rotulo-item">Operación multi-predio</span>
+            El modelo de datos no tiene una entidad «sitio»: las áreas cuelgan
+            directamente de la base. No existe un segundo parque a informatizar,
+            y agregar esa dimensión habría sido complejidad especulativa.
+          </li>
+        </ul>
+
+        <h3>Supuestos asumidos</h3>
+        <p>
+          El proyecto asume que hay cobertura Wi-Fi de 2,4 GHz en los sectores a
+          instrumentar, que esos sectores tienen energía de red, y que el
+          personal de guardia cuenta con un teléfono con Telegram. Los tres
+          supuestos se verificaron con el personal del parque antes de definir la
+          arquitectura; si alguno no se cumpliera en un sector, ese sector no es
+          instrumentable con este diseño.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">4</div>
+  </article>
+
+  <!-- ============ 3. ARQUITECTURA ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>3 · Arquitectura</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">3</div>
+      <div class="cuerpo">
+        <h2>Arquitectura de la solución</h2>
+
+        <p>
+          El sistema tiene una sola cadena principal y dos flujos secundarios. La
+          cadena principal va del sensor a la notificación y vuelve al actuador
+          en la misma conversación HTTP.
+        </p>
+
+        <figure>
+<pre class="diagrama">
+ CAMPO                      ENLACE                SERVIDOR PÚBLICO
+┌───────────────────┐                      ┌──────────────────────────┐
+│ NODO-INV-N-01     │                      │  POST /api/ingest        │
+│ ESP32-S3-Zero     │  Wi-Fi 2,4 GHz       │  1 valida x-device-key   │
+│                   │  ────────────────►   │  2 guarda la lectura     │
+│  DHT11    GPIO 5 ─┼─►  HTTPS / JSON      │  3 lee umbrales del área │
+│  Botón    GPIO 10─┼─►  cada 10 s         │  4 evalúa los desvíos    │
+│                   │                      │  5 abre o actualiza      │
+│  Relé     GPIO 6 ◄┼──  respuesta         │    el llamado            │
+│  Buzzer   GPIO 7 ◄┼──  {rele, alarma}    │  6 responde al nodo      │
+└───────────────────┘  ◄────────────────   └────────────┬─────────────┘
+                                                        │
+                                           ┌────────────▼─────────────┐
+                                           │  PostgreSQL (Supabase)   │
+                                           │  areas · empleados ·     │
+                                           │  usuarios · lecturas ·   │
+                                           │  llamados                │
+                                           └────────────┬─────────────┘
+                        ┌───────────────────────────────┼──────────────┐
+                        ▼                               ▼              ▼
+             ┌────────────────────┐     ┌────────────────────┐  ┌────────────┐
+             │ INTERFAZ WEB       │     │ INTERFAZ MÓVIL     │  │ NOTIFICA-  │
+             │ escritorio         │     │ /movil · 390 px    │  │ CIÓN       │
+             │ tablero · ABM ·    │     │ atender en campo · │  │ Telegram   │
+             │ reportes · CSV/PDF │     │ cargar un llamado  │  │ al crear   │
+             └────────────────────┘     └────────────────────┘  └────────────┘
+</pre>
+          <figcaption>Cadena principal: nodo → Wi-Fi → servidor público → interfaces → notificación</figcaption>
+        </figure>
+
+        <h3>Recorrido tramo por tramo</h3>
+        <p>
+          <strong>Nodo.</strong> Cada diez segundos el firmware lee el sensor y
+          arma un objeto JSON con el identificador del dispositivo, el código del
+          área, la temperatura, la humedad y el estado del botón. Si hubo una
+          pulsación larga, no espera al ciclo: envía en el acto.
+        </p>
+        <p>
+          <strong>Enlace.</strong> El nodo se conecta como estación a la red
+          Wi-Fi de 2,4 GHz del predio y publica sobre HTTPS. La caída del enlace
+          no reinicia la placa: el firmware informa el estado y reintenta.
+        </p>
+        <p>
+          <strong>Servidor público.</strong> El endpoint valida la clave de
+          dispositivo, guarda la lectura —siempre, aunque el área esté dada de
+          baja—, lee los umbrales vigentes del área <em>en esa misma petición</em>
+          y decide. La decisión produce, según el caso, un llamado nuevo, la
+          actualización de uno abierto, o nada.
+        </p>
+        <p>
+          <strong>Respuesta al nodo.</strong> En el cuerpo de la respuesta viajan
+          dos banderas: <span class="cod">rele</span>, que se activa si hay que
+          ventilar por calor o regar por sequedad, y
+          <span class="cod">alarma</span>, que se activa mientras haya al menos
+          una emergencia sin atender en esa área. El nodo aplica esas dos
+          banderas a sus salidas físicas. Esto cierra el lazo dentro de la misma
+          conversación HTTP: no hay un segundo canal de comandos.
+        </p>
+        <p>
+          <strong>Interfaces.</strong> Las dos vistas leen de la misma base y
+          ejecutan las mismas acciones de servidor. La de escritorio suma el ABM
+          y los reportes; la móvil se reduce a lo que se hace parado en un
+          invernadero: ver los llamados abiertos, atenderlos y cargar uno nuevo.
+        </p>
+        <p>
+          <strong>Notificación.</strong> Al crear un llamado —solo al crearlo—
+          se agenda un mensaje a un grupo de Telegram con el tipo, el área, el
+          motivo, el detalle y un enlace a la pantalla de llamados. El envío se
+          programa para después de responderle al nodo, de modo que la latencia
+          de Telegram nunca se le traslada al hardware.
+        </p>
+
+        <h3>Flujos secundarios</h3>
+        <p>
+          <strong>Vigilancia de nodos.</strong> Una barrida recorre el último
+          reporte de cada dispositivo visto en las últimas 24 horas; el que
+          superó los 90 segundos sin reportar genera un llamado de emergencia con
+          motivo <em>Sensor sin señal</em>. La barrida se dispara desde el
+          tablero cuando se lo carga y también desde una ruta propia, para no
+          depender de un programador de tareas externo.
+        </p>
+        <p>
+          <strong>Llamado cargado por una persona.</strong> Cualquier usuario con
+          sesión puede abrir un llamado desde la interfaz eligiendo un motivo del
+          catálogo (falla de riego, corte de energía, pedido de insumos, plaga
+          detectada, pedido de asistencia). Entra por la misma tabla, con
+          <span class="cod">origen = EMPLEADO</span>, y dispara el mismo aviso.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">5</div>
+  </article>
+
+  <!-- ============ 4. CRITERIOS TÉCNICOS ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>4 · Criterios técnicos</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">4</div>
+      <div class="cuerpo">
+        <h2>Criterios técnicos de selección de herramientas</h2>
+
+        <p class="lede">
+          Cada decisión se presenta con lo elegido, lo evaluado, el criterio que
+          desempató y las dos consecuencias operativas. Ninguna elección es
+          gratuita; lo que sigue intenta poner por escrito qué se paga por cada
+          una.
+        </p>
+
+        <div class="decision">
+          <h3>4.1 Framework de aplicación</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>Next.js 16.3.3 con React 19 y TypeScript, en modo App Router, con componentes de servidor y acciones de servidor.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>Aplicación React de una sola página con una API REST separada en Express; PHP plano sobre Apache; Django con plantillas.</dd>
+
+            <dt>Criterio</dt>
+            <dd>Un solo repositorio y un solo despliegue para el equipo. Los componentes de servidor permiten que las credenciales de base de datos no salgan nunca al navegador, y las acciones de servidor evitan escribir y documentar una capa REST completa solo para el ABM.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>La pantalla, su consulta a la base y su verificación de permisos viven en el mismo archivo. Cuando hay que revisar quién puede hacer qué, no hay que saltar entre un cliente y un servidor separados, y no existe la posibilidad de que la interfaz muestre un dato que la API no debía entregar.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>Es una versión muy reciente y con cambios de convención: el archivo <span class="cod">middleware.ts</span> pasó a llamarse <span class="cod">proxy.ts</span>, y el 403 real depende de una bandera experimental (<span class="cod">authInterrupts</span>). La documentación que un futuro mantenedor encuentre buscando en la web probablemente no coincida con este código, y una bandera experimental puede cambiar de forma en la próxima versión mayor. Además, el sistema queda acoplado a un modelo de despliegue sin estado.</dd>
+          </dl>
+        </div>
+
+        <div class="decision">
+          <h3>4.2 Motor de base de datos</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>PostgreSQL, provisto como servicio gestionado por Supabase, con acceso desde el servidor mediante el cliente oficial.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>MySQL o MariaDB, que es lo que la consigna sugería; SQLite embebido; una base de series temporales.</dd>
+
+            <dt>Criterio</dt>
+            <dd>Corresponde decirlo con claridad: <strong>la consigna sugería MySQL, y esa sugerencia era orientativa, no obligatoria.</strong> Se optó por PostgreSQL por tres razones verificables en el código. Primera, el tipo <span class="cod">timestamptz</span> guarda el instante con zona y permite convertir a hora de Argentina en la propia consulta; sin eso, los llamados de la noche caen en el día siguiente y la curva de evolución queda corrida un día. Segunda, las funciones de reporte usan agregados con <span class="cod">filter (where …)</span> y <span class="cod">generate_series</span> para rellenar los días sin llamados; escribir lo mismo en MySQL habría exigido tablas de calendario auxiliares. Tercera, el proveedor entrega la base con editor SQL y API de acceso sin montar ni administrar un servidor, algo determinante en un plan de seis días.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>Las agregaciones de la pantalla de Reportes se resuelven en el motor y llegan a la aplicación como una decena de filas ya sumadas, en lugar de traer todos los llamados del rango para contarlos en memoria. El costo de un reporte deja de crecer con el volumen de la tabla.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>Nos apartamos de lo sugerido, y eso exige justificarlo —esta misma subsección es parte del costo. En lo técnico hay dos costos concretos: la API REST del proveedor no agrupa, así que toda agregación hay que escribirla como función SQL o resolverla en memoria (es lo que ocurre con el estado de los nodos, que se agrupa en el servidor sobre una ventana de 24 horas); y el tipo <span class="cod">numeric</span> llega a JavaScript como cadena, de modo que cada umbral hay que convertirlo explícitamente antes de compararlo. Sumado a eso, la base vive en la infraestructura de un tercero.</dd>
+          </dl>
+        </div>
+
+        <div class="decision">
+          <h3>4.3 Autenticación propia</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>Autenticación implementada por el equipo: verificación contra la tabla <span class="cod">usuarios</span>, hash bcrypt, token JWT firmado con HS256 y cookie <span class="cod">httpOnly</span> de ocho horas.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>Supabase Auth, incluido en el mismo proveedor de base de datos; una biblioteca de terceros del tipo Auth.js; autenticación básica HTTP contra el servidor.</dd>
+
+            <dt>Criterio</dt>
+            <dd>El proyecto tiene que poder explicar y defender su mecanismo de acceso, no delegarlo en una caja cerrada. A eso se suma una razón de modelo: el usuario del sistema es un empleado del parque con un legajo y un área, y esa relación ya estaba en la base; usar un proveedor de identidad externo habría obligado a mantener dos padrones sincronizados. Por último, el rol y el área tienen que viajar dentro de la sesión para que el filtro por área sea una comparación y no una consulta más.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>El token lleva <span class="cod">id</span>, <span class="cod">usuario</span>, <span class="cod">rol</span> y <span class="cod">area_id</span>. Cada verificación de permiso es una comparación en memoria, sin ida a la base, y el confinamiento de un empleado a su área se resuelve en una línea dentro de la acción de servidor. No hay proveedor de identidad intermedio que pueda cambiar sus condiciones.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>Todo lo que un proveedor da resuelto hay que hacerlo o asumir que falta, y en este proyecto falta: no hay recuperación de contraseña, no hay bloqueo por intentos fallidos, no hay revocación de un token ya emitido y no hay rotación del secreto de firma. Dar de baja a un usuario impide un acceso nuevo, pero su sesión abierta sigue siendo válida hasta que vence. Está detallado en la sección 7.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="folio">6</div>
+  </article>
+
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>4 · Criterios técnicos</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral"></div>
+      <div class="cuerpo">
+
+        <div class="decision">
+          <h3>4.4 Hosting</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>Vercel, con despliegue automático desde el repositorio y variables de entorno administradas en la plataforma.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>Servidor virtual propio con Nginx y certificado gestionado a mano; una Raspberry Pi dentro del predio; otro proveedor equivalente.</dd>
+
+            <dt>Criterio</dt>
+            <dd>El nodo necesita una URL pública, estable y con HTTPS válido. Montar eso sobre un servidor propio implica administrar certificados, actualizaciones del sistema operativo y respaldo, tareas que nadie del parque puede sostener. La Raspberry dentro del predio se descartó por un motivo de fondo: dejaría el sistema encerrado en la red del parque, cuando parte del objetivo es que se pueda consultar desde afuera.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>El certificado, el dominio y la escala los resuelve la plataforma. Cada cambio en el repositorio publica una versión nueva sin intervención manual, lo que hizo posible corregir el firmware y el servidor el mismo día durante las pruebas.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>El entorno no guarda estado entre peticiones: no hay procesos de fondo, de modo que la barrida de nodos caídos se dispara desde el propio tablero, y el freno que evita repetirla vale por instancia y no globalmente. Se puede ejecutar de más, nunca de menos, y la operación es idempotente gracias al antirrebote, pero es una limitación real del modelo. Se suma el arranque en frío y, sobre todo, la dependencia del plan gratuito de un tercero.</dd>
+          </dl>
+        </div>
+
+        <div class="decision">
+          <h3>4.5 Canal de notificación</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>Telegram Bot API, con un bot que publica en un grupo compartido por el personal de guardia.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>Correo electrónico por SMTP; SMS a través de una pasarela; notificaciones push del navegador; WhatsApp Business API.</dd>
+
+            <dt>Criterio</dt>
+            <dd>Tres condiciones: costo cero por mensaje, alta inmediata sin trámite comercial, y llegada al teléfono que el personal ya usa. El SMS cumple la tercera pero no la primera ni la segunda. El correo cumple las dos primeras pero no la tercera: un aviso de emergencia en la casilla no se lee a tiempo. Las notificaciones push exigen tener el navegador abierto con la página. WhatsApp Business exige verificación de empresa y plantillas aprobadas.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>Un solo grupo alcanza para toda la guardia: el que está de turno ve el aviso, y el que no está también, lo que permite que un supervisor detecte que nadie respondió. El mensaje incluye el enlace directo a la pantalla de llamados, de modo que del aviso a la acción hay un toque.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>Se depende de un servicio de terceros y de que cada persona tenga Telegram instalado y con notificaciones activas. No hay confirmación de lectura ni escalamiento: si nadie contesta, el sistema no vuelve a insistir ni avisa a otro nivel. Y el token del bot, si se filtra, permite publicar en el grupo en nombre del sistema.</dd>
+          </dl>
+        </div>
+
+        <div class="decision">
+          <h3>4.6 Método de exportación a PDF</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>Una vista de impresión dedicada, en blanco y negro, con hoja de estilos propia, que se exporta con la función de impresión del navegador.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>jsPDF armando el documento por código; html2canvas capturando la pantalla como imagen; generación en el servidor con un navegador sin interfaz; una biblioteca de composición de PDF en React.</dd>
+
+            <dt>Criterio</dt>
+            <dd>El motor de impresión del navegador ya sabe paginar, respeta las reglas de impresión y produce texto seleccionable. Ninguna biblioteca agregaba capacidad y todas agregaban una dependencia que podía fallar durante la demostración. La generación en el servidor con navegador sin interfaz era la opción técnicamente más completa, pero exige un entorno con ese navegador instalado, algo que el hosting elegido no ofrece en el plan usado.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>El mismo HTML sirve para pantalla y para papel, así que el reporte impreso no se puede desactualizar respecto del que se ve. Los gráficos salen vectoriales y el texto queda seleccionable y buscable dentro del PDF, cosa que una captura de pantalla no permite.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>No es automatizable: siempre hace falta una persona frente a la pantalla apretando un botón. No se puede programar un reporte mensual que llegue solo por correo, ni adjuntar el PDF a una notificación. Además, el resultado depende del navegador y de lo que el usuario elija en el diálogo de impresión (márgenes, escala, encabezados), de modo que dos personas pueden obtener archivos con paginación distinta.</dd>
+          </dl>
+        </div>
+
+        <div class="decision">
+          <h3>4.7 Lógica de umbrales en el servidor y no en el firmware</h3>
+          <dl class="decision-grid">
+            <dt>Qué se eligió</dt>
+            <dd>El firmware solo mide y reporta. El servidor lee los umbrales del área en cada petición, decide si hay desvío y de qué gravedad, y le devuelve al nodo el estado del relé y de la alarma.</dd>
+
+            <dt>Alternativas</dt>
+            <dd>Umbrales compilados dentro del <span class="cod">.ino</span> de cada nodo; umbrales almacenados en la memoria no volátil del nodo y actualizados por un comando; un esquema mixto con umbrales locales de respaldo.</dd>
+
+            <dt>Criterio</dt>
+            <dd>Cambiar el rango de un invernadero no puede requerir reprogramar una placa que está colgada a tres metros de altura. Quien conoce el cultivo es el encargado del sector, no quien sabe compilar. El criterio fue que el umbral es un <em>dato del área</em>, y los datos viven en la base.</dd>
+
+            <dt class="favor">Ventaja operativa</dt>
+            <dd>Un administrador cambia el rango desde la pantalla de Áreas y la lectura siguiente —a lo sumo diez segundos después— ya se evalúa con el valor nuevo, sin reprogramar nada. Los ocho nodos comparten un único firmware, que solo se diferencia por dos constantes de identidad; la lógica de gravedad, el antirrebote y el escalamiento existen en un solo lugar y se prueban en un solo lugar.</dd>
+
+            <dt class="contra">Desventaja operativa</dt>
+            <dd>Es la desventaja estructural del sistema: <strong>sin red, el nodo no decide nada</strong>. No enciende el relé por su cuenta ni hace sonar la sirena, porque no sabe cuál es el rango correcto. Un corte de internet deja la instrumentación ciega y muda justo en el momento en que podría hacer falta. Además, cada decisión cuesta un viaje de red completo, con lo que la reacción del actuador queda atada al intervalo de reporte y a la latencia del enlace.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="folio">7</div>
+  </article>
+
+  <!-- ============ 5. BASE DE DATOS ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>5 · Base de datos</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">5</div>
+      <div class="cuerpo">
+        <h2>Diseño de la base de datos</h2>
+
+        <p>
+          Cinco tablas. Dos describen la organización del parque
+          (<span class="cod">areas</span>, <span class="cod">empleados</span>),
+          una el acceso al sistema (<span class="cod">usuarios</span>) y dos
+          registran lo que pasa (<span class="cod">lecturas</span>,
+          <span class="cod">llamados</span>). El esquema completo está en
+          <span class="cod">sql/01_esquema.sql</span>.
+        </p>
+
+        <h4>areas — el sector físico y su rango admisible</h4>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:32%">Campo</th><th style="width:26%">Tipo</th><th>Función</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="m">id</td><td class="m">serial PK</td><td>Clave sustituta.</td></tr>
+              <tr><td class="m">codigo</td><td class="m">text único</td><td>Clave natural que usa el operador y que envía el nodo: <span class="cod">INV-N</span>, <span class="cod">HID-1</span>.</td></tr>
+              <tr><td class="m">nombre, tipo</td><td class="m">text</td><td>Descripción legible y clase de sector (invernadero, hidroponía, compostaje, vivero, servicios).</td></tr>
+              <tr><td class="m">temp_min, temp_max<br>hum_min, hum_max</td><td class="m">numeric</td><td>El rango admisible. Es el dato que gobierna todo el comportamiento del sistema.</td></tr>
+              <tr><td class="m">activa</td><td class="m">boolean</td><td>Un área dada de baja sigue guardando lecturas pero no genera llamados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>empleados — el padrón del parque</h4>
+        <p>
+          Legajo único, datos personales y de contacto, área asignada, tarea,
+          turno, fecha de ingreso, estado (activo, licencia, baja) y
+          observaciones. Se relaciona con <span class="cod">areas</span> por
+          <span class="cod">area_id</span>. Es una tabla de padrón, independiente
+          del acceso al sistema: hay empleados sin usuario.
+        </p>
+
+        <h4>usuarios — el acceso</h4>
+        <p>
+          Nombre de usuario único, <span class="cod">password_hash</span>, rol
+          restringido por <span class="cod">check</span> a
+          <span class="cod">ADMINISTRADOR</span> o
+          <span class="cod">EMPLEADO</span>, referencia opcional al empleado,
+          <span class="cod">area_id</span> y bandera de activo.
+        </p>
+        <p class="nota">
+          <strong>Una desnormalización consciente.</strong> El área del usuario
+          se podría deducir de su empleado, pero está copiada en
+          <span class="cod">usuarios.area_id</span> por dos razones: viaja dentro
+          del token de sesión, con lo que el filtro por área no cuesta una
+          consulta adicional en cada pantalla; y un administrador puede no tener
+          empleado asociado. El costo es que hay que mantenerla coherente: el
+          código recalcula el área en un único lugar cada vez que cambia el rol o
+          el empleado del usuario.
+        </p>
+
+        <h4>lecturas — la serie de mediciones</h4>
+        <p>
+          Dispositivo, área, temperatura, humedad y momento de la toma. Se guarda
+          <em>toda</em> lectura recibida, dentro o fuera de rango: la serie sirve
+          para los gráficos de clima y para saber cuándo fue el último reporte de
+          cada nodo. Temperatura y humedad admiten nulo porque el sensor puede
+          fallar y el hecho de que el nodo reportó también es información.
+        </p>
+
+        <h4>llamados — el registro de eventos que requieren intervención</h4>
+        <p>
+          Área, tipo (<span class="cod">NORMAL</span> /
+          <span class="cod">EMERGENCIA</span>), origen
+          (<span class="cod">SENSOR</span> / <span class="cod">EMPLEADO</span>),
+          estado (<span class="cod">NO_ATENDIDO</span> /
+          <span class="cod">ATENDIDO</span>), motivo tomado de un catálogo
+          cerrado, detalle con la lectura que lo provocó, quién y cuándo lo creó,
+          y quién y cuándo lo atendió. Es la tabla que responde las preguntas de
+          gestión.
+        </p>
+
+        <h3>Decisiones de tipo</h3>
+        <ul>
+          <li><strong>serial contra bigserial.</strong> Áreas, empleados y usuarios se cuentan por decenas y llevan <span class="cod">serial</span>. Lecturas y llamados crecen con el tiempo y llevan <span class="cod">bigserial</span>: un nodo que reporta cada diez segundos produce del orden de 8.600 filas por día, y ocho nodos superan el millón de filas en unos cinco meses.</li>
+          <li><strong>timestamptz y no timestamp.</strong> El servidor corre en UTC y el usuario piensa en hora de Argentina. Guardar el instante con zona permite convertir en la consulta; las funciones de reporte agrupan por día usando explícitamente <span class="cod">America/Argentina/Buenos_Aires</span>, porque de lo contrario los llamados de después de las 21 caerían en el día siguiente.</li>
+          <li><strong>numeric y no float.</strong> Los umbrales son valores que una persona escribe y espera ver iguales. El punto flotante binario introduce diferencias en la comparación contra el límite. El costo operativo, ya mencionado, es que llegan a JavaScript como cadena.</li>
+          <li><strong>check en lugar de tablas de catálogo.</strong> Rol, tipo, origen y estado son conjuntos cerrados de dos o tres valores que no van a cambiar por decisión de un usuario. La restricción los deja declarados en el esquema, visibles al leerlo, y convierte al motor en la última línea de validación: la aplicación valida, pero un dato inválido tampoco puede entrar por otra vía.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="folio">8</div>
+  </article>
+
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>5 · Base de datos</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral"></div>
+      <div class="cuerpo">
+        <h3>Relaciones</h3>
+        <figure>
+<pre class="diagrama">
+   areas ──1───N── empleados ──1───0..1── usuarios
+     │                                        │
+     ├──1───N── lecturas                      │
+     ├──1───N── llamados                      │
+     └──────────1───N───────────────────────── (usuarios.area_id)
+</pre>
+          <figcaption>Todas las relaciones parten de areas; usuarios se apoya en empleados y repite el área</figcaption>
+        </figure>
+        <p>
+          <span class="cod">empleados.area_id</span>,
+          <span class="cod">lecturas.area_id</span>,
+          <span class="cod">llamados.area_id</span> y
+          <span class="cod">usuarios.area_id</span> referencian a
+          <span class="cod">areas.id</span>;
+          <span class="cod">usuarios.empleado_id</span> referencia a
+          <span class="cod">empleados.id</span>. Las claves foráneas admiten
+          nulo de forma deliberada: un llamado histórico debe sobrevivir a la
+          baja de un área, y un administrador no está asociado a ningún sector.
+        </p>
+
+        <h3>Índices y por qué esos</h3>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:34%">Índice</th><th>Consulta que sostiene y motivo</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="m">idx_lecturas_area_hora<br>(area_id, tomada_en desc)</td>
+                <td>El más importante. «Última lectura del área X» se resuelve como una búsqueda por la primera columna y la primera fila de la segunda, sin ordenar. Esa consulta se ejecuta una vez por área en cada carga del tablero, y <span class="cod">lecturas</span> es la tabla que más rápido crece. El orden descendente está en la definición del índice para que el motor no tenga que invertir el resultado.</td>
+              </tr>
+              <tr>
+                <td class="m">idx_llamados_creado_en<br>(creado_en desc)</td>
+                <td>Todas las listas y el detalle del reporte se ordenan por fecha de creación descendente. Sin el índice, cada listado ordena la tabla completa aunque después muestre veinte filas.</td>
+              </tr>
+              <tr>
+                <td class="m">idx_llamados_area</td>
+                <td>Sostiene dos filtros distintos: el confinamiento del rol empleado a su área, que se aplica en toda consulta de llamados, y el filtro por área de la pantalla de Reportes.</td>
+              </tr>
+              <tr>
+                <td class="m">idx_llamados_estado</td>
+                <td>El tablero cuenta los <span class="cod">NO_ATENDIDO</span> en cada carga y el antirrebote busca el llamado abierto antes de decidir si crea uno nuevo. Los no atendidos son una fracción chica del total, así que el índice es muy selectivo justo donde se lo consulta.</td>
+              </tr>
+              <tr>
+                <td class="m">Unicidad: areas.codigo,<br>empleados.legajo, usuarios.usuario</td>
+                <td>Son las claves naturales con las que trabaja el personal. La restricción impide dos áreas con el mismo código —el nodo quedaría apuntando a un área ambigua— y da además el índice que usa la búsqueda del endpoint de ingesta.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="nota">
+          <strong>Lo que no se indexó.</strong> El campo <span class="cod">motivo</span>
+          no tiene índice propio, aunque el antirrebote filtra por área, motivo y
+          estado a la vez. Para el volumen esperado, los índices de área y de
+          estado acotan lo suficiente. Si la tabla crece, el paso siguiente sería
+          un índice compuesto parcial sobre
+          <span class="cod">(area_id, motivo)</span> restringido a los llamados
+          no atendidos. Queda anotado como trabajo futuro y no como algo que ya
+          esté resuelto.
+        </p>
+
+        <h3>Agregaciones en el motor</h3>
+        <p>
+          Las cinco funciones de <span class="cod">sql/03_reportes.sql</span>
+          resuelven en PostgreSQL lo que muestra la pantalla de Reportes: el
+          resumen de totales, los llamados por área, las tres distribuciones
+          (estado, tipo y origen) en una sola consulta, la evolución diaria y el
+          promedio diario de temperatura y humedad. Las cuatro primeras aceptan
+          los mismos parámetros —área, origen, desde y hasta— y admiten nulo como
+          «sin filtro».
+        </p>
+        <p>
+          Dos detalles del diseño de esas funciones tienen consecuencia visible.
+          La de llamados por área parte de <span class="cod">areas</span> con
+          unión externa, de modo que devuelve las ocho áreas aunque alguna no
+          tenga llamados: el eje del gráfico no cambia de forma al mover los
+          filtros. La de evolución diaria arma un calendario con
+          <span class="cod">generate_series</span> y hace la unión contra él, de
+          modo que los días sin llamados valen cero en vez de desaparecer: la
+          línea no salta huecos y no sugiere una continuidad que no existió.
+        </p>
+
+        <h3>Datos de prueba</h3>
+        <p>
+          El archivo <span class="cod">sql/02_datos.sql</span> siembra ocho
+          áreas con sus rangos reales, quince empleados, tres usuarios y
+          cuatrocientos llamados distribuidos sobre los últimos noventa días, con
+          proporciones deliberadamente desparejas entre áreas, tipos y estados.
+          Sirve para que los gráficos y los filtros se puedan evaluar con un
+          conjunto que no sea uniforme. Son datos generados, no registros
+          históricos del parque, y así están rotulados.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">9</div>
+  </article>
+
+  <!-- ============ 6. HARDWARE ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>6 · Hardware</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">6</div>
+      <div class="cuerpo">
+        <h2>Hardware: componentes, conexionado y protocolo</h2>
+
+        <h3>Componentes del nodo</h3>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:34%">Componente</th><th>Función en el nodo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ESP32-S3-Zero</td><td>Microcontrolador con Wi-Fi integrado y USB nativo. Ejecuta el firmware, mide, publica por HTTPS y aplica las órdenes que devuelve el servidor.</td></tr>
+              <tr><td>Sensor DHT11</td><td>Temperatura y humedad relativa en un único encapsulado, con salida digital de un hilo. Según su hoja de datos: ±2 °C y ±5 % HR, con una lectura por segundo como máximo.</td></tr>
+              <tr><td>Módulo de relé</td><td>Salida de potencia aislada. Habilita ventilación o riego según la orden del servidor.</td></tr>
+              <tr><td>Buzzer activo</td><td>Sirena local del sector. Suena mientras haya una emergencia sin atender en el área del nodo.</td></tr>
+              <tr><td>Pulsador normalmente abierto</td><td>Llamado manual desde el campo, sin necesidad de teléfono.</td></tr>
+              <tr><td>Alimentación 5 V</td><td>Fuente de red. El nodo no tiene respaldo por batería.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Conexionado</h3>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:14%">GPIO</th><th style="width:24%">Elemento</th><th>Configuración y nota de montaje</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="m">5</td><td>DHT11 (dato)</td><td>Entrada digital de un hilo. Alimentación y masa comunes con la placa.</td></tr>
+              <tr><td class="m">6</td><td>Relé (señal)</td><td>Salida. El módulo empleado activa con nivel bajo; el sentido está en una constante del firmware para no depender del módulo que se consiga.</td></tr>
+              <tr><td class="m">7</td><td>Buzzer (señal)</td><td>Salida. Buzzer activo, que suena con nivel alto.</td></tr>
+              <tr><td class="m">10</td><td>Pulsador</td><td>Entrada con resistencia interna de <em>pull-up</em>; el pulsador cierra a masa. No requiere componentes externos.</td></tr>
+              <tr><td class="m">19 · 20</td><td>Reservados</td><td>No se usan: están asociados al USB nativo del ESP32-S3, y ocuparlos deja la placa sin puerto de programación ni monitor serie.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          En el arranque, el firmware pone las dos salidas en estado seguro
+          —relé abierto y buzzer en silencio— antes de iniciar el Wi-Fi o de leer
+          el sensor, para que un reinicio no deje un actuador enganchado.
+        </p>
+
+        <h3>Protocolo de comunicación</h3>
+        <p>
+          El nodo se conecta como estación a una red Wi-Fi de 2,4 GHz y publica
+          sobre HTTPS con <span class="cod">POST</span> a
+          <span class="cod">/api/ingest</span>, con cuerpo JSON y cabecera
+          <span class="cod">x-device-key</span>. El ciclo normal es de diez
+          segundos; una pulsación larga fuerza el envío inmediato.
+        </p>
+        <figure>
+<pre class="cod-bloque">
+POST /api/ingest                       →   200 OK
+Content-Type: application/json
+x-device-key: &lt;clave del dispositivo&gt;
+
+{ "dispositivo": "NODO-INV-N-01",          { "ok": true,
+  "area":        "INV-N",                    "rele":   true,
+  "temperatura": 31.4,                       "alarma": false,
+  "humedad":     52.0,                       "area":   "INV-N",
+  "boton":       "NINGUNO" }                 "llamados": [ … ] }
+</pre>
+          <figcaption>Petición del nodo y respuesta del servidor con las dos órdenes de salida</figcaption>
+        </figure>
+        <p>
+          Los códigos de respuesta que el firmware distingue son 200 (procesado),
+          401 (clave de dispositivo incorrecta) y 404 (el código de área no
+          existe); cualquier otro se informa por el monitor serie con su número.
+          Los tiempos límite son de seis segundos para conexión y lectura HTTP, y
+          de veinte segundos para un intento de asociación Wi-Fi.
+        </p>
+
+        <h3>Comportamiento del firmware</h3>
+        <ul>
+          <li><strong>Bucle sin bloqueo.</strong> No hay <span class="cod">delay()</span>: la atención del Wi-Fi, del botón, del buzzer y del ciclo de envío se resuelven comparando marcas de tiempo, de modo que el botón responde aunque el nodo esté esperando la red.</li>
+          <li><strong>Botón con antirrebote de 50 ms.</strong> Pulsación corta: llamado <span class="cod">NORMAL</span>, que viaja en el ciclo siguiente. Pulsación sostenida de dos segundos o más: llamado <span class="cod">EMERGENCIA</span> con envío inmediato. El estado del botón se limpia recién cuando el servidor confirma haberlo recibido, así una pulsación no se pierde si falla la red.</li>
+          <li><strong>Sirena.</strong> Mientras la respuesta traiga <span class="cod">alarma</span> activa, el buzzer emite un pulso de 200 ms cada dos segundos. El patrón intermitente es deliberado: un tono continuo en un invernadero cerrado se vuelve insoportable y termina desconectado.</li>
+          <li><strong>Caída del enlace.</strong> El nodo no se reinicia si se cae el Wi-Fi. Informa el estado, reintenta la asociación y retoma los envíos solo. Esto importa porque un reinicio perdería el estado del botón pendiente.</li>
+          <li><strong>Falla del sensor.</strong> Si el DHT11 devuelve un valor no numérico, el firmware reenvía la última lectura válida y lo declara en el monitor serie; si todavía no hubo ninguna lectura válida y hay un botón pendiente, envía el botón con los valores en nulo. Se prefirió reenviar y avisar antes que callar.</li>
+          <li><strong>Hora.</strong> El nodo sincroniza por NTP únicamente para sellar las líneas del monitor serie. La marca de tiempo con validez es siempre la del servidor, que es única para todos los nodos.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="folio">10</div>
+  </article>
+
+  <!-- ============ 7. SEGURIDAD ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>7 · Seguridad</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">7</div>
+      <div class="cuerpo">
+        <h2>Seguridad y limitaciones remanentes</h2>
+
+        <h3>Lo que el sistema hace</h3>
+        <p>
+          <strong>Contraseñas.</strong> Nunca se almacenan ni se registran en
+          claro. Se guarda un hash bcrypt con diez rondas de costo y sal propia
+          por usuario; la verificación se hace con la comparación de la
+          biblioteca, que trabaja sobre el hash y no sobre la contraseña. Bcrypt
+          se eligió por ser deliberadamente lento y de costo ajustable, a
+          diferencia de las funciones de resumen de propósito general.
+        </p>
+        <p>
+          <strong>Cookie de sesión.</strong> La sesión viaja en la cookie
+          <span class="cod">pab_sesion</span>, marcada
+          <span class="cod">httpOnly</span> —de modo que un script en la página
+          no puede leerla, y una vulnerabilidad de inyección de código no se
+          lleva la sesión—, <span class="cod">sameSite=lax</span>,
+          <span class="cod">secure</span> en producción y con vencimiento de
+          ocho horas, que es una jornada. Su contenido es un JWT firmado con
+          HS256 que transporta identificador, nombre de usuario, rol y área.
+        </p>
+        <p>
+          <strong>Clave de dispositivo.</strong> El endpoint de ingesta es la
+          única ruta abierta sin sesión, y compara la cabecera
+          <span class="cod">x-device-key</span> contra una variable de entorno
+          antes de tocar la base. Si la variable no está configurada, el endpoint
+          responde error y no procesa nada, en lugar de aceptar cualquier
+          petición.
+        </p>
+        <p>
+          <strong>Verificación de permisos del lado del servidor.</strong> Hay
+          tres barreras encadenadas. La primera corta antes de que se arme la
+          página: toda ruta que no sea el acceso o los dos endpoints de
+          dispositivo exige sesión válida, y una cookie vencida o adulterada se
+          borra en la redirección. La segunda está en cada página, que declara si
+          exige sesión o rol de administrador. La tercera —la que realmente
+          importa— está en cada acción de servidor, que vuelve a verificar por su
+          cuenta: esconder un ítem del menú no es un control de acceso, porque la
+          acción se puede invocar sin pasar por el menú. Sobre eso se apoya el
+          confinamiento por área: cuando un empleado intenta atender un llamado,
+          el servidor compara el área del llamado contra la de su sesión y
+          <em>ignora</em> el área que venga del cliente. Un intento de un
+          empleado sobre una pantalla de administración devuelve un 403 real, no
+          una redirección disfrazada.
+        </p>
+        <p>
+          <strong>Otros controles.</strong> El destino al que se redirige después
+          del acceso se valida para que solo sean rutas internas. La exportación
+          a CSV antepone una comilla a los valores que una planilla de cálculo
+          interpretaría como fórmula, porque el campo de detalle lo escriben
+          personas. Los filtros de reportes se normalizan antes de llegar al
+          motor: lo que no coincide con el formato esperado se descarta.
+        </p>
+
+        <h3>Las limitaciones que quedan</h3>
+        <p>
+          Lo que sigue no está resuelto. Se enumera con precisión porque un
+          sistema que oculta sus limitaciones es más peligroso que uno que las
+          declara.
+        </p>
+        <ol class="numerada">
+          <li><strong>Toda la autorización vive en el código de la aplicación.</strong> La conexión a la base usa una clave de servicio con permisos totales y no hay seguridad a nivel de fila activada. Un solo camino que olvide verificar el rol expone la base entera. Fue una decisión consciente por el plazo del proyecto; no es una buena práctica y no debe presentarse como tal.</li>
+          <li><strong>La clave de dispositivo es única, estática y está en claro.</strong> La comparten todos los nodos, está escrita en el archivo de firmware y se ve en el monitor serie de cualquier placa. Quien la obtenga puede inyectar lecturas falsas o disparar emergencias. No hay clave por dispositivo, ni rotación, ni firma del mensaje, ni marca de tiempo que impida reenviar una petición capturada.</li>
+          <li><strong>El nodo no valida el certificado del servidor.</strong> El firmware usa el modo inseguro de la biblioteca TLS: cifra la comunicación, pero acepta cualquier certificado. Alguien con control del punto de acceso puede interponerse, hacerse pasar por el servidor y quedarse con la clave de dispositivo. Corresponde fijar el certificado de la autoridad en el firmware.</li>
+          <li><strong>No hay límite de intentos de acceso.</strong> El formulario de ingreso no cuenta fallas, no demora las respuestas ni bloquea la cuenta. El costo de bcrypt hace lenta la fuerza bruta, pero no la impide contra una contraseña débil.</li>
+          <li><strong>Un token emitido no se puede revocar.</strong> Desactivar un usuario impide un ingreso nuevo, pero su sesión abierta sigue siendo válida hasta ocho horas. Tampoco hay rotación del secreto de firma; cambiarlo invalida todas las sesiones a la vez.</li>
+          <li><strong>No hay registro de auditoría.</strong> Se sabe quién atendió cada llamado, pero no queda constancia de quién modificó un umbral, dio de baja a un empleado o creó un usuario. El propio sistema no puede explicar por qué un rango cambió.</li>
+          <li><strong>Las contraseñas de demostración están publicadas</strong> en este informe y en el archivo de datos sembrados. Deben rotarse antes de cualquier uso que no sea la evaluación.</li>
+          <li><strong>El simulador escribe en la base real.</strong> La pantalla de Dispositivos usa la clave real y el endpoint real; requiere rol de administrador, pero una lectura simulada queda guardada igual que una física y no hay un campo que las distinga.</li>
+          <li><strong>La protección contra peticiones de sitios cruzados</strong> se apoya en el atributo <span class="cod">sameSite</span> de la cookie y en la validación de origen que hace el propio marco de trabajo en sus acciones de servidor. No hay un testigo anti-CSRF propio.</li>
+          <li><strong>No se declararon cabeceras de seguridad</strong> —política de contenido, transporte estricto más allá de la que agrega la plataforma— ni se hizo revisión de dependencias.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="folio">11</div>
+  </article>
+
+  <!-- ============ 8. PRUEBAS ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>8 · Pruebas</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">8</div>
+      <div class="cuerpo">
+        <h2>Pruebas realizadas y resultados</h2>
+
+        <p>
+          Las pruebas fueron funcionales, sobre el nodo físico y sobre el
+          simulador, en la red del aula y en la del predio. Se registran el
+          procedimiento y lo observado.
+        </p>
+
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:26%">Prueba</th><th style="width:33%">Procedimiento</th><th>Resultado observado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Ingesta válida</td><td>Envío desde el nodo con clave y área correctas.</td><td>Respuesta 200, fila nueva en <span class="cod">lecturas</span>, valor visible en el tablero en la recarga siguiente. Correcto.</td></tr>
+              <tr><td>Clave incorrecta</td><td>Se altera la cabecera de clave en el firmware.</td><td>Respuesta 401 y ninguna fila registrada. El monitor serie informa la causa. Correcto.</td></tr>
+              <tr><td>Área inexistente</td><td>Se envía un código de área que no está en la tabla.</td><td>Respuesta 404 y ninguna lectura guardada: la validación del área ocurre antes de la inserción. Correcto.</td></tr>
+              <tr><td>Desvío leve</td><td>Se calienta el sensor hasta superar el máximo del área por menos de 3 °C.</td><td>Se abre un llamado de tipo <span class="cod">NORMAL</span> con el detalle de la lectura y el límite. Correcto.</td></tr>
+              <tr><td>Desvío grave</td><td>Se sostiene la temperatura más de 3 °C por encima del máximo.</td><td>Se abre un llamado <span class="cod">EMERGENCIA</span>; la misma respuesta trae relé y alarma activos y el buzzer entra en su patrón intermitente. Correcto.</td></tr>
+              <tr><td>Antirrebote</td><td>Se mantiene la condición de desvío durante varios minutos, con el nodo reportando cada diez segundos.</td><td>Un único llamado abierto, cuyo detalle se actualiza con la lectura más reciente. No se crean filas nuevas ni se repite el aviso de Telegram. Correcto.</td></tr>
+              <tr><td>Escalamiento</td><td>Con un llamado <span class="cod">NORMAL</span> abierto, se agrava el desvío hasta el rango de emergencia.</td><td>El mismo registro cambia de tipo a <span class="cod">EMERGENCIA</span> en lugar de quedar subestimado. Correcto.</td></tr>
+              <tr><td>Botón corto y largo</td><td>Pulsación breve y pulsación sostenida de más de dos segundos.</td><td>La breve genera un llamado <span class="cod">NORMAL</span> de origen empleado en el ciclo siguiente; la sostenida fuerza el envío inmediato y genera uno de emergencia. Correcto.</td></tr>
+              <tr><td>Nodo caído</td><td>Se desconecta el nodo y se espera más de 90 segundos, luego se recarga el tablero.</td><td>La barrida abre un llamado <span class="cod">EMERGENCIA</span> con motivo <em>Sensor sin señal</em> y el detalle del tiempo transcurrido. Correcto.</td></tr>
+              <tr><td>Falla del sensor</td><td>Se desconecta el hilo de datos del DHT11 con el nodo en marcha.</td><td>El firmware informa el valor no numérico y reenvía la última lectura válida marcando la nota. Sin lectura previa y sin botón pendiente, no envía. Correcto.</td></tr>
+              <tr><td>Caída del enlace</td><td>Se apaga el punto de acceso durante varios minutos y se vuelve a encender.</td><td>El nodo no se reinicia, informa la caída, reintenta y retoma los envíos solo al volver la red. Durante el corte no hubo lecturas: la pérdida es la esperada y quedó registrada como <em>Sensor sin señal</em>. Correcto.</td></tr>
+              <tr><td>Permisos por rol</td><td>Con sesión de empleado se navega a una pantalla de administración y se invoca su acción de servidor.</td><td>La navegación devuelve 403 con la pantalla correspondiente; la acción invocada directamente también se rechaza. Correcto.</td></tr>
+              <tr><td>Confinamiento por área</td><td>Con sesión de empleado se intenta atender un llamado de otra área.</td><td>Rechazo con mensaje explícito. El estado del llamado no cambia. Correcto.</td></tr>
+              <tr><td>Atención concurrente</td><td>Dos sesiones atienden el mismo llamado casi al mismo tiempo.</td><td>La segunda recibe el aviso de que ya estaba atendido; la actualización condicionada por estado no sobrescribe al primer autor. Correcto.</td></tr>
+              <tr><td>Sesión vencida o adulterada</td><td>Se modifica manualmente el valor de la cookie y se recarga.</td><td>Redirección al acceso y borrado de la cookie inválida. Correcto.</td></tr>
+              <tr><td>Exportación a CSV</td><td>Se exporta con filtros aplicados y se abre en una planilla de cálculo en español.</td><td>Acentos correctos, columnas separadas, fechas en formato local. Un detalle que empieza con signo igual queda como texto y no como fórmula. Correcto.</td></tr>
+              <tr><td>Vista de impresión</td><td>Se genera el PDF desde el navegador en A4 vertical.</td><td>Encabezado, filtros escritos en texto, indicadores, gráficos y tabla de detalle. Los gráficos salen vectoriales. Correcto.</td></tr>
+              <tr><td>Zona horaria</td><td>Se crea un llamado después de las 21 hora local y se observa el gráfico de evolución diaria.</td><td>El llamado se agrupa en el día local correcto, pese a que el servidor opera en UTC. Correcto.</td></tr>
+              <tr><td>Ausencia de credenciales de Telegram</td><td>Se quita la configuración del bot y se provoca un llamado.</td><td>El llamado se crea y la ingesta responde normalmente; solo no hay aviso. La notificación no puede voltear el registro. Correcto.</td></tr>
+              <tr><td>Vista de campo</td><td>Se opera la vista móvil en una pantalla de 390 px de ancho.</td><td>Los llamados abiertos se listan con las emergencias primero; atender y cargar un llamado funcionan con una sola mano. Correcto.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Qué no se midió</h3>
+        <p>
+          Este informe no presenta cifras de rendimiento porque no se realizaron
+          esas mediciones. En concreto: no se midieron tiempos de respuesta del
+          endpoint ni latencia extremo a extremo; no se midió el consumo
+          eléctrico del nodo ni su autonomía; no se contrastó el DHT11 contra un
+          instrumento patrón, de modo que la exactitud declarada es la de su hoja
+          de datos y no una verificación propia; no se probó el sistema con los
+          ocho nodos físicos en simultáneo, porque solo se construyó uno; y no se
+          hicieron pruebas de carga, de resistencia prolongada ni de intrusión.
+          Toda afirmación de este informe sobre volúmenes futuros de datos es una
+          proyección aritmética a partir del intervalo configurado, y está
+          señalada como tal.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">12</div>
+  </article>
+
+  <!-- ============ 9. VENTAJAS Y DESVENTAJAS ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>9 · Ventajas y desventajas</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">9</div>
+      <div class="cuerpo">
+        <h2>Ventajas y desventajas operativas del sistema en conjunto</h2>
+
+        <h3>Ventajas</h3>
+        <ol class="numerada">
+          <li><strong>El registro existe y es continuo.</strong> La cobertura deja de depender de que haya alguien cerca. La noche y el fin de semana quedan cubiertos con la misma densidad de datos que el turno mañana.</li>
+          <li><strong>Cada evento es trazable.</strong> Un llamado guarda área, motivo, gravedad, origen, momento de creación, quién lo atendió y cuándo. Preguntas que antes no tenían respuesta —cuántas emergencias tuvo hidroponía el trimestre pasado, qué proporción quedó sin atender— se responden con un filtro.</li>
+          <li><strong>El umbral es un dato y no código.</strong> Quien conoce el cultivo cambia el rango desde una pantalla y el cambio rige en la lectura siguiente, sin intervención técnica y sin tocar el hardware.</li>
+          <li><strong>Un solo firmware para todos los nodos.</strong> Se diferencian por dos constantes de identidad. La lógica de gravedad, el antirrebote y el escalamiento existen en un único lugar, con lo que se corrigen y se prueban una sola vez.</li>
+          <li><strong>Dos interfaces sin lógica duplicada.</strong> La vista de escritorio y la de campo comparten servidor, base y verificaciones de permiso; lo que cambia es la disposición, no la regla.</li>
+          <li><strong>La ausencia de datos es un evento, no un silencio.</strong> Un nodo que deja de reportar produce una emergencia. En un sistema de monitoreo, no saber es tan grave como saber que algo está mal, y esa distinción está implementada.</li>
+          <li><strong>Nada que instalar.</strong> El operario entra por el navegador del teléfono que ya tiene. No hay despliegue de aplicaciones ni gestión de dispositivos.</li>
+          <li><strong>Salidas en los formatos que la administración ya usa.</strong> CSV para trabajar en planilla y PDF para adjuntar a un expediente. El sistema no obliga a nadie a cambiar de herramienta para usar sus datos.</li>
+          <li><strong>Costo de infraestructura bajo.</strong> Hardware de bajo costo y servicios en plan gratuito. La barrera de entrada para instrumentar un sector más es el nodo, no la plataforma.</li>
+        </ol>
+
+        <h3>Desventajas</h3>
+        <ol class="numerada">
+          <li><strong>Dependencia total del enlace.</strong> Es la contracara directa de haber puesto los umbrales en el servidor: sin red, el nodo no enciende el relé ni la sirena porque no sabe cuál es el rango correcto. Un corte de internet deja la instrumentación ciega y muda, y lo deja justo cuando podría hacer falta. Un esquema con umbrales de respaldo en el nodo resolvería esto a costa de tener dos fuentes de verdad.</li>
+          <li><strong>La información del parque vive en infraestructura ajena.</strong> Hosting y base de datos son servicios de terceros en plan gratuito. Un cambio de condiciones, una suspensión por inactividad o el cierre de la cuenta dejan al parque sin sistema y, en el peor caso, sin acceso cómodo a su propia serie histórica. No hay hoy una rutina de respaldo automático fuera de esos proveedores.</li>
+          <li><strong>La calidad del dato está limitada por el sensor.</strong> El DHT11 declara ±2 °C y ±5 % HR. El margen de 3 °C que separa un desvío normal de una emergencia es del mismo orden que el error del instrumento: cerca del límite, la clasificación entre <span class="cod">NORMAL</span> y <span class="cod">EMERGENCIA</span> es discutible. El sistema presenta una categoría tajante sobre una medición que no lo es.</li>
+          <li><strong>Un punto de medición no representa un área.</strong> Un invernadero tiene gradientes de temperatura y humedad entre el techo y el suelo, y entre la puerta y el fondo. El nodo informa lo que ocurre donde está colgado, y el sistema lo presenta como el estado del sector.</li>
+          <li><strong>Costo por lectura y crecimiento sin política de retención.</strong> Cada lectura es una escritura más varias consultas. A diez segundos por nodo son del orden de 8.600 filas diarias por nodo, y con ocho nodos cerca de 69.000 por día —proyección aritmética, no medición—. La tabla de lecturas crece de forma indefinida y el plan gratuito tiene cupo de almacenamiento. Alguien va a tener que decidir qué se conserva y con qué granularidad.</li>
+          <li><strong>El aviso no garantiza la atención.</strong> Telegram entrega el mensaje al grupo y ahí termina la responsabilidad del sistema. No confirma lectura, no insiste y no escala a otro nivel si nadie responde. La cadena de emergencia termina en una persona que puede tener el teléfono en silencio.</li>
+          <li><strong>Falsos positivos por lectura puntual.</strong> Basta una ráfaga de aire caliente sobre el sensor, o el sol dando directo un rato, para abrir un llamado. No hay promedio móvil ni exigencia de N lecturas consecutivas fuera de rango: el antirrebote evita repetir el llamado, pero no evita crearlo. Con el tiempo, eso erosiona la confianza del personal en el aviso, que es el peor resultado posible para un sistema de alarma.</li>
+          <li><strong>El reporte en PDF requiere una persona.</strong> No hay envío programado ni adjunto automático. Si la dirección quiere un informe mensual, alguien tiene que entrar, filtrar e imprimir.</li>
+          <li><strong>Superficie de mantenimiento amplia para un equipo chico.</strong> Cinco pantallas de administración más reportes son mucho para sostener. Y varios catálogos —motivos de llamado, tareas, tipos de área— están declarados en el código: agregar un motivo nuevo obliga a un despliegue, no a una carga de datos.</li>
+          <li><strong>El sistema no puede explicarse a sí mismo.</strong> Sin registro de auditoría, si un umbral aparece cambiado no hay forma de saber quién lo cambió ni cuándo. En un sistema cuyo comportamiento entero depende de esos valores, es una omisión de peso.</li>
+          <li><strong>Deuda por versiones muy recientes.</strong> El marco de trabajo cambió convenciones respecto de sus versiones anteriores y se usa una bandera experimental para el 403 real. Un mantenedor futuro va a encontrar en la web documentación que no coincide con este código, y una actualización mayor puede exigir retrabajo.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="folio">13</div>
+  </article>
+
+  <!-- ============ 10 y 11 ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>10 · 11 · Limitaciones y metodología</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">10</div>
+      <div class="cuerpo">
+        <h2>Limitaciones conocidas y trabajo futuro</h2>
+
+        <p>
+          Las limitaciones de seguridad están en la sección 7 y las operativas en
+          la sección 9. Se agregan aquí las que no entran en ninguna de las dos y
+          se ordena lo que seguiría, por prioridad.
+        </p>
+
+        <h4>Limitaciones adicionales</h4>
+        <ul>
+          <li>Hay un solo nodo físico construido. Las siete áreas restantes están modeladas y se ejercitan con el simulador.</li>
+          <li>El sistema mide temperatura y humedad del aire. No mide humedad de sustrato, pH, conductividad ni temperatura de pila de compostaje, que son las variables que cerrarían el control de hidroponía y compostaje.</li>
+          <li>El estado de los nodos se calcula sobre las lecturas de las últimas 24 horas y se agrupa en memoria, porque la interfaz de acceso a la base no agrupa. Con muchos nodos, esa consulta habría que reemplazarla por una función SQL.</li>
+          <li>No hay respaldo automático de la base fuera del proveedor.</li>
+          <li>El sistema está en español y con formatos de Argentina fijos en el código; no está preparado para otra configuración regional.</li>
+        </ul>
+
+        <h4>Trabajo futuro, por prioridad</h4>
+        <ol class="numerada">
+          <li>Clave por dispositivo y validación del certificado del servidor en el firmware. Es lo que cierra el agujero más grande del sistema.</li>
+          <li>Política de retención: conservar la lectura cruda un plazo acotado y guardar promedios horarios más allá de ese plazo. Sin esto, el crecimiento de la tabla se vuelve un problema por sí solo.</li>
+          <li>Confirmación por varias lecturas consecutivas o promedio móvil antes de abrir un llamado, para reducir los falsos positivos.</li>
+          <li>Registro de auditoría de las operaciones de administración.</li>
+          <li>Escalamiento del aviso: si un llamado de emergencia sigue sin atender pasado un plazo, avisar de nuevo o a otro destinatario.</li>
+          <li>Recuperación de contraseña y bloqueo por intentos fallidos.</li>
+          <li>Activar seguridad a nivel de fila en la base y bajar la conexión de la aplicación a un rol con permisos acotados.</li>
+          <li>Almacenamiento local en el nodo con marca de tiempo confiable, para no perder las lecturas de un corte de enlace.</li>
+          <li>Actualización de firmware por aire, a partir del tercer nodo instalado.</li>
+          <li>Instrumentar las áreas restantes y agregar los sensores específicos de hidroponía y compostaje.</li>
+          <li>Reporte programado generado en el servidor y enviado sin intervención.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">11</div>
+      <div class="cuerpo">
+        <h2>Metodología de trabajo del equipo</h2>
+        <p>
+          El equipo se repartió el trabajo por capa y no por tarea suelta: Thiago
+          Ibañez se ocupó del nodo —firmware, armado y conexionado—, Matías Grau
+          del modelo y la base de datos —esquema, funciones de agregación, índices
+          y datos de prueba— y Sofia Coria de la aplicación web —interfaz,
+          autenticación, reportes y despliegue—, mientras que la definición del
+          alcance, las decisiones de la sección 4 y las pruebas de la sección 8 se
+          hicieron entre los tres; el plan fue de seis días, con el primero
+          dedicado al relevamiento con el personal del parque y al modelo de
+          datos, el segundo a la base montada, el acceso y las pantallas de
+          administración, el tercero al endpoint de ingesta con la lógica de
+          umbrales, llamados y antirrebote, el cuarto al firmware y al armado del
+          nodo con pruebas de ingesta reales, el quinto a reportes, gráficos,
+          exportaciones y vista de campo, y el sexto a la vigilancia de nodos, la
+          notificación, las pruebas de permisos y sesión, el despliegue y este
+          informe; durante todo el proceso se usó un asistente de inteligencia
+          artificial como herramienta de apoyo —consulta de documentación,
+          borradores de código y de texto, y revisión— bajo la regla de que
+          ninguna sugerencia entraba sin ser leída, ejecutada y verificada contra
+          el sistema en funcionamiento, de modo que el criterio de cada decisión
+          técnica, la validación de cada prueba y la responsabilidad por lo que
+          finalmente quedó escrito son del equipo.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">14</div>
+  </article>
+
+  <!-- ============ 12. BIBLIOGRAFÍA ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>12 · Bibliografía</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">12</div>
+      <div class="cuerpo">
+        <h2>Bibliografía y criterios de selección</h2>
+
+        <p>
+          Se consultaron fuentes primarias siempre que existieran. Los cuatro
+          criterios de selección aplicados son: documentación oficial del
+          fabricante, actualización a la versión efectivamente utilizada,
+          disponibilidad de ejemplos verificables, y carácter de referencia
+          normativa del protocolo o formato.
+        </p>
+
+        <div class="marco-tabla">
+          <table class="tabla-fuentes">
+            <thead>
+              <tr>
+                <th style="width:25%">Fuente</th>
+                <th style="width:15%">Tipo</th>
+                <th style="width:30%">Para qué se usó</th>
+                <th style="width:30%">Criterio de selección</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Next.js — documentación incluida en el paquete instalado (<span class="cod">node_modules/next/dist/docs</span>)</td>
+                <td>Documentación oficial</td>
+                <td>Componentes y acciones de servidor, el archivo <span class="cod">proxy.ts</span>, la bandera <span class="cod">authInterrupts</span> y la función de trabajo posterior a la respuesta.</td>
+                <td>Está actualizada a la versión que usamos: es la copia que viaja dentro de la versión 16.3.3 instalada, y no la del sitio, que describe versiones anteriores.</td>
+              </tr>
+              <tr>
+                <td>Next.js — <span class="cod">nextjs.org/docs</span></td>
+                <td>Documentación oficial</td>
+                <td>Enrutado, manejadores de ruta, metadatos y despliegue.</td>
+                <td>Es documentación oficial del fabricante del marco de trabajo.</td>
+              </tr>
+              <tr>
+                <td>React — <span class="cod">react.dev</span></td>
+                <td>Documentación oficial</td>
+                <td>Componentes de servidor, transiciones y el estado de formulario del acceso.</td>
+                <td>Es documentación oficial y está actualizada a React 19, la versión que usamos.</td>
+              </tr>
+              <tr>
+                <td>PostgreSQL 16 — manual oficial</td>
+                <td>Manual</td>
+                <td>Tipo <span class="cod">timestamptz</span>, agregados con <span class="cod">filter</span>, <span class="cod">generate_series</span>, expresiones comunes de tabla y funciones en SQL.</td>
+                <td>Es la documentación oficial del motor y su capítulo de funciones incluye ejemplos verificables que se probaron en el editor SQL.</td>
+              </tr>
+              <tr>
+                <td>Supabase — documentación del cliente de JavaScript</td>
+                <td>Documentación oficial</td>
+                <td>Creación del cliente con clave de servicio, consultas, conteos exactos y llamadas a funciones.</td>
+                <td>Es documentación oficial del proveedor y corresponde a la versión 2 del cliente, que es la instalada.</td>
+              </tr>
+              <tr>
+                <td>PostgREST — documentación de la API</td>
+                <td>Documentación oficial</td>
+                <td>Entender qué puede y qué no puede hacer la capa REST sobre PostgreSQL; en particular, la ausencia de agrupamiento, que motivó escribir las funciones de reporte.</td>
+                <td>Es la referencia del protocolo que expone la base: la interfaz del proveedor se apoya en él.</td>
+              </tr>
+              <tr>
+                <td>Espressif — ESP32-S3 Datasheet y Technical Reference Manual</td>
+                <td>Hoja de datos</td>
+                <td>Asignación de pines, funciones reservadas del USB nativo y resistencias internas configurables.</td>
+                <td>Es la hoja de datos oficial del fabricante del microcontrolador; determinó no usar GPIO 19 y 20.</td>
+              </tr>
+              <tr>
+                <td>Espressif — Arduino core para ESP32, documentación</td>
+                <td>Documentación oficial</td>
+                <td>API de Wi-Fi en modo estación, reconexión, cliente TLS y cliente HTTP.</td>
+                <td>Es documentación oficial del fabricante para el entorno de programación que usamos.</td>
+              </tr>
+              <tr>
+                <td>Aosong — DHT11 Datasheet</td>
+                <td>Hoja de datos</td>
+                <td>Rango de medición, exactitud declarada (±2 °C y ±5 % HR) y frecuencia máxima de muestreo.</td>
+                <td>Es la hoja de datos del fabricante del sensor: es la única fuente válida para la exactitud que declaramos, ya que no la verificamos contra un patrón.</td>
+              </tr>
+              <tr>
+                <td>Adafruit — DHT sensor library</td>
+                <td>Manual</td>
+                <td>Inicialización del sensor y lectura de temperatura y humedad, incluido el manejo del valor no numérico ante falla.</td>
+                <td>Tiene ejemplos verificables que se compilaron y ejecutaron sobre la placa antes de integrarlos.</td>
+              </tr>
+              <tr>
+                <td>ArduinoJson — <span class="cod">arduinojson.org</span></td>
+                <td>Manual</td>
+                <td>Serialización del cuerpo de la petición y lectura de las banderas de relé y alarma en la respuesta.</td>
+                <td>Tiene ejemplos verificables y una guía de migración que confirma la sintaxis de la versión instalada.</td>
+              </tr>
+              <tr>
+                <td>RFC 7519 — JSON Web Token</td>
+                <td>Documentación normativa</td>
+                <td>Estructura del token de sesión, campos registrados y validación de vencimiento.</td>
+                <td>Es la referencia normativa del formato; define qué significa cada campo del token que emitimos.</td>
+              </tr>
+              <tr>
+                <td>RFC 6265 — HTTP State Management Mechanism</td>
+                <td>Documentación normativa</td>
+                <td>Atributos de la cookie de sesión: <span class="cod">HttpOnly</span>, <span class="cod">Secure</span>, <span class="cod">SameSite</span>, <span class="cod">Path</span> y <span class="cod">Max-Age</span>.</td>
+                <td>Es la referencia normativa del mecanismo de cookies, y define el alcance exacto de cada atributo que usamos.</td>
+              </tr>
+              <tr>
+                <td>RFC 4180 — Common Format and MIME Type for CSV Files</td>
+                <td>Documentación normativa</td>
+                <td>Escape de comillas, tratamiento de separadores dentro de un campo y fin de línea del archivo exportado.</td>
+                <td>Es la referencia normativa del formato: define qué es un CSV correcto, independientemente de lo que acepte una planilla en particular.</td>
+              </tr>
+              <tr>
+                <td><span class="cod">jose</span> — documentación de la biblioteca</td>
+                <td>Manual</td>
+                <td>Firma y verificación del token con HS256 en el entorno de ejecución del servidor.</td>
+                <td>Está actualizada a la versión 6 que usamos y sus ejemplos son verificables y ejecutables tal cual.</td>
+              </tr>
+              <tr>
+                <td>Provos y Mazières — «A Future-Adaptable Password Scheme» (USENIX, 1999)</td>
+                <td>Artículo</td>
+                <td>Fundamento del algoritmo bcrypt y del parámetro de costo que fijamos en diez rondas.</td>
+                <td>Es el trabajo original que define el algoritmo: explica por qué la lentitud ajustable es la propiedad buscada.</td>
+              </tr>
+              <tr>
+                <td>OWASP — Cheat Sheet Series: Password Storage y Session Management</td>
+                <td>Artículo</td>
+                <td>Elección del algoritmo de hash, atributos de la cookie y duración de la sesión; también la lista de lo que quedó sin implementar.</td>
+                <td>Es la referencia de consenso de la comunidad de seguridad y está actualizada; se usó además como lista de control para redactar las limitaciones de la sección 7.</td>
+              </tr>
+              <tr>
+                <td>MDN Web Docs — <span class="cod">window.print()</span>, regla <span class="cod">@page</span> y medio de impresión</td>
+                <td>Documentación oficial</td>
+                <td>Vista de impresión: tamaño de hoja, márgenes, saltos de página y evitar cortes dentro de tablas y gráficos.</td>
+                <td>Tiene ejemplos verificables y tablas de compatibilidad por navegador, que era lo que necesitábamos para no depender de uno solo.</td>
+              </tr>
+              <tr>
+                <td>Telegram — Bot API</td>
+                <td>Documentación oficial</td>
+                <td>Alta del bot, obtención del identificador del grupo y envío de mensajes.</td>
+                <td>Es documentación oficial de la plataforma y define los límites de uso que condicionan el envío.</td>
+              </tr>
+              <tr>
+                <td>Vercel — documentación de funciones y variables de entorno</td>
+                <td>Documentación oficial</td>
+                <td>Despliegue, configuración de secretos y comportamiento sin estado entre peticiones.</td>
+                <td>Es documentación oficial del proveedor: explica la restricción de ejecución que motivó disparar la vigilancia desde el tablero.</td>
+              </tr>
+              <tr>
+                <td>Recharts — documentación de la biblioteca</td>
+                <td>Manual</td>
+                <td>Gráficos de barras apiladas, de torta y de líneas de la pantalla de Reportes.</td>
+                <td>Está actualizada a la versión 3 instalada y sus ejemplos son verificables.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="folio">15</div>
+  </article>
+
+  <!-- ============ 13. ANEXO ============ -->
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>13 · Anexo</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral">13</div>
+      <div class="cuerpo">
+        <h2>Anexo: acceso, URL y capturas</h2>
+
+        <h3>Dirección del sistema</h3>
+        <dl class="ficha">
+          <dt>Aplicación</dt>
+          <dd class="m">https://parque-ambiental.vercel.app</dd>
+          <dt>Pantalla de acceso</dt>
+          <dd class="m">https://parque-ambiental.vercel.app/login</dd>
+          <dt>Endpoint del nodo</dt>
+          <dd class="m">POST https://parque-ambiental.vercel.app/api/ingest</dd>
+          <dt>Vigilancia de nodos</dt>
+          <dd class="m">GET https://parque-ambiental.vercel.app/api/vigilancia</dd>
+        </dl>
+
+        <h3>Credenciales de acceso para la evaluación</h3>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:22%">Usuario</th><th style="width:24%">Contraseña</th><th style="width:20%">Rol</th><th>Qué permite ver</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="m">admin</td><td class="m">Parque2026!</td><td>ADMINISTRADOR</td><td>Todo el sistema: tablero de las ocho áreas, ABM de áreas, empleados y usuarios, dispositivos con simulador, y reportes con exportación.</td></tr>
+              <tr><td class="m">lbarrios</td><td class="m">Invernadero1!</td><td>EMPLEADO</td><td>Solo el Invernadero Norte (<span class="cod">INV-N</span>), que es el área del nodo físico. Sin acceso a las pantallas de administración.</td></tr>
+              <tr><td class="m">hgauna</td><td class="m">Hidroponia1!</td><td>EMPLEADO</td><td>Solo Hidroponía (<span class="cod">HID-1</span>). Sirve para comprobar el confinamiento por área comparándolo con el usuario anterior.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="nota">
+          Estas credenciales existen para la evaluación del proyecto y están
+          publicadas también en el archivo de datos sembrados. Deben rotarse
+          antes de cualquier uso operativo del sistema, y así se consigna entre
+          las limitaciones de la sección 7.
+        </p>
+
+        <h3>Recorrido sugerido para la evaluación</h3>
+        <ol class="numerada">
+          <li>Ingresar como <span class="cod">admin</span> y observar el tablero: semáforo por área, última lectura del nodo físico y llamados sin atender.</li>
+          <li>Entrar a Áreas, modificar el máximo de temperatura de <span class="cod">INV-N</span> por debajo de la lectura actual y volver al tablero: el cambio rige en la lectura siguiente del nodo, sin tocar el hardware.</li>
+          <li>Entrar a Dispositivos y enviar una lectura simulada fuera de rango en otra área. La petición sale por HTTP al mismo endpoint y con la misma clave que usa el nodo.</li>
+          <li>Verificar en Llamados que el llamado se abrió con el tipo correspondiente, y en el grupo de Telegram que llegó el aviso.</li>
+          <li>Repetir el envío con el mismo desvío: comprobar que no se crea un segundo llamado, sino que se actualiza el detalle del que ya estaba abierto.</li>
+          <li>Ir a Reportes, aplicar filtros, exportar el CSV y abrir la vista de impresión para generar el PDF.</li>
+          <li>Cerrar sesión, ingresar como <span class="cod">hgauna</span> e intentar entrar a <span class="cod">/usuarios</span>: el sistema responde con un 403 real.</li>
+          <li>Con esa misma sesión, abrir la vista de campo en un teléfono o reduciendo la ventana por debajo de 900 px de ancho.</li>
+        </ol>
+
+        <h3>Prueba directa del endpoint</h3>
+        <p>
+          Para verificar la ingesta sin el nodo, con la clave de dispositivo
+          provista aparte:
+        </p>
+<pre class="cod-bloque">
+curl -X POST https://parque-ambiental.vercel.app/api/ingest \
+  -H "Content-Type: application/json" \
+  -H "x-device-key: &lt;clave del dispositivo&gt;" \
+  -d '{"dispositivo":"NODO-INV-N-01","area":"INV-N",
+       "temperatura":33.5,"humedad":48,"boton":"NINGUNO"}'
+</pre>
+        <p class="nota">
+          La clave de dispositivo no se publica en este informe. Se entrega por
+          separado a la mesa evaluadora, junto con los datos de acceso al grupo
+          de Telegram. Todo lo demás del sistema se puede recorrer con las
+          credenciales de la tabla anterior.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">16</div>
+  </article>
+
+  <article class="hoja">
+    <div class="encabezado-corriente">
+      <span>Invernaderos del Parque Ambiental · Informe final</span>
+      <span>13 · Anexo · Capturas</span>
+    </div>
+
+    <div class="seccion">
+      <div class="numeral"></div>
+      <div class="cuerpo">
+        <h3>Capturas de pantalla</h3>
+        <p>
+          Los espacios que siguen corresponden a las capturas del sistema en
+          funcionamiento. Se detalla qué debe mostrar cada una para que el
+          material gráfico acompañe lo afirmado en el informe y no lo repita.
+        </p>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 1 — Tablero operativo</span>
+          <p class="captura-texto">Sesión de administrador. Las ocho áreas con su semáforo, la última lectura del nodo físico con su hora, y los contadores de llamados sin atender.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 2 — Áreas con sus umbrales</span>
+          <p class="captura-texto">La pantalla de edición mostrando los cuatro umbrales de un área. Es la evidencia de que el rango es un dato editable y no una constante del firmware.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 3 — Llamados</span>
+          <p class="captura-texto">Listado con emergencias y llamados normales, de origen sensor y empleado, con estado y detalle. Conviene que se vea un llamado ya atendido con su responsable y su hora.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 4 — Dispositivos y simulador</span>
+          <p class="captura-texto">Estado de los nodos con el tiempo transcurrido desde el último reporte, y el formulario de envío de lectura simulada.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 5 — Reportes</span>
+          <p class="captura-texto">Los cuatro indicadores, el gráfico de barras por área, la torta de distribución y la línea de evolución diaria, con filtros aplicados.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 6 — Vista de impresión</span>
+          <p class="captura-texto">El PDF generado desde el navegador, en blanco y negro, con los filtros escritos en texto en el encabezado.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 7 — Vista de campo en teléfono</span>
+          <p class="captura-texto">La interfaz móvil a 390 px, con las emergencias arriba y los botones de atención al alcance del pulgar.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 8 — Aviso en Telegram</span>
+          <p class="captura-texto">El mensaje recibido en el grupo, con tipo, área, motivo, detalle y el enlace a la pantalla de llamados.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 9 — Monitor serie del nodo</span>
+          <p class="captura-texto">Varias líneas de operación mostrando la lectura, el estado del relé y de la alarma, y la calidad del enlace. Conviene incluir una línea de error, por ejemplo la de clave incorrecta o la de Wi-Fi caído.</p>
+        </div>
+
+        <div class="captura">
+          <span class="captura-rotulo">Figura 10 — Nodo armado</span>
+          <p class="captura-texto">Fotografía del nodo con el sensor, el relé, el buzzer y el pulsador conectados, montado en el Invernadero Norte.</p>
+        </div>
+
+        <h3>Archivos entregados</h3>
+        <div class="marco-tabla">
+          <table>
+            <thead>
+              <tr><th style="width:38%">Ruta</th><th>Contenido</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="m">sql/01_esquema.sql</td><td>Tablas, restricciones e índices. Se ejecuta primero.</td></tr>
+              <tr><td class="m">sql/02_datos.sql</td><td>Áreas, empleados, usuarios y llamados de prueba. Se ejecuta segundo.</td></tr>
+              <tr><td class="m">sql/03_reportes.sql</td><td>Las cinco funciones de agregación. Se ejecuta tercero.</td></tr>
+              <tr><td class="m">firmware/produccion_parque/</td><td>Firmware del nodo para Arduino IDE, con las constantes de red, servidor, clave e identidad al principio del archivo.</td></tr>
+              <tr><td class="m">scripts/hash.js</td><td>Generador de los hashes bcrypt sembrados en la base.</td></tr>
+              <tr><td class="m">app/ · lib/ · proxy.ts</td><td>Aplicación web: pantallas, acciones de servidor, lógica de umbrales, sesión y notificación.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          El servidor requiere seis variables de entorno, que no se publican:
+          dirección y clave de servicio de la base, secreto de firma de sesión,
+          clave de dispositivo, y token e identificador de grupo de Telegram. Sin
+          las dos últimas el sistema opera igual, solo que sin avisos.
+        </p>
+      </div>
+    </div>
+
+    <div class="folio">17</div>
+  </article>
+
+</div>

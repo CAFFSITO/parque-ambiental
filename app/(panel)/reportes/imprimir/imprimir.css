@@ -1,0 +1,174 @@
+/* app/(panel)/reportes/imprimir/imprimir.css
+   Reporte en blanco y negro. Se imprime con window.print(), sin librería:
+   sale igual en cualquier máquina y no hay nada que pueda fallar en vivo. */
+
+.hoja {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 12px;
+}
+
+.hoja h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hoja h2 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #444444;
+}
+
+.hoja-encabezado {
+  border-bottom: 2px solid #111111;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.hoja-filtros {
+  border: 1px solid #cccccc;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+}
+
+.hoja-filtros dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 16px;
+  margin: 0;
+}
+
+.hoja-filtros dt {
+  display: inline;
+  font-weight: 700;
+}
+
+.hoja-filtros dd {
+  display: inline;
+  margin: 0 0 0 6px;
+}
+
+.hoja-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hoja-numero {
+  border: 1px solid #cccccc;
+  padding: 8px 10px;
+}
+
+.hoja-numero span {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555555;
+}
+
+.hoja-numero strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja-grafico {
+  border: 1px solid #cccccc;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.hoja-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.hoja-tabla th,
+.hoja-tabla td {
+  border: 1px solid #cccccc;
+  padding: 3px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.hoja-tabla th {
+  background: #eeeeee;
+  font-weight: 700;
+}
+
+.hoja-tabla td {
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja-pie {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #cccccc;
+  font-size: 10px;
+  color: #555555;
+}
+
+/* ------------------------------------------------------------------ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  /* Fuera la barra superior, la navegación lateral y los controles. */
+  .barra-superior,
+  .nav-lateral,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* El layout del panel deja hueco para la nav: en papel no va. */
+  main {
+    padding: 0 !important;
+  }
+
+  .hoja {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ninguna fila ni bloque se parte al medio. */
+  tr,
+  .hoja-numero,
+  .hoja-grafico {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  h1,
+  h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}
