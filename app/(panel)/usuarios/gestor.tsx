@@ -10,9 +10,11 @@ import { useRouter } from "next/navigation";
 import { LARGO_MINIMO_PASSWORD, ROLES, sugerirUsuario } from "@/lib/catalogos";
 import { SIN_DATO } from "@/lib/formato";
 import type { Area, Empleado, Rol, Sesion, Usuario } from "@/lib/tipos";
-import { Aviso, Campo, Etiqueta } from "../componentes/campos";
-import { ConfirmarModal, Modal } from "../componentes/modal";
-import { PanelLateral } from "../componentes/panel-lateral";
+import { Aviso, Campo } from "../componentes/campos";
+import { Desplegable } from "../componentes/desplegable";
+import { Icono } from "../componentes/iconos";
+import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
+import { ConfirmarModal, Modal, ModalFicha } from "../componentes/modal";
 import {
   cambiarActivoUsuario,
   cambiarRolUsuario,
@@ -236,7 +238,10 @@ export function GestorUsuarios({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Usuarios</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="usuarios" tamano={18} />
+          Usuarios
+        </h1>
         <div className="flex items-center gap-3">
           <span className="rotulo">{usuarios.length} usuarios</span>
           <button type="button" className="boton" onClick={abrirNuevo}>
@@ -258,131 +263,115 @@ export function GestorUsuarios({
         </div>
       ) : null}
 
-      <section className="panel overflow-x-auto">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Estado</th>
-              <th>Usuario</th>
-              <th>Rol</th>
-              <th>Empleado vinculado</th>
-              <th>Área</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-tenue">
-                  No hay usuarios cargados.
-                </td>
-              </tr>
-            ) : (
-              usuarios.map((usuario) => {
-                const esYo = usuario.id === sesion.id;
-                const empleado =
-                  usuario.empleado_id === null
-                    ? null
-                    : (empleadoPorId.get(usuario.empleado_id) ?? null);
+      <Lista hayFilas={usuarios.length > 0} vacio="No hay usuarios cargados.">
+        {usuarios.map((usuario) => {
+          const esYo = usuario.id === sesion.id;
+          const empleado =
+            usuario.empleado_id === null
+              ? null
+              : (empleadoPorId.get(usuario.empleado_id) ?? null);
 
-                return (
-                  <tr key={usuario.id} data-baja={usuario.activo ? "no" : "si"}>
-                    <td>
-                      <Etiqueta
-                        texto={usuario.activo ? "Activo" : "Inactivo"}
-                        nivel={usuario.activo ? "NORMAL" : "NEUTRO"}
-                      />
-                    </td>
-                    <td className="text-texto">
-                      {usuario.usuario}
-                      {esYo ? (
-                        <span className="ml-2 text-tenue">(vos)</span>
-                      ) : null}
-                    </td>
-                    <td>
-                      <select
-                        className="campo"
-                        style={{ width: 160 }}
-                        value={usuario.rol}
-                        disabled={pendiente}
-                        onChange={(e) => {
-                          const nuevo = e.target.value;
-                          if (nuevo !== usuario.rol && esRolValido(nuevo)) {
-                            pedirCambioDeRol(usuario, nuevo);
-                          }
-                        }}
-                      >
-                        {ROLES.map((rol) => (
-                          <option
-                            key={rol}
-                            value={rol}
-                            disabled={esYo && rol !== "ADMINISTRADOR"}
-                          >
-                            {rol}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="text-tenue">
-                      {empleado
-                        ? `${empleado.legajo} · ${empleado.apellido}, ${empleado.nombre}`
-                        : SIN_DATO}
-                    </td>
-                    <td className="text-tenue">
-                      {usuario.area_id === null
-                        ? SIN_DATO
-                        : (areaPorId.get(usuario.area_id) ?? SIN_DATO)}
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="boton-plano"
-                          disabled={pendiente}
-                          onClick={() => {
-                            setPasswordNueva("");
-                            setErrorReset(null);
-                            setAReset(usuario);
-                          }}
-                        >
-                          Resetear contraseña
-                        </button>
-                        <button
-                          type="button"
-                          className="boton-plano"
-                          disabled={pendiente || (esYo && usuario.activo)}
-                          title={
-                            esYo && usuario.activo
-                              ? "No podés desactivar tu propio usuario"
-                              : undefined
-                          }
-                          onClick={() => pedirCambioDeActivo(usuario)}
-                        >
-                          {usuario.activo ? "Desactivar" : "Activar"}
-                        </button>
-                        <button
-                          type="button"
-                          className="boton-plano"
-                          disabled={pendiente || esYo}
-                          title={
-                            esYo ? "No podés eliminar tu propio usuario" : undefined
-                          }
-                          onClick={() => pedirEliminacion(usuario)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </section>
+          return (
+            <FilaDesplegable
+              key={usuario.id}
+              clave={String(usuario.id)}
+              nivel={usuario.activo ? "NORMAL" : "NINGUNO"}
+              tenue={!usuario.activo}
+              accion={
+                <button
+                  type="button"
+                  className="boton boton-chico"
+                  disabled={pendiente}
+                  onClick={() => {
+                    setPasswordNueva("");
+                    setErrorReset(null);
+                    setAReset(usuario);
+                  }}
+                >
+                  Contraseña
+                </button>
+              }
+              titulo={usuario.usuario}
+              marcas={
+                <>
+                  {esYo ? <Chip texto="Vos" /> : null}
+                  {usuario.activo ? null : <Chip texto="Inactivo" />}
+                </>
+              }
+              resumen={`${usuario.rol} · ${
+                empleado
+                  ? `${empleado.legajo} ${empleado.apellido}`
+                  : "sin empleado vinculado"
+              }`}
+              detalle={
+                <>
+                  <Dato rotulo="Estado">
+                    {usuario.activo ? "Activo" : "Inactivo"}
+                  </Dato>
+                  <Dato rotulo="Empleado vinculado">
+                    {empleado
+                      ? `${empleado.legajo} · ${empleado.apellido}, ${empleado.nombre}`
+                      : SIN_DATO}
+                  </Dato>
+                  <Dato rotulo="Área">
+                    {usuario.area_id === null
+                      ? SIN_DATO
+                      : (areaPorId.get(usuario.area_id) ?? SIN_DATO)}
+                  </Dato>
+                  <Dato rotulo="Rol">
+                    <Desplegable
+                      etiquetaAccesible={`Rol de ${usuario.usuario}`}
+                      valor={usuario.rol}
+                      deshabilitado={pendiente}
+                      opciones={ROLES.map((rol) => ({
+                        valor: rol,
+                        etiqueta: rol,
+                        deshabilitada: esYo && rol !== "ADMINISTRADOR",
+                      }))}
+                      alCambiar={(nuevo) => {
+                        if (nuevo !== usuario.rol && esRolValido(nuevo)) {
+                          pedirCambioDeRol(usuario, nuevo);
+                        }
+                      }}
+                    />
+                  </Dato>
+                </>
+              }
+              pie={
+                <>
+                  <button
+                    type="button"
+                    className="boton-plano"
+                    disabled={pendiente || (esYo && usuario.activo)}
+                    title={
+                      esYo && usuario.activo
+                        ? "No podés desactivar tu propio usuario"
+                        : undefined
+                    }
+                    onClick={() => pedirCambioDeActivo(usuario)}
+                  >
+                    {usuario.activo ? "Desactivar" : "Activar"}
+                  </button>
+                  <button
+                    type="button"
+                    className="boton-plano boton-peligro"
+                    disabled={pendiente || esYo}
+                    title={
+                      esYo ? "No podés eliminar tu propio usuario" : undefined
+                    }
+                    onClick={() => pedirEliminacion(usuario)}
+                  >
+                    Eliminar
+                  </button>
+                </>
+              }
+            />
+          );
+        })}
+      </Lista>
 
       {ficha ? (
-        <PanelLateral
+        <ModalFicha
           titulo="Nuevo usuario"
           alCerrar={() => setFicha(null)}
           pie={
@@ -414,19 +403,18 @@ export function GestorUsuarios({
               htmlFor="empleado"
               ayuda="Solo aparecen los empleados en actividad que todavía no tienen usuario."
             >
-              <select
+              <Desplegable
                 id="empleado"
-                className="campo"
-                value={ficha.empleado_id === null ? "" : String(ficha.empleado_id)}
-                onChange={(e) => elegirEmpleado(e.target.value)}
-              >
-                <option value="">Sin vincular</option>
-                {empleadosDisponibles.map((empleado) => (
-                  <option key={empleado.id} value={String(empleado.id)}>
-                    {empleado.legajo} — {empleado.apellido}, {empleado.nombre}
-                  </option>
-                ))}
-              </select>
+                valor={ficha.empleado_id === null ? "" : String(ficha.empleado_id)}
+                opciones={[
+                  { valor: "", etiqueta: "Sin vincular" },
+                  ...empleadosDisponibles.map((empleado) => ({
+                    valor: String(empleado.id),
+                    etiqueta: `${empleado.legajo} — ${empleado.apellido}, ${empleado.nombre}`,
+                  })),
+                ]}
+                alCambiar={elegirEmpleado}
+              />
             </Campo>
 
             <Campo
@@ -468,24 +456,17 @@ export function GestorUsuarios({
             </Campo>
 
             <Campo etiqueta="Rol" htmlFor="rol">
-              <select
+              <Desplegable
                 id="rol"
-                className="campo"
-                value={ficha.rol}
-                onChange={(e) => {
-                  const valor = e.target.value;
+                valor={ficha.rol}
+                opciones={ROLES.map((rol) => ({ valor: rol, etiqueta: rol }))}
+                alCambiar={(valor) => {
                   if (!esRolValido(valor)) return;
                   setFicha((actual) =>
                     actual ? { ...actual, rol: valor } : actual,
                   );
                 }}
-              >
-                {ROLES.map((rol) => (
-                  <option key={rol} value={rol}>
-                    {rol}
-                  </option>
-                ))}
-              </select>
+              />
             </Campo>
 
             <div className="border-t border-borde pt-3">
@@ -509,7 +490,7 @@ export function GestorUsuarios({
               )}
             </div>
           </div>
-        </PanelLateral>
+        </ModalFicha>
       ) : null}
 
       {aReset ? (

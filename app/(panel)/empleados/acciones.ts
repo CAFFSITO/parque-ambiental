@@ -4,11 +4,11 @@
 
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { COLUMNA_INEXISTENTE, COLUMNA_SIN_CACHE, db } from "@/lib/db";
 import {
   esEstadoEmpleado,
-  esTurno,
-  TAREAS,
+  LARGO_MAXIMO_OPCION,
+  normalizarOpcion,
   type EstadoEmpleado,
 } from "@/lib/catalogos";
 import type { Resultado } from "@/lib/tipos";
@@ -22,15 +22,26 @@ export type EntradaEmpleado = {
   telefono: string;
   email: string;
   domicilio: string;
-  area_id: number | null;
-  tarea: string;
-  turno: string;
+  areas_ids: number[];
+  tareas: string[];
+  turnos: string[];
   fecha_ingreso: string;
   estado: string;
   observaciones: string;
 };
 
+/** Tope defensivo: la ficha no es una bolsa infinita de etiquetas. */
+const MAXIMO_SELECCIONES = 12;
+
 const LEGAJO_DUPLICADO = "23505";
+
+const FALTA_MIGRACION =
+  "La base todavía no tiene las columnas de selección múltiple. Corré sql/04_multiseleccion.sql en el SQL Editor de Supabase y volvé a guardar.";
+
+/** True si la base sigue con el esquema anterior a sql/04_multiseleccion.sql. */
+function faltaMigracion(codigo: string | undefined): boolean {
+  return codigo === COLUMNA_SIN_CACHE || codigo === COLUMNA_INEXISTENTE;
+}
 
 function refrescar(): void {
   revalidatePath("/empleados");
@@ -54,7 +65,24 @@ function sanear(entrada: EntradaEmpleado): EntradaEmpleado {
   const texto = (clave: string): string =>
     typeof crudo?.[clave] === "string" ? (crudo[clave] as string) : "";
 
-  const areaId = crudo?.area_id;
+  /** Ids de área: solo enteros positivos, sin repetir y acotados. */
+  const ids = (clave: string): number[] => {
+    const bruto = Array.isArray(crudo?.[clave]) ? (crudo[clave] as unknown[]) : [];
+    const limpios = bruto
+      .map((valor) => Number(valor))
+      .filter((valor) => Number.isInteger(valor) && valor > 0);
+    return [...new Set(limpios)].slice(0, MAXIMO_SELECCIONES);
+  };
+
+  /** Etiquetas escritas a mano: normalizadas, sin vacías y sin repetir. */
+  const etiquetas = (clave: string): string[] => {
+    const bruto = Array.isArray(crudo?.[clave]) ? (crudo[clave] as unknown[]) : [];
+    const limpias = bruto
+      .filter((valor): valor is string => typeof valor === "string")
+      .map(normalizarOpcion)
+      .filter((valor) => valor !== "");
+    return [...new Set(limpias)].slice(0, MAXIMO_SELECCIONES);
+  };
 
   return {
     legajo: texto("legajo"),
@@ -65,9 +93,9 @@ function sanear(entrada: EntradaEmpleado): EntradaEmpleado {
     telefono: texto("telefono"),
     email: texto("email"),
     domicilio: texto("domicilio"),
-    area_id: typeof areaId === "number" ? areaId : null,
-    tarea: texto("tarea"),
-    turno: texto("turno"),
+    areas_ids: ids("areas_ids"),
+    tareas: etiquetas("tareas"),
+    turnos: etiquetas("turnos"),
     fecha_ingreso: texto("fecha_ingreso"),
     estado: texto("estado"),
     observaciones: texto("observaciones"),
@@ -89,12 +117,15 @@ function validar(entrada: EntradaEmpleado): string | null {
     return "El email no tiene un formato válido.";
   }
 
-  if (entrada.tarea.trim() !== "" && !TAREAS.includes(entrada.tarea)) {
-    return "La tarea no pertenece al catálogo.";
+  // Tareas y turnos son catálogos abiertos: se pueden crear escribiéndolos.
+  // Lo único que se exige es que cada etiqueta entre en el largo permitido.
+  const largas = [...entrada.tareas, ...entrada.turnos].some(
+    (valor) => valor.length > LARGO_MAXIMO_OPCION,
+  );
+  if (largas) {
+    return `Cada tarea o turno puede tener hasta ${LARGO_MAXIMO_OPCION} caracteres.`;
   }
-  if (entrada.turno.trim() !== "" && !esTurno(entrada.turno)) {
-    return "El turno tiene que ser M, T o N.";
-  }
+
   if (!esEstadoEmpleado(entrada.estado)) {
     return "El estado tiene que ser activo, licencia o baja.";
   }
@@ -102,6 +133,12 @@ function validar(entrada: EntradaEmpleado): string | null {
   return null;
 }
 
+/**
+ * Además de los arreglos se sigue escribiendo la columna de un solo valor con
+ * el primero de cada selección. De eso viven el tablero, el filtro de llamados
+ * por área y el área que hereda el usuario del empleado: mientras exista un
+ * valor principal, nada de eso se entera del cambio.
+ */
 function aFila(entrada: EntradaEmpleado) {
   return {
     legajo: entrada.legajo.trim().toUpperCase(),
@@ -112,9 +149,12 @@ function aFila(entrada: EntradaEmpleado) {
     telefono: oNulo(entrada.telefono),
     email: oNulo(entrada.email),
     domicilio: oNulo(entrada.domicilio),
-    area_id: entrada.area_id,
-    tarea: oNulo(entrada.tarea),
-    turno: oNulo(entrada.turno),
+    areas_ids: entrada.areas_ids,
+    tareas: entrada.tareas,
+    turnos: entrada.turnos,
+    area_id: entrada.areas_ids[0] ?? null,
+    tarea: entrada.tareas[0] ?? null,
+    turno: entrada.turnos[0] ?? null,
     fecha_ingreso: oNulo(entrada.fecha_ingreso),
     estado: entrada.estado,
     observaciones: oNulo(entrada.observaciones),
@@ -133,6 +173,9 @@ export async function crearEmpleado(
   const { error } = await db().from("empleados").insert(aFila(limpia));
 
   if (error) {
+    if (faltaMigracion(error.code)) {
+      return { ok: false, error: FALTA_MIGRACION };
+    }
     if (error.code === LEGAJO_DUPLICADO) {
       return { ok: false, error: "Ya existe un empleado con ese legajo." };
     }
@@ -162,6 +205,9 @@ export async function actualizarEmpleado(
     .eq("id", id);
 
   if (error) {
+    if (faltaMigracion(error.code)) {
+      return { ok: false, error: FALTA_MIGRACION };
+    }
     if (error.code === LEGAJO_DUPLICADO) {
       return { ok: false, error: "Ya existe otro empleado con ese legajo." };
     }

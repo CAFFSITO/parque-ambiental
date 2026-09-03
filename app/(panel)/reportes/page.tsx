@@ -16,6 +16,7 @@ import {
 } from "@/lib/reportes";
 import type { Area } from "@/lib/tipos";
 import { Aviso } from "../componentes/campos";
+import { Icono } from "../componentes/iconos";
 import { FiltrosReporte } from "./filtros";
 import {
   GraficoDistribucion,
@@ -82,7 +83,10 @@ export default async function PaginaReportes(props: PageProps<"/reportes">) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3 border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Reportes</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="reportes" tamano={18} />
+          Reportes
+        </h1>
         <div className="flex items-center gap-2">
           <a className="boton-plano" href={`/api/exportar/csv${sufijo}`}>
             Exportar CSV

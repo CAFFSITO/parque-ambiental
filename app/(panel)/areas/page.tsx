@@ -3,6 +3,7 @@
 
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { TIPOS_AREA, unirOpciones } from "@/lib/catalogos";
 import type { Area } from "@/lib/tipos";
 import { GestorAreas, type AreaConMetricas } from "./gestor";
 
@@ -55,5 +56,11 @@ export default async function PaginaAreas() {
     llamados_abiertos: llamadosPorArea.get(area.id) ?? 0,
   }));
 
-  return <GestorAreas areas={areas} />;
+  // El selector de tipo ofrece el catálogo base más los tipos ya inventados.
+  const tiposDisponibles = unirOpciones(
+    TIPOS_AREA,
+    (areasResultado.data ?? []).map((area) => area.tipo),
+  );
+
+  return <GestorAreas areas={areas} tiposDisponibles={tiposDisponibles} />;
 }

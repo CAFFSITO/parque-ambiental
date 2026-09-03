@@ -1,0 +1,6 @@
+1. agrega iconos grices a los modulos de la sidebar, los titulos. 
+deben estar a la izquierda de cada palabra
+2. como en la imagen, los colores de los numeros deben ser mas fuertes para que demuestren más importancia. solo cambia los colores de esos numeros.
+3. el menu de la side bar debe ser un menu hamburguesa, animado que se despliegue cuando lo toques y que tambien se pueda cerrar.
+4. dale mas peso a las oraciones que estan muy chicas, en general, como por ejemplo los subtitulos, porque estan tan finas las letras que se ve de poca calidad. 
+la verctorizacion esta mal, asi que fijate que es mejor, mejorar la vectorizacion o cambiar el peso de las letras. 

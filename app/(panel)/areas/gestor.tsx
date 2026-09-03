@@ -1,17 +1,18 @@
 "use client";
 
 // app/(panel)/areas/gestor.tsx
-// Listado de áreas + ficha en panel lateral. Sin librerías de tablas ni de
-// formularios: HTML y estado de React.
+// Lista compacta de áreas + ficha en diálogo centrado. Sin librerías de tablas ni
+// de formularios: HTML y estado de React.
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { TIPOS_AREA } from "@/lib/catalogos";
 import { entero, numero } from "@/lib/formato";
 import type { Area } from "@/lib/tipos";
-import { Aviso, Campo, Etiqueta } from "../componentes/campos";
-import { ConfirmarModal } from "../componentes/modal";
-import { PanelLateral } from "../componentes/panel-lateral";
+import { Aviso, Campo } from "../componentes/campos";
+import { Icono } from "../componentes/iconos";
+import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
+import { ConfirmarModal, ModalFicha } from "../componentes/modal";
+import { Selector, type OpcionSelector } from "../componentes/selector";
 import {
   actualizarArea,
   cambiarActivaArea,
@@ -30,7 +31,7 @@ const FICHA_VACIA: Ficha = {
   id: null,
   codigo: "",
   nombre: "",
-  tipo: "invernadero",
+  tipo: "",
   temp_min: 15,
   temp_max: 30,
   hum_min: 40,
@@ -52,7 +53,13 @@ function aFicha(area: Area): Ficha {
   };
 }
 
-export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
+export function GestorAreas({
+  areas,
+  tiposDisponibles,
+}: {
+  areas: AreaConMetricas[];
+  tiposDisponibles: string[];
+}) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
 
@@ -60,6 +67,11 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
   const [errorFicha, setErrorFicha] = useState<string | null>(null);
   const [aBajar, setABajar] = useState<AreaConMetricas | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  const opcionesTipo = useMemo<OpcionSelector[]>(
+    () => tiposDisponibles.map((tipo) => ({ valor: tipo, etiqueta: tipo })),
+    [tiposDisponibles],
+  );
 
   function abrirNueva() {
     setErrorFicha(null);
@@ -112,10 +124,13 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Áreas</h1>
-        <div className="flex items-center gap-3">
-          <span className="rotulo">{areas.length} áreas</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-borde pb-2">
+        <h1 className="titulo-modulo min-w-0">
+          <Icono nombre="areas" tamano={18} />
+          Áreas
+        </h1>
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <span className="rotulo whitespace-nowrap">{areas.length} áreas</span>
           <button type="button" className="boton" onClick={abrirNueva}>
             Nueva área
           </button>
@@ -135,83 +150,78 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
         </div>
       ) : null}
 
-      <section className="panel overflow-x-auto">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Estado</th>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th className="col-num">Rango temp. °C</th>
-              <th className="col-num">Rango hum. %</th>
-              <th className="col-num">Empleados</th>
-              <th className="col-num">Llamados abiertos</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {areas.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="text-tenue">
-                  No hay áreas cargadas.
-                </td>
-              </tr>
-            ) : (
-              areas.map((area) => (
-                <tr key={area.id} data-baja={area.activa ? "no" : "si"}>
-                  <td>
-                    <Etiqueta
-                      texto={area.activa ? "Activa" : "Baja"}
-                      nivel={area.activa ? "NORMAL" : "NEUTRO"}
-                    />
-                  </td>
-                  <td className="text-texto">{area.codigo}</td>
-                  <td>{area.nombre}</td>
-                  <td className="text-tenue">{area.tipo}</td>
-                  <td className="col-num">
-                    {numero(Number(area.temp_min), 0)} –{" "}
-                    {numero(Number(area.temp_max), 0)}
-                  </td>
-                  <td className="col-num">
-                    {numero(Number(area.hum_min), 0)} –{" "}
-                    {numero(Number(area.hum_max), 0)}
-                  </td>
-                  <td className="col-num">{entero(area.empleados)}</td>
-                  <td
-                    className={`col-num ${
-                      area.llamados_abiertos > 0 ? "text-advertencia" : ""
-                    }`}
-                  >
-                    {entero(area.llamados_abiertos)}
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="boton-plano"
-                        onClick={() => abrirEdicion(area)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="boton-plano"
-                        onClick={() => setABajar(area)}
-                      >
-                        {area.activa ? "Dar de baja" : "Reactivar"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <Lista hayFilas={areas.length > 0} vacio="No hay áreas cargadas.">
+        {areas.map((area) => (
+          <FilaDesplegable
+            key={area.id}
+            clave={String(area.id)}
+            nivel={
+              area.llamados_abiertos > 0
+                ? "ADVERTENCIA"
+                : area.activa
+                  ? "NORMAL"
+                  : "NINGUNO"
+            }
+            tenue={!area.activa}
+            accion={
+              <button
+                type="button"
+                className="boton boton-chico"
+                onClick={() => abrirEdicion(area)}
+              >
+                Editar
+              </button>
+            }
+            titulo={area.codigo}
+            marcas={
+              area.activa ? null : <Chip texto="Baja" />
+            }
+            resumen={area.nombre}
+            detalle={
+              <>
+                <Dato rotulo="Nombre">{area.nombre}</Dato>
+                <Dato rotulo="Tipo">{area.tipo}</Dato>
+                <Dato rotulo="Estado">{area.activa ? "Activa" : "Baja"}</Dato>
+                <Dato rotulo="Rango de temperatura">
+                  {numero(Number(area.temp_min), 0)} –{" "}
+                  {numero(Number(area.temp_max), 0)} °C
+                </Dato>
+                <Dato rotulo="Rango de humedad">
+                  {numero(Number(area.hum_min), 0)} –{" "}
+                  {numero(Number(area.hum_max), 0)} %
+                </Dato>
+                <Dato rotulo="Empleados asignados">
+                  {entero(area.empleados)}
+                </Dato>
+                <Dato rotulo="Llamados abiertos">
+                  {entero(area.llamados_abiertos)}
+                </Dato>
+              </>
+            }
+            pie={
+              <>
+                <button
+                  type="button"
+                  className="boton-plano"
+                  onClick={() => abrirEdicion(area)}
+                >
+                  Editar el área
+                </button>
+                <button
+                  type="button"
+                  className="boton-plano"
+                  onClick={() => setABajar(area)}
+                >
+                  {area.activa ? "Dar de baja" : "Reactivar"}
+                </button>
+              </>
+            }
+          />
+        ))}
+      </Lista>
 
       {ficha ? (
-        <PanelLateral
+        <ModalFicha
           titulo={ficha.id === null ? "Nueva área" : "Editar área"}
           subtitulo={ficha.id === null ? undefined : ficha.codigo}
           alCerrar={() => setFicha(null)}
@@ -239,34 +249,30 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
           <div className="flex flex-col gap-3">
             {errorFicha ? <Aviso texto={errorFicha} /> : null}
 
-            <div className="grid grid-cols-2 gap-3">
-              <Campo etiqueta="Código" htmlFor="codigo">
-                <input
-                  id="codigo"
-                  className="campo"
-                  value={ficha.codigo}
-                  maxLength={12}
-                  onChange={(e) =>
-                    editar("codigo", e.target.value.toUpperCase())
-                  }
-                />
-              </Campo>
+            <Campo etiqueta="Código" htmlFor="codigo">
+              <input
+                id="codigo"
+                className="campo"
+                value={ficha.codigo}
+                maxLength={12}
+                onChange={(e) => editar("codigo", e.target.value.toUpperCase())}
+              />
+            </Campo>
 
-              <Campo etiqueta="Tipo" htmlFor="tipo">
-                <select
-                  id="tipo"
-                  className="campo"
-                  value={ficha.tipo}
-                  onChange={(e) => editar("tipo", e.target.value)}
-                >
-                  {TIPOS_AREA.map((tipo) => (
-                    <option key={tipo} value={tipo}>
-                      {tipo}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-            </div>
+            <Campo
+              etiqueta="Tipo"
+              htmlFor="tipo"
+              ayuda="Elegí uno de los tipos ya creados o escribí uno nuevo y apretá Enter."
+            >
+              <Selector
+                id="tipo"
+                rotuloMenu="Tipos de área"
+                creable
+                opciones={opcionesTipo}
+                valores={ficha.tipo === "" ? [] : [ficha.tipo]}
+                alCambiar={(valores) => editar("tipo", valores[0] ?? "")}
+              />
+            </Campo>
 
             <Campo etiqueta="Nombre" htmlFor="nombre">
               <input
@@ -293,9 +299,7 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
                     step="0.1"
                     className="campo"
                     value={ficha.temp_min}
-                    onChange={(e) =>
-                      editar("temp_min", Number(e.target.value))
-                    }
+                    onChange={(e) => editar("temp_min", Number(e.target.value))}
                   />
                 </Campo>
 
@@ -306,9 +310,7 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
                     step="0.1"
                     className="campo"
                     value={ficha.temp_max}
-                    onChange={(e) =>
-                      editar("temp_max", Number(e.target.value))
-                    }
+                    onChange={(e) => editar("temp_max", Number(e.target.value))}
                   />
                 </Campo>
 
@@ -347,7 +349,7 @@ export function GestorAreas({ areas }: { areas: AreaConMetricas[] }) {
               </label>
             </div>
           </div>
-        </PanelLateral>
+        </ModalFicha>
       ) : null}
 
       {aBajar ? (

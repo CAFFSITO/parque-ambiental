@@ -4,6 +4,12 @@
 
 import type { Rol } from "./tipos";
 
+/**
+ * Tareas, tipos de área y turnos son catálogos ABIERTOS: estas listas son el
+ * punto de partida que ofrece el selector, pero cualquiera puede crear una
+ * opción nueva escribiéndola. Las opciones vigentes se arman uniendo estas
+ * constantes con los valores que ya están guardados en la base.
+ */
 export const TAREAS: readonly string[] = [
   "Operario de invernadero",
   "Técnico en riego",
@@ -55,8 +61,51 @@ export function esRol(valor: string): valor is Rol {
   return valor === "ADMINISTRADOR" || valor === "EMPLEADO";
 }
 
+/**
+ * Los tres turnos históricos se guardan por código (M, T, N) y se muestran con
+ * su nombre. Un turno creado a mano se guarda y se muestra tal cual se escribió.
+ */
 export function nombreTurno(codigo: string | null): string {
-  return TURNOS.find((turno) => turno.codigo === codigo)?.nombre ?? "—";
+  if (codigo === null || codigo.trim() === "") return "—";
+  return (
+    TURNOS.find((turno) => turno.codigo === codigo)?.nombre ?? codigo.trim()
+  );
+}
+
+/** Largo máximo de una opción creada a mano (tarea, tipo de área o turno). */
+export const LARGO_MAXIMO_OPCION = 48;
+
+/**
+ * Normaliza una opción escrita por una persona: sin espacios de sobra ni
+ * saltos de línea, y acotada para que no desarme la interfaz.
+ */
+export function normalizarOpcion(texto: string): string {
+  return texto.replace(/\s+/g, " ").trim().slice(0, LARGO_MAXIMO_OPCION);
+}
+
+/**
+ * Une el catálogo base con los valores que ya existen en la base y deduplica
+ * sin distinguir mayúsculas ni acentos, respetando el orden de aparición.
+ */
+export function unirOpciones(
+  base: readonly string[],
+  guardados: readonly (string | null)[],
+): string[] {
+  const vistas = new Map<string, string>();
+
+  for (const crudo of [...base, ...guardados]) {
+    const valor = normalizarOpcion(crudo ?? "");
+    if (valor === "") continue;
+
+    const clave = valor
+      .normalize("NFD")
+      .replace(MARCAS_DIACRITICAS, "")
+      .toLowerCase();
+
+    if (!vistas.has(clave)) vistas.set(clave, valor);
+  }
+
+  return [...vistas.values()];
 }
 
 /** Marcas diacríticas combinantes (bloque Unicode U+0300 a U+036F). */

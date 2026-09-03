@@ -9,6 +9,8 @@ import type { Area } from "@/lib/tipos";
 import type { FiltroReporte } from "@/lib/reportes";
 import { filtroAQueryString } from "@/lib/reportes";
 import { Campo } from "../componentes/campos";
+import { Desplegable } from "../componentes/desplegable";
+import { CampoFecha } from "../componentes/fecha";
 
 /** Date -> "aaaa-mm-ddTHH:mm" en hora local del navegador. */
 function aDatetimeLocal(fecha: Date): string {
@@ -70,57 +72,54 @@ export function FiltrosReporte({
     <section className="panel flex flex-wrap items-end gap-3 p-3">
       <div className="w-[220px]">
         <Campo etiqueta="Área" htmlFor="r-area">
-          <select
+          <Desplegable
             id="r-area"
-            className="campo"
-            value={filtro.area}
-            onChange={(evento) => cambiar("area", evento.target.value)}
-          >
-            <option value="">Todas</option>
-            {areas.map((area) => (
-              <option key={area.id} value={String(area.id)}>
-                {area.codigo} — {area.nombre}
-              </option>
-            ))}
-          </select>
+            valor={filtro.area}
+            opciones={[
+              { valor: "", etiqueta: "Todas" },
+              ...areas.map((area) => ({
+                valor: String(area.id),
+                etiqueta: `${area.codigo} — ${area.nombre}`,
+              })),
+            ]}
+            alCambiar={(valor) => cambiar("area", valor)}
+          />
         </Campo>
       </div>
 
       <div className="w-[160px]">
         <Campo etiqueta="Origen" htmlFor="r-origen">
-          <select
+          <Desplegable
             id="r-origen"
-            className="campo"
-            value={filtro.origen}
-            onChange={(evento) => cambiar("origen", evento.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="SENSOR">Sensor</option>
-            <option value="EMPLEADO">Empleado</option>
-          </select>
+            valor={filtro.origen}
+            opciones={[
+              { valor: "", etiqueta: "Todos" },
+              { valor: "SENSOR", etiqueta: "Sensor" },
+              { valor: "EMPLEADO", etiqueta: "Empleado" },
+            ]}
+            alCambiar={(valor) => cambiar("origen", valor)}
+          />
         </Campo>
       </div>
 
       <div className="w-[200px]">
         <Campo etiqueta="Desde" htmlFor="r-desde">
-          <input
+          <CampoFecha
             id="r-desde"
-            type="datetime-local"
-            className="campo"
-            value={filtro.desde}
-            onChange={(evento) => cambiar("desde", evento.target.value)}
+            conHora
+            valor={filtro.desde}
+            alCambiar={(valor) => cambiar("desde", valor)}
           />
         </Campo>
       </div>
 
       <div className="w-[200px]">
         <Campo etiqueta="Hasta" htmlFor="r-hasta">
-          <input
+          <CampoFecha
             id="r-hasta"
-            type="datetime-local"
-            className="campo"
-            value={filtro.hasta}
-            onChange={(evento) => cambiar("hasta", evento.target.value)}
+            conHora
+            valor={filtro.hasta}
+            alCambiar={(valor) => cambiar("hasta", valor)}
           />
         </Campo>
       </div>

@@ -11,6 +11,8 @@ import { fechaHora, SIN_DATO } from "@/lib/formato";
 import type { Area, Llamado, Sesion } from "@/lib/tipos";
 import { atenderLlamado, crearLlamado } from "../llamados/acciones";
 import { Aviso, Campo } from "../componentes/campos";
+import { Icono } from "../componentes/iconos";
+import { Desplegable } from "../componentes/desplegable";
 
 const MS_SONDEO = 10_000;
 
@@ -114,7 +116,10 @@ export function GestorMovil({
   return (
     <div className="solo-movil mx-auto flex w-full max-w-[420px] flex-col gap-3">
       <div className="flex items-baseline justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Llamados abiertos</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="llamados" tamano={18} />
+          Llamados abiertos
+        </h1>
         <span className="rotulo">
           {sesion.rol === "EMPLEADO"
             ? (areaPropia?.codigo ?? SIN_DATO)
@@ -164,73 +169,63 @@ export function GestorMovil({
                 }
               />
             ) : (
-              <select
+              <Desplegable
                 id="m-area"
-                className="campo"
-                style={{ height: 44 }}
-                value={ficha.area_id === null ? "" : String(ficha.area_id)}
-                onChange={(evento) =>
+                estilo={{ height: 44 }}
+                valor={ficha.area_id === null ? "" : String(ficha.area_id)}
+                opciones={[
+                  { valor: "", etiqueta: "Elegí un área" },
+                  ...areas.map((area) => ({
+                    valor: String(area.id),
+                    etiqueta: `${area.codigo} — ${area.nombre}`,
+                  })),
+                ]}
+                alCambiar={(valor) =>
                   setFicha((actual) =>
                     actual
                       ? {
                           ...actual,
-                          area_id:
-                            evento.target.value === ""
-                              ? null
-                              : Number(evento.target.value),
+                          area_id: valor === "" ? null : Number(valor),
                         }
                       : actual,
                   )
                 }
-              >
-                <option value="">Elegí un área</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={String(area.id)}>
-                    {area.codigo} — {area.nombre}
-                  </option>
-                ))}
-              </select>
+              />
             )}
           </Campo>
 
           <Campo etiqueta="Tipo" htmlFor="m-tipo">
-            <select
+            <Desplegable
               id="m-tipo"
-              className="campo"
-              style={{ height: 44 }}
-              value={ficha.tipo}
-              onChange={(evento) =>
+              estilo={{ height: 44 }}
+              valor={ficha.tipo}
+              opciones={TIPOS_LLAMADO.map((tipo) => ({
+                valor: tipo,
+                etiqueta: tipo,
+              }))}
+              alCambiar={(valor) =>
                 setFicha((actual) =>
-                  actual ? { ...actual, tipo: evento.target.value } : actual,
+                  actual ? { ...actual, tipo: valor } : actual,
                 )
               }
-            >
-              {TIPOS_LLAMADO.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </select>
+            />
           </Campo>
 
           <Campo etiqueta="Motivo" htmlFor="m-motivo">
-            <select
+            <Desplegable
               id="m-motivo"
-              className="campo"
-              style={{ height: 44 }}
-              value={ficha.motivo}
-              onChange={(evento) =>
+              estilo={{ height: 44 }}
+              valor={ficha.motivo}
+              opciones={MOTIVOS_MANUALES.map((motivo) => ({
+                valor: motivo,
+                etiqueta: motivo,
+              }))}
+              alCambiar={(valor) =>
                 setFicha((actual) =>
-                  actual ? { ...actual, motivo: evento.target.value } : actual,
+                  actual ? { ...actual, motivo: valor } : actual,
                 )
               }
-            >
-              {MOTIVOS_MANUALES.map((motivo) => (
-                <option key={motivo} value={motivo}>
-                  {motivo}
-                </option>
-              ))}
-            </select>
+            />
           </Campo>
 
           <Campo etiqueta="Detalle" htmlFor="m-detalle">

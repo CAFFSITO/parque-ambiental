@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { TIPOS_AREA } from "@/lib/catalogos";
+import { LARGO_MAXIMO_OPCION, normalizarOpcion } from "@/lib/catalogos";
 import type { Resultado } from "@/lib/tipos";
 
 export type EntradaArea = {
@@ -44,7 +44,7 @@ function sanear(entrada: EntradaArea): EntradaArea {
   return {
     codigo: texto("codigo"),
     nombre: texto("nombre"),
-    tipo: texto("tipo"),
+    tipo: normalizarOpcion(texto("tipo")),
     temp_min: numeroCampo("temp_min"),
     temp_max: numeroCampo("temp_max"),
     hum_min: numeroCampo("hum_min"),
@@ -58,7 +58,13 @@ function validar(entrada: EntradaArea): string | null {
   if (entrada.codigo.trim().length > 12)
     return "El código no puede tener más de 12 caracteres.";
   if (!entrada.nombre.trim()) return "El nombre es obligatorio.";
-  if (!TIPOS_AREA.includes(entrada.tipo)) return "El tipo de área no es válido.";
+
+  // El tipo es un catálogo abierto: se elige entre los ya creados o se crea uno
+  // nuevo escribiéndolo. Solo se controla que exista y que entre en el campo.
+  if (entrada.tipo === "") return "El tipo de área es obligatorio.";
+  if (entrada.tipo.length > LARGO_MAXIMO_OPCION) {
+    return `El tipo de área puede tener hasta ${LARGO_MAXIMO_OPCION} caracteres.`;
+  }
 
   const numeros = [
     entrada.temp_min,

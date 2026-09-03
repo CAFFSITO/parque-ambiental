@@ -1,9 +1,12 @@
 "use client";
 
 // app/(panel)/llamados/gestor.tsx
-// Tabla operativa con filtros en la URL y sondeo cada 10 segundos.
+// Lista operativa con filtros en la URL y sondeo cada 10 segundos.
 // Sin websockets ni Realtime: router.refresh() vuelve a correr el componente
 // de servidor con los mismos filtros y no se rompe en serverless.
+//
+// Cada llamado es una fila compacta: primero el botón Atender, después lo
+// mínimo para decidir. El resto de la ficha aparece al desplegarla.
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -16,7 +19,11 @@ import {
 import { fechaHora, SIN_DATO } from "@/lib/formato";
 import type { Area, Llamado, Sesion } from "@/lib/tipos";
 import { Aviso, Campo } from "../componentes/campos";
-import { PanelLateral } from "../componentes/panel-lateral";
+import { Desplegable } from "../componentes/desplegable";
+import { Icono } from "../componentes/iconos";
+import { CampoFecha } from "../componentes/fecha";
+import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
+import { ModalFicha } from "../componentes/modal";
 import { atenderLlamado, crearLlamado } from "./acciones";
 
 const MS_SONDEO = 10_000;
@@ -140,7 +147,10 @@ export function GestorLlamados({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Llamados</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="llamados" tamano={18} />
+          Llamados
+        </h1>
         <div className="flex items-center gap-3">
           {sesion.rol === "EMPLEADO" ? (
             <span className="rotulo">
@@ -169,97 +179,86 @@ export function GestorLlamados({
         {sesion.rol === "ADMINISTRADOR" ? (
           <div className="w-[210px]">
             <Campo etiqueta="Área" htmlFor="f-area">
-              <select
+              <Desplegable
                 id="f-area"
-                className="campo"
-                value={filtros.area}
-                onChange={(e) => cambiarFiltro("area", e.target.value)}
-              >
-                <option value="">Todas</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={String(area.id)}>
-                    {area.codigo} — {area.nombre}
-                  </option>
-                ))}
-              </select>
+                valor={filtros.area}
+                opciones={[
+                  { valor: "", etiqueta: "Todas" },
+                  ...areas.map((area) => ({
+                    valor: String(area.id),
+                    etiqueta: `${area.codigo} — ${area.nombre}`,
+                  })),
+                ]}
+                alCambiar={(valor) => cambiarFiltro("area", valor)}
+              />
             </Campo>
           </div>
         ) : null}
 
         <div className="w-[140px]">
           <Campo etiqueta="Tipo" htmlFor="f-tipo">
-            <select
+            <Desplegable
               id="f-tipo"
-              className="campo"
-              value={filtros.tipo}
-              onChange={(e) => cambiarFiltro("tipo", e.target.value)}
-            >
-              <option value="">Todos</option>
-              {TIPOS_LLAMADO.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </select>
+              valor={filtros.tipo}
+              opciones={[
+                { valor: "", etiqueta: "Todos" },
+                ...TIPOS_LLAMADO.map((tipo) => ({ valor: tipo, etiqueta: tipo })),
+              ]}
+              alCambiar={(valor) => cambiarFiltro("tipo", valor)}
+            />
           </Campo>
         </div>
 
         <div className="w-[140px]">
           <Campo etiqueta="Origen" htmlFor="f-origen">
-            <select
+            <Desplegable
               id="f-origen"
-              className="campo"
-              value={filtros.origen}
-              onChange={(e) => cambiarFiltro("origen", e.target.value)}
-            >
-              <option value="">Todos</option>
-              {ORIGENES_LLAMADO.map((origen) => (
-                <option key={origen} value={origen}>
-                  {origen}
-                </option>
-              ))}
-            </select>
+              valor={filtros.origen}
+              opciones={[
+                { valor: "", etiqueta: "Todos" },
+                ...ORIGENES_LLAMADO.map((origen) => ({
+                  valor: origen,
+                  etiqueta: origen,
+                })),
+              ]}
+              alCambiar={(valor) => cambiarFiltro("origen", valor)}
+            />
           </Campo>
         </div>
 
         <div className="w-[160px]">
           <Campo etiqueta="Estado" htmlFor="f-estado">
-            <select
+            <Desplegable
               id="f-estado"
-              className="campo"
-              value={filtros.estado}
-              onChange={(e) => cambiarFiltro("estado", e.target.value)}
-            >
-              <option value="">Todos</option>
-              {ESTADOS_LLAMADO.map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
+              valor={filtros.estado}
+              opciones={[
+                { valor: "", etiqueta: "Todos" },
+                ...ESTADOS_LLAMADO.map((estado) => ({
+                  valor: estado,
+                  etiqueta: estado,
+                })),
+              ]}
+              alCambiar={(valor) => cambiarFiltro("estado", valor)}
+            />
           </Campo>
         </div>
 
         <div className="w-[150px]">
           <Campo etiqueta="Desde" htmlFor="f-desde">
-            <input
+            <CampoFecha
               id="f-desde"
-              type="date"
-              className="campo"
-              value={filtros.desde}
-              onChange={(e) => cambiarFiltro("desde", e.target.value)}
+              valor={filtros.desde}
+              alCambiar={(valor) => cambiarFiltro("desde", valor)}
             />
           </Campo>
         </div>
 
         <div className="w-[150px]">
           <Campo etiqueta="Hasta" htmlFor="f-hasta">
-            <input
+            <CampoFecha
               id="f-hasta"
-              type="date"
-              className="campo"
-              value={filtros.hasta}
-              onChange={(e) => cambiarFiltro("hasta", e.target.value)}
+              valor={filtros.hasta}
+              alCambiar={(valor) => cambiarFiltro("hasta", valor)}
             />
           </Campo>
         </div>
@@ -288,85 +287,86 @@ export function GestorLlamados({
         </div>
       ) : null}
 
-      <section className="panel overflow-x-auto">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Fecha y hora</th>
-              <th>Área</th>
-              <th>Tipo</th>
-              <th>Origen</th>
-              <th>Motivo</th>
-              <th>Detalle</th>
-              <th>Estado</th>
-              <th>Atendido por</th>
-              <th>Atendido en</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {llamados.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="text-tenue">
-                  Ningún llamado coincide con el filtro.
-                </td>
-              </tr>
-            ) : (
-              llamados.map((llamado) => {
-                const area = areas.find((item) => item.id === llamado.area_id);
-                const atendido = llamado.estado === "ATENDIDO";
+      <Lista
+        hayFilas={llamados.length > 0}
+        vacio="Ningún llamado coincide con el filtro."
+      >
+        {llamados.map((llamado) => {
+          const area = areas.find((item) => item.id === llamado.area_id);
+          const atendido = llamado.estado === "ATENDIDO";
+          const nivel = nivelDeFila(llamado);
 
-                return (
-                  <tr key={llamado.id} data-alerta={nivelDeFila(llamado)}>
-                    <td>{fechaHora(llamado.creado_en)}</td>
-                    <td className="text-texto">{area?.codigo ?? SIN_DATO}</td>
-                    <td
-                      className={
-                        llamado.tipo === "EMERGENCIA" && !atendido
-                          ? "text-emergencia"
-                          : "text-tenue"
-                      }
-                    >
-                      {llamado.tipo}
-                    </td>
-                    <td className="text-tenue">{llamado.origen}</td>
-                    <td>{llamado.motivo ?? SIN_DATO}</td>
-                    <td
-                      className="max-w-[380px] truncate text-tenue"
-                      title={llamado.detalle ?? undefined}
-                    >
-                      {llamado.detalle ?? SIN_DATO}
-                    </td>
-                    <td className={atendido ? "text-tenue" : "text-texto"}>
-                      {llamado.estado}
-                    </td>
-                    <td className="text-tenue">
-                      {llamado.atendido_por ?? SIN_DATO}
-                    </td>
-                    <td className="text-tenue">
-                      {fechaHora(llamado.atendido_en)}
-                    </td>
-                    <td>
-                      {atendido ? (
-                        <span className="text-tenue">—</span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="boton-plano"
-                          disabled={pendiente}
-                          onClick={() => atender(llamado.id)}
-                        >
-                          Atender
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </section>
+          return (
+            <FilaDesplegable
+              key={llamado.id}
+              clave={String(llamado.id)}
+              nivel={nivel}
+              tenue={atendido}
+              accion={
+                atendido ? (
+                  <Chip texto="Atendido" />
+                ) : (
+                  <button
+                    type="button"
+                    className="boton boton-chico"
+                    disabled={pendiente}
+                    onClick={() => atender(llamado.id)}
+                  >
+                    {pendiente ? "…" : "Atender"}
+                  </button>
+                )
+              }
+              titulo={llamado.motivo ?? SIN_DATO}
+              marcas={
+                llamado.tipo === "EMERGENCIA" ? (
+                  <Chip
+                    texto="Emergencia"
+                    nivel={atendido ? "NINGUNO" : "EMERGENCIA"}
+                  />
+                ) : null
+              }
+              resumen={`${area?.codigo ?? SIN_DATO} · ${fechaHora(llamado.creado_en)}`}
+              detalle={
+                <>
+                  <Dato rotulo="Área">
+                    {area ? `${area.codigo} — ${area.nombre}` : SIN_DATO}
+                  </Dato>
+                  <Dato rotulo="Fecha y hora">
+                    {fechaHora(llamado.creado_en)}
+                  </Dato>
+                  <Dato rotulo="Tipo">{llamado.tipo}</Dato>
+                  <Dato rotulo="Origen">{llamado.origen}</Dato>
+                  <Dato rotulo="Estado">{llamado.estado}</Dato>
+                  <Dato rotulo="Creado por">
+                    {llamado.creado_por ?? SIN_DATO}
+                  </Dato>
+                  <Dato rotulo="Atendido por">
+                    {llamado.atendido_por ?? SIN_DATO}
+                  </Dato>
+                  <Dato rotulo="Atendido en">
+                    {fechaHora(llamado.atendido_en)}
+                  </Dato>
+                  <Dato rotulo="Detalle" ancho>
+                    {llamado.detalle ?? SIN_DATO}
+                  </Dato>
+                </>
+              }
+              pie={
+                atendido ? null : (
+                  <button
+                    type="button"
+                    className="boton"
+                    disabled={pendiente}
+                    onClick={() => atender(llamado.id)}
+                  >
+                    {pendiente ? "Marcando…" : "Marcar como atendido"}
+                  </button>
+                )
+              }
+            />
+          );
+        })}
+      </Lista>
 
       {truncado ? (
         <p className="rotulo">
@@ -376,7 +376,7 @@ export function GestorLlamados({
       ) : null}
 
       {ficha ? (
-        <PanelLateral
+        <ModalFicha
           titulo="Nuevo llamado"
           subtitulo="Carga manual"
           alCerrar={() => setFicha(null)}
@@ -417,31 +417,27 @@ export function GestorLlamados({
                   }
                 />
               ) : (
-                <select
+                <Desplegable
                   id="n-area"
-                  className="campo"
-                  value={ficha.area_id === null ? "" : String(ficha.area_id)}
-                  onChange={(e) =>
+                  valor={ficha.area_id === null ? "" : String(ficha.area_id)}
+                  opciones={[
+                    { valor: "", etiqueta: "Elegí un área" },
+                    ...areas.map((area) => ({
+                      valor: String(area.id),
+                      etiqueta: `${area.codigo} — ${area.nombre}`,
+                    })),
+                  ]}
+                  alCambiar={(valor) =>
                     setFicha((actual) =>
                       actual
                         ? {
                             ...actual,
-                            area_id:
-                              e.target.value === ""
-                                ? null
-                                : Number(e.target.value),
+                            area_id: valor === "" ? null : Number(valor),
                           }
                         : actual,
                     )
                   }
-                >
-                  <option value="">Elegí un área</option>
-                  {areas.map((area) => (
-                    <option key={area.id} value={String(area.id)}>
-                      {area.codigo} — {area.nombre}
-                    </option>
-                  ))}
-                </select>
+                />
               )}
             </Campo>
 
@@ -452,41 +448,35 @@ export function GestorLlamados({
             ) : null}
 
             <Campo etiqueta="Tipo" htmlFor="n-tipo">
-              <select
+              <Desplegable
                 id="n-tipo"
-                className="campo"
-                value={ficha.tipo}
-                onChange={(e) =>
+                valor={ficha.tipo}
+                opciones={TIPOS_LLAMADO.map((tipo) => ({
+                  valor: tipo,
+                  etiqueta: tipo,
+                }))}
+                alCambiar={(valor) =>
                   setFicha((actual) =>
-                    actual ? { ...actual, tipo: e.target.value } : actual,
+                    actual ? { ...actual, tipo: valor } : actual,
                   )
                 }
-              >
-                {TIPOS_LLAMADO.map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
+              />
             </Campo>
 
             <Campo etiqueta="Motivo" htmlFor="n-motivo">
-              <select
+              <Desplegable
                 id="n-motivo"
-                className="campo"
-                value={ficha.motivo}
-                onChange={(e) =>
+                valor={ficha.motivo}
+                opciones={MOTIVOS_MANUALES.map((motivo) => ({
+                  valor: motivo,
+                  etiqueta: motivo,
+                }))}
+                alCambiar={(valor) =>
                   setFicha((actual) =>
-                    actual ? { ...actual, motivo: e.target.value } : actual,
+                    actual ? { ...actual, motivo: valor } : actual,
                   )
                 }
-              >
-                {MOTIVOS_MANUALES.map((motivo) => (
-                  <option key={motivo} value={motivo}>
-                    {motivo}
-                  </option>
-                ))}
-              </select>
+              />
             </Campo>
 
             <Campo etiqueta="Detalle" htmlFor="n-detalle">
@@ -508,7 +498,7 @@ export function GestorLlamados({
               Se registra con origen EMPLEADO y creado por {sesion.usuario}.
             </p>
           </div>
-        </PanelLateral>
+        </ModalFicha>
       ) : null}
     </div>
   );

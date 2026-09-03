@@ -8,7 +8,10 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { entero, fechaHora, numero, SIN_DATO } from "@/lib/formato";
 import type { Area, NivelEstado } from "@/lib/tipos";
-import { Aviso, Campo, Etiqueta } from "../componentes/campos";
+import { Aviso, Campo } from "../componentes/campos";
+import { Desplegable } from "../componentes/desplegable";
+import { Icono } from "../componentes/iconos";
+import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
 import { simularLectura } from "./acciones";
 
 const MS_SONDEO = 10_000;
@@ -124,67 +127,76 @@ export function GestorDispositivos({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Dispositivos</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="dispositivos" tamano={18} />
+          Dispositivos
+        </h1>
         <span className="rotulo">
           {dispositivos.length} nodos · sin señal a los {umbralSegundos} s
         </span>
       </div>
 
-      <section className="panel overflow-x-auto">
-        <div className="border-b border-borde px-3 py-2">
-          <span className="rotulo">Último reporte de cada nodo</span>
+      <div>
+        <div className="cabecera-seccion">
+          <span className="titulo-seccion">Último reporte de cada nodo</span>
+          <span className="rotulo">{dispositivos.length} nodos</span>
         </div>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Estado</th>
-              <th>Dispositivo</th>
-              <th>Área</th>
-              <th>Última lectura</th>
-              <th className="col-num">Hace (s)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dispositivos.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-tenue">
-                  Ningún nodo reportó en las últimas 24 horas.
-                </td>
-              </tr>
-            ) : (
-              dispositivos.map((nodo) => {
-                const area = areas.find((item) => item.id === nodo.area_id);
-                const nivel = nivelPorSilencio(nodo.segundos, umbralSegundos);
 
-                return (
-                  <tr key={nodo.dispositivo}>
-                    <td>
-                      <Etiqueta
-                        texto={
-                          nivel === "EMERGENCIA" ? "Sin señal" : "Reportando"
-                        }
-                        nivel={nivel}
-                      />
-                    </td>
-                    <td className="text-texto">{nodo.dispositivo}</td>
-                    <td className="text-tenue">
+        <Lista
+          hayFilas={dispositivos.length > 0}
+          vacio="Ningún nodo reportó en las últimas 24 horas."
+        >
+          {dispositivos.map((nodo) => {
+            const area = areas.find((item) => item.id === nodo.area_id);
+            const nivel = nivelPorSilencio(nodo.segundos, umbralSegundos);
+            const sinSenal = nivel === "EMERGENCIA";
+
+            return (
+              <FilaDesplegable
+                key={nodo.dispositivo}
+                clave={nodo.dispositivo}
+                nivel={nivel}
+                accion={
+                  <button
+                    type="button"
+                    className="boton-plano boton-chico"
+                    onClick={() => cambiarArea(area?.codigo ?? "")}
+                    disabled={area === undefined}
+                    title="Cargar esta área en el simulador"
+                  >
+                    Simular
+                  </button>
+                }
+                titulo={nodo.dispositivo}
+                marcas={
+                  sinSenal ? <Chip texto="Sin señal" nivel="EMERGENCIA" /> : null
+                }
+                resumen={`${area?.codigo ?? SIN_DATO} · hace ${entero(nodo.segundos)} s`}
+                detalle={
+                  <>
+                    <Dato rotulo="Estado">
+                      {sinSenal ? "Sin señal" : "Reportando"}
+                    </Dato>
+                    <Dato rotulo="Área">
                       {area ? `${area.codigo} — ${area.nombre}` : SIN_DATO}
-                    </td>
-                    <td>{fechaHora(nodo.ultima)}</td>
-                    <td
-                      className={`col-num ${
-                        nivel === "EMERGENCIA" ? "text-emergencia" : ""
-                      }`}
-                    >
-                      {entero(nodo.segundos)}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </section>
+                    </Dato>
+                    <Dato rotulo="Última lectura">
+                      {fechaHora(nodo.ultima)}
+                    </Dato>
+                    <Dato rotulo="Silencio">
+                      {entero(nodo.segundos)} s
+                      <span className="text-tenue">
+                        {" "}
+                        (umbral {umbralSegundos} s)
+                      </span>
+                    </Dato>
+                  </>
+                }
+              />
+            );
+          })}
+        </Lista>
+      </div>
 
       <section className="panel">
         <div className="border-b border-borde px-3 py-2">
@@ -203,18 +215,15 @@ export function GestorDispositivos({
 
           <div className="grid grid-cols-2 gap-3">
             <Campo etiqueta="Área" htmlFor="s-area">
-              <select
+              <Desplegable
                 id="s-area"
-                className="campo"
-                value={simulacion.area}
-                onChange={(e) => cambiarArea(e.target.value)}
-              >
-                {areas.map((area) => (
-                  <option key={area.id} value={area.codigo}>
-                    {area.codigo} — {area.nombre}
-                  </option>
-                ))}
-              </select>
+                valor={simulacion.area}
+                opciones={areas.map((area) => ({
+                  valor: area.codigo,
+                  etiqueta: `${area.codigo} — ${area.nombre}`,
+                }))}
+                alCambiar={cambiarArea}
+              />
             </Campo>
 
             <Campo etiqueta="Dispositivo" htmlFor="s-nodo">
@@ -284,23 +293,18 @@ export function GestorDispositivos({
             htmlFor="s-boton"
             ayuda="Simula el pulsador físico del ESP32."
           >
-            <select
+            <Desplegable
               id="s-boton"
-              className="campo"
-              value={simulacion.boton}
-              onChange={(e) =>
-                setSimulacion((actual) => ({
-                  ...actual,
-                  boton: e.target.value,
-                }))
+              valor={simulacion.boton}
+              opciones={[
+                { valor: "NINGUNO", etiqueta: "NINGUNO" },
+                { valor: "NORMAL", etiqueta: "NORMAL — solicitud de asistencia" },
+                { valor: "EMERGENCIA", etiqueta: "EMERGENCIA — botón de emergencia" },
+              ]}
+              alCambiar={(valor) =>
+                setSimulacion((actual) => ({ ...actual, boton: valor }))
               }
-            >
-              <option value="NINGUNO">NINGUNO</option>
-              <option value="NORMAL">NORMAL — solicitud de asistencia</option>
-              <option value="EMERGENCIA">
-                EMERGENCIA — botón de emergencia
-              </option>
-            </select>
+            />
           </Campo>
 
           <div className="flex items-center justify-between border-t border-borde pt-3">

@@ -2,7 +2,8 @@
 // Exclusiva del rol ADMINISTRADOR.
 
 import { exigirAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, leerEmpleados } from "@/lib/db";
+import { TAREAS, unirOpciones } from "@/lib/catalogos";
 import type { Area, Empleado } from "@/lib/tipos";
 import { GestorEmpleados } from "./gestor";
 
@@ -10,18 +11,25 @@ export const metadata = {
   title: "Empleados · Parque Ambiental Municipal de Berisso",
 };
 
+/** Las opciones vigentes son el catálogo base más todo lo ya creado a mano. */
+function opcionesGuardadas(
+  empleados: Empleado[],
+  campo: "tareas" | "turnos",
+  principal: "tarea" | "turno",
+): string[] {
+  const valores: (string | null)[] = [];
+  for (const empleado of empleados) {
+    valores.push(...(empleado[campo] ?? []));
+    valores.push(empleado[principal]);
+  }
+  return valores.filter((valor): valor is string => valor !== null);
+}
+
 export default async function PaginaEmpleados() {
   await exigirAdmin();
 
-  const [empleadosResultado, areasResultado] = await Promise.all([
-    db()
-      .from("empleados")
-      .select(
-        "id, legajo, nombre, apellido, dni, fecha_nacimiento, telefono, email, domicilio, area_id, tarea, turno, fecha_ingreso, estado, observaciones, creado_en",
-      )
-      .order("apellido", { ascending: true })
-      .order("nombre", { ascending: true })
-      .overrideTypes<Empleado[], { merge: false }>(),
+  const [empleados, areasResultado] = await Promise.all([
+    leerEmpleados(),
 
     db()
       .from("areas")
@@ -34,8 +42,13 @@ export default async function PaginaEmpleados() {
 
   return (
     <GestorEmpleados
-      empleados={empleadosResultado.data ?? []}
+      empleados={empleados}
       areas={areasResultado.data ?? []}
+      tareasDisponibles={unirOpciones(
+        TAREAS,
+        opcionesGuardadas(empleados, "tareas", "tarea"),
+      )}
+      turnosGuardados={opcionesGuardadas(empleados, "turnos", "turno")}
     />
   );
 }

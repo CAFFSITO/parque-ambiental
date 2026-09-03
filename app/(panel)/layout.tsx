@@ -3,44 +3,30 @@
 // ítems dependen del rol.
 
 import type { ReactNode } from "react";
-import localFont from "next/font/local";
+import Image from "next/image";
 import { redirect } from "next/navigation";
+import marcaBerisso from "../marca-berisso.png";
 import { getSesion } from "@/lib/auth";
 import type { Rol } from "@/lib/tipos";
 import { cerrarSesion } from "./acciones";
-import { Navegacion, type ItemNav } from "./navegacion";
-
-const gcFenture = localFont({
-  src: [
-    { path: "./gcfentura-hairline.ttf", weight: "100", style: "normal" },
-    { path: "./gcfentura-thin.otf", weight: "200", style: "normal" },
-    { path: "./gcfentura-extralight.ttf", weight: "300", style: "normal" },
-    { path: "./gcfentura-light.ttf", weight: "400", style: "normal" },
-    { path: "./gcfentura-regular.ttf", weight: "500", style: "normal" },
-    { path: "./gcfentura-medium.ttf", weight: "600", style: "normal" },
-    { path: "./gcfentura-semibold.ttf", weight: "700", style: "normal" },
-    { path: "./gcfentura-bold.ttf", weight: "800", style: "normal" },
-    { path: "./gcfentura-extrabold.ttf", weight: "900", style: "normal" },
-  ],
-  variable: "--font-gc-fenture",
-  display: "swap",
-});
+import { MarcoPanel } from "./marco";
+import type { ItemNav } from "./navegacion";
 
 const NAV_ADMINISTRADOR: ItemNav[] = [
-  { etiqueta: "Tablero", href: "/" },
-  { etiqueta: "Llamados", href: "/llamados" },
-  { etiqueta: "Móvil", href: "/movil" },
-  { etiqueta: "Áreas", href: "/areas" },
-  { etiqueta: "Empleados", href: "/empleados" },
-  { etiqueta: "Usuarios", href: "/usuarios" },
-  { etiqueta: "Dispositivos", href: "/dispositivos" },
-  { etiqueta: "Reportes", href: "/reportes" },
+  { etiqueta: "Tablero", href: "/", icono: "tablero" },
+  { etiqueta: "Llamados", href: "/llamados", icono: "llamados" },
+  { etiqueta: "Móvil", href: "/movil", icono: "movil" },
+  { etiqueta: "Áreas", href: "/areas", icono: "areas" },
+  { etiqueta: "Empleados", href: "/empleados", icono: "empleados" },
+  { etiqueta: "Usuarios", href: "/usuarios", icono: "usuarios" },
+  { etiqueta: "Dispositivos", href: "/dispositivos", icono: "dispositivos" },
+  { etiqueta: "Reportes", href: "/reportes", icono: "reportes" },
 ];
 
 const NAV_EMPLEADO: ItemNav[] = [
-  { etiqueta: "Tablero", href: "/" },
-  { etiqueta: "Llamados", href: "/llamados" },
-  { etiqueta: "Móvil", href: "/movil" },
+  { etiqueta: "Tablero", href: "/", icono: "tablero" },
+  { etiqueta: "Llamados", href: "/llamados", icono: "llamados" },
+  { etiqueta: "Móvil", href: "/movil", icono: "movil" },
 ];
 
 function itemsPara(rol: Rol): ItemNav[] {
@@ -56,11 +42,17 @@ export default async function LayoutPanel({
   if (!sesion) redirect("/login");
 
   return (
-    <div className={`${gcFenture.variable} superficie-panel`}>
+    <div className="superficie-panel">
       <header className="barra-superior">
         <div className="marca-panel">
-          <span className="marca-sigla" aria-hidden="true">
-            PA
+          <span className="marca-sigla">
+            <Image
+              src={marcaBerisso}
+              alt="Municipalidad de Berisso"
+              width={22}
+              height={28}
+              priority
+            />
           </span>
           <span className="marca-texto">
             <span className="marca-titulo">Parque Ambiental</span>
@@ -81,11 +73,7 @@ export default async function LayoutPanel({
         </div>
       </header>
 
-      <Navegacion items={itemsPara(sesion.rol)} />
-
-      <main className="contenido-panel">
-        <div className="contenido-panel-interior">{children}</div>
-      </main>
+      <MarcoPanel items={itemsPara(sesion.rol)}>{children}</MarcoPanel>
     </div>
   );
 }

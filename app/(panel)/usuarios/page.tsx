@@ -2,8 +2,8 @@
 // Exclusiva del rol ADMINISTRADOR. El password_hash nunca sale del servidor.
 
 import { exigirAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
-import type { Area, Empleado } from "@/lib/tipos";
+import { db, leerEmpleados } from "@/lib/db";
+import type { Area } from "@/lib/tipos";
 import { GestorUsuarios, type UsuarioListado } from "./gestor";
 
 export const metadata = {
@@ -13,21 +13,14 @@ export const metadata = {
 export default async function PaginaUsuarios() {
   const sesion = await exigirAdmin();
 
-  const [usuariosResultado, empleadosResultado, areasResultado] =
-    await Promise.all([
+  const [usuariosResultado, empleados, areasResultado] = await Promise.all([
       db()
         .from("usuarios")
         .select("id, usuario, rol, empleado_id, area_id, activo, creado_en")
         .order("usuario", { ascending: true })
         .overrideTypes<UsuarioListado[], { merge: false }>(),
 
-      db()
-        .from("empleados")
-        .select(
-          "id, legajo, nombre, apellido, dni, fecha_nacimiento, telefono, email, domicilio, area_id, tarea, turno, fecha_ingreso, estado, observaciones, creado_en",
-        )
-        .order("apellido", { ascending: true })
-        .overrideTypes<Empleado[], { merge: false }>(),
+      leerEmpleados(),
 
       db()
         .from("areas")
@@ -41,7 +34,7 @@ export default async function PaginaUsuarios() {
   return (
     <GestorUsuarios
       usuarios={usuariosResultado.data ?? []}
-      empleados={empleadosResultado.data ?? []}
+      empleados={empleados}
       areas={areasResultado.data ?? []}
       sesion={sesion}
     />

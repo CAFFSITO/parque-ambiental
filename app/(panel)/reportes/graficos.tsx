@@ -22,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 import type { FilaClima, FilaDistribucion, FilaPorArea, FilaPorDia } from "@/lib/reportes";
+import { Desplegable } from "../componentes/desplegable";
 import { particion } from "@/lib/reportes";
 
 const VERDE = "#92a05b";
@@ -149,19 +150,16 @@ export function GraficoDistribucion({
   const filas = particion(datos, activa);
 
   const selector = dimensionFija ? undefined : (
-    <select
-      className="campo"
-      style={{ width: 220, height: 26 }}
-      value={dimension}
-      onChange={(evento) => setDimension(evento.target.value)}
-      aria-label="Partición de la torta"
-    >
-      {PARTICIONES.map((opcion) => (
-        <option key={opcion.clave} value={opcion.clave}>
-          {opcion.nombre}
-        </option>
-      ))}
-    </select>
+    <Desplegable
+      etiquetaAccesible="Partición de la torta"
+      estilo={{ width: 220, height: 26 }}
+      valor={dimension}
+      opciones={PARTICIONES.map((opcion) => ({
+        valor: opcion.clave,
+        etiqueta: opcion.nombre,
+      }))}
+      alCambiar={setDimension}
+    />
   );
 
   const titulo =
@@ -223,16 +221,16 @@ export function GraficoEvolucion({
   const activa = serieFija ?? serie;
 
   const selector = serieFija ? undefined : (
-    <select
-      className="campo"
-      style={{ width: 220, height: 26 }}
-      value={serie}
-      onChange={(evento) => setSerie(evento.target.value)}
-      aria-label="Serie del gráfico de evolución"
-    >
-      <option value="llamados">Llamados por día</option>
-      <option value="clima">Temperatura y humedad promedio</option>
-    </select>
+    <Desplegable
+      etiquetaAccesible="Serie del gráfico de evolución"
+      estilo={{ width: 220, height: 26 }}
+      valor={serie}
+      opciones={[
+        { valor: "llamados", etiqueta: "Llamados por día" },
+        { valor: "clima", etiqueta: "Temperatura y humedad promedio" },
+      ]}
+      alCambiar={setSerie}
+    />
   );
 
   if (activa === "clima") {

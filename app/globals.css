@@ -22,9 +22,17 @@
   --color-durazno: #f1d2a1;
   --color-espacio: #2d4c39;
 
+  /* Paleta de apoyo del bosque. No compite con --color-senal ni desplaza al
+     verde: solo matiza superficies, hover y estados para dar profundidad. */
+  --color-musgo: #365004;
+  --color-manzana: #8da432;
+  --color-lino: #ede383;
+  --color-tierra: #925e06;
+  --color-bistre: #351903;
+
   --radius-pab: 14px;
 
-  --font-sans: var(--font-gc-fenture, var(--font-inter)), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-alera), ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -49,8 +57,6 @@ body {
   font-weight: 400;
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
 input,
@@ -93,11 +99,26 @@ textarea:focus-visible {
 
 @layer components {
   .superficie-panel {
+    /* El mismo valor gobierna el ancho del cajón y cuánto se achica el
+       contenido: así nunca se pisan ni queda un hueco. */
+    --ancho-menu: 264px;
+    /* Y este, cuánto mide la barra inferior y cuánto aire hay que dejarle
+       abajo al contenido para que no le tape la última fila. Incluye la franja
+       del gesto de Android y la barra de inicio del iPhone. */
+    --alto-barra: calc(64px + env(safe-area-inset-bottom, 0px));
+
     min-height: 100vh;
     background:
-      radial-gradient(circle at 18% 4%, rgb(12 96 56 / 18%), transparent 30rem),
-      radial-gradient(circle at 96% 22%, rgb(199 120 93 / 8%), transparent 24rem),
-      linear-gradient(145deg, #10251f 0%, var(--color-fondo) 58%, #0b1915 100%);
+      radial-gradient(circle at 16% 2%, rgb(54 80 4 / 24%), transparent 32rem),
+      radial-gradient(circle at 96% 20%, rgb(146 94 6 / 13%), transparent 26rem),
+      radial-gradient(circle at 64% 98%, rgb(53 25 3 / 32%), transparent 34rem),
+      linear-gradient(
+        145deg,
+        #10251f 0%,
+        #0e2620 32%,
+        var(--color-fondo) 64%,
+        #0b1915 100%
+      );
   }
 
   /* Barra principal */
@@ -109,10 +130,13 @@ textarea:focus-visible {
     align-items: center;
     min-width: 0;
     height: 72px;
-    padding: 0 24px;
+    padding: 0 24px 0 76px;
+    background-image: linear-gradient(120deg, rgb(12 96 56 / 12%), transparent 62%);
     background-color: rgb(13 30 25 / 88%);
     border-bottom: none;
-    box-shadow: 0 12px 40px rgb(3 13 10 / 18%);
+    box-shadow:
+      inset 0 -1px 0 rgb(54 80 4 / 55%),
+      0 12px 40px rgb(3 13 10 / 18%);
     backdrop-filter: blur(18px);
   }
 
@@ -123,17 +147,15 @@ textarea:focus-visible {
     gap: 12px;
   }
 
+  /* Pastilla clara: el isotipo de la Municipalidad es azul marino y sobre el
+     verde del panel no se leería. Acá contrasta y no hay que recolorearlo. */
   .marca-sigla {
     display: grid;
     width: 40px;
     height: 40px;
     flex: 0 0 auto;
     place-items: center;
-    color: var(--color-fondo);
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    background: linear-gradient(145deg, var(--color-durazno), var(--color-senal));
+    background: linear-gradient(145deg, var(--color-lino), var(--color-senal));
     border: none;
     border-radius: 13px 5px 13px 5px;
     box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
@@ -150,7 +172,7 @@ textarea:focus-visible {
     overflow: hidden;
     color: var(--color-texto);
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.02em;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -160,7 +182,7 @@ textarea:focus-visible {
     margin-top: 5px;
     color: var(--color-tenue);
     font-size: 10px;
-    font-weight: 300;
+    font-weight: 600;
     letter-spacing: 0.17em;
     text-transform: uppercase;
   }
@@ -182,100 +204,278 @@ textarea:focus-visible {
   .usuario-nombre {
     color: var(--color-texto);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .usuario-rol {
     margin-top: 4px;
     color: var(--color-senal);
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  /* Navegación lateral */
+  /* Botón hamburguesa. Va fijo sobre la barra en vez de dentro: el estado
+     del cajón vive en un solo componente de cliente. */
+  .boton-menu {
+    position: fixed;
+    top: 16px;
+    left: 20px;
+    z-index: 40;
+    display: flex;
+    width: 40px;
+    height: 40px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background-color: rgb(45 76 57 / 62%);
+    border: none;
+    border-radius: 11px 4px 11px 4px;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      transform 120ms ease;
+  }
+
+  .boton-menu:hover {
+    background-color: rgb(54 80 4 / 62%);
+  }
+
+  .boton-menu:active {
+    transform: scale(0.94);
+  }
+
+  .boton-menu-linea {
+    width: 18px;
+    height: 2px;
+    background-color: var(--color-senal);
+    border-radius: 2px;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.9, 0.25, 1),
+      opacity 180ms ease;
+  }
+
+  /* gap 5 + trazo 2 = 7 px de centro a centro: las puntas se encuentran. */
+  .boton-menu[data-abierto="si"] .boton-menu-linea:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .boton-menu[data-abierto="si"] .boton-menu-linea:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+
+  .boton-menu[data-abierto="si"] .boton-menu-linea:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* Navegación lateral, en cajón */
   .nav-lateral {
     position: fixed;
     top: 72px;
     bottom: 0;
     left: 0;
     z-index: 20;
-    width: 240px;
+    width: var(--ancho-menu);
     padding: 22px 16px;
     overflow-y: auto;
-    background-color: rgb(18 43 35 / 92%);
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition:
+      transform 300ms cubic-bezier(0.2, 0.9, 0.25, 1),
+      visibility 300ms;
+    background-image: linear-gradient(
+      180deg,
+      rgb(54 80 4 / 15%),
+      transparent 40%,
+      rgb(53 25 3 / 24%)
+    );
+    background-color: rgb(18 43 35 / 96%);
     border-right: none;
+    box-shadow: 0 24px 60px rgb(2 12 9 / 45%);
     backdrop-filter: blur(16px);
   }
 
-  .nav-lateral::before {
-    display: block;
-    margin: 0 10px 12px;
-    color: var(--color-tenue);
-    font-size: 9px;
-    font-weight: 100;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    content: "Navegación";
+  .nav-lateral[data-abierto="si"] {
+    visibility: visible;
+    transform: none;
   }
 
   .nav-item {
     position: relative;
     display: flex;
-    min-height: 44px;
-    margin-bottom: 4px;
-    padding: 0 12px;
+    min-height: 46px;
+    margin-bottom: 3px;
+    padding: 0 14px;
     align-items: center;
-    gap: 11px;
     color: var(--color-tenue);
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 500;
+    letter-spacing: -0.015em;
     text-decoration: none;
     border: none;
     border-radius: 10px 5px 10px 5px;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition:
+      opacity 220ms ease,
+      transform 260ms cubic-bezier(0.2, 0.9, 0.25, 1),
+      color 160ms ease,
+      background-color 160ms ease;
   }
 
-  .nav-indice {
-    display: grid;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 auto;
-    place-items: center;
-    color: #83988c;
-    font-size: 9px;
-    font-weight: 200;
-    letter-spacing: 0.04em;
-    background-color: rgb(255 255 255 / 3%);
-    border: none;
-    border-radius: 8px 3px 8px 3px;
+  /* --i lo pone la navegación: cada ítem entra un pelo después del anterior. */
+  .nav-lateral[data-abierto="si"] .nav-item {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(var(--i, 0) * 30ms);
   }
 
   .nav-item:hover {
     color: var(--color-texto);
-    background-color: rgb(45 76 57 / 54%);
+    background-color: rgb(54 80 4 / 34%);
   }
 
   .nav-item[data-activo="si"] {
-    color: var(--color-fondo);
+    color: var(--color-bistre);
     font-weight: 700;
-    background: linear-gradient(100deg, var(--color-durazno), #ddc68b);
+    background: linear-gradient(100deg, var(--color-lino), var(--color-senal));
     box-shadow: 0 10px 24px rgb(0 0 0 / 20%);
-  }
-
-  .nav-item[data-activo="si"] .nav-indice {
-    color: var(--color-durazno);
-    background-color: var(--color-fondo);
   }
 
   .nav-item[data-solo-movil="si"] {
     display: none;
   }
 
+  /* El ícono hereda el color del ítem: tenue, claro al pasar por encima y
+     oscuro sobre el dorado del activo. No tiene color propio. */
+  .nav-icono {
+    flex: 0 0 auto;
+    margin-right: 11px;
+    opacity: 0.75;
+    transition: opacity 160ms ease;
+  }
+
+  .nav-item:hover .nav-icono,
+  .nav-item[data-activo="si"] .nav-icono {
+    opacity: 1;
+  }
+
+  /* Navegación de pantalla angosta: fija abajo y siempre a la vista. Todos
+     los módulos entran en una sola fila de columnas iguales, así que nunca
+     hay que correrla ni desplegar nada. Se oculta desde md con md:hidden. */
+  .barra-inferior {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    background-image: linear-gradient(
+      0deg,
+      rgb(53 25 3 / 24%),
+      transparent 70%
+    );
+    background-color: rgb(18 43 35 / 96%);
+    box-shadow:
+      inset 0 1px 0 rgb(54 80 4 / 55%),
+      0 -12px 40px rgb(3 13 10 / 32%);
+    backdrop-filter: blur(16px);
+  }
+
+  .barra-inferior-item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 7px 2px 6px;
+    color: var(--color-tenue);
+    text-decoration: none;
+    border-radius: 10px 5px 10px 5px;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  /* El mismo dorado del ítem activo del cajón: el módulo en el que se está se
+     reconoce igual en las dos navegaciones. */
+  .barra-inferior-item[data-activo="si"] {
+    color: var(--color-bistre);
+    background: linear-gradient(100deg, var(--color-lino), var(--color-senal));
+    box-shadow: 0 8px 20px rgb(0 0 0 / 22%);
+  }
+
+  .barra-inferior-item:active {
+    background-color: rgb(54 80 4 / 34%);
+  }
+
+  .barra-inferior-icono {
+    flex: 0 0 auto;
+    opacity: 0.8;
+  }
+
+  .barra-inferior-item[data-activo="si"] .barra-inferior-icono {
+    opacity: 1;
+  }
+
+  .barra-inferior-etiqueta {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .barra-inferior-item[data-activo="si"] .barra-inferior-etiqueta {
+    font-weight: 700;
+  }
+
+  /* Título de módulo: el mismo ícono que en la navegación, para que la
+     pantalla se reconozca sin leer. */
+  .titulo-modulo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--color-texto);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .titulo-modulo svg {
+    flex: 0 0 auto;
+    color: var(--color-senal);
+  }
+
+  /* Pista de módulos. En escritorio es display:contents: el div está en el
+     DOM pero no genera caja, así que el marco queda exactamente como estaba.
+     Debajo de md pasa a ser la caja que se corre con el dedo. */
+  .pista-modulos {
+    display: contents;
+  }
+
+  .adelanto-modulo {
+    display: none;
+  }
+
   .contenido-panel {
     min-height: 100vh;
     padding-top: 72px;
-    padding-left: 240px;
+    transition: padding-left 300ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+
+  .contenido-panel[data-menu="abierto"] {
+    padding-left: var(--ancho-menu);
   }
 
   .contenido-panel-interior {
@@ -319,7 +519,7 @@ textarea:focus-visible {
     margin: 13px 0 0;
     color: var(--color-tenue);
     font-size: 14px;
-    font-weight: 300;
+    font-weight: 400;
   }
 
   .contexto-tablero {
@@ -327,11 +527,11 @@ textarea:focus-visible {
     padding: 12px 14px;
     color: var(--color-tenue);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.11em;
     text-align: right;
     text-transform: uppercase;
-    background-color: rgb(41 73 62 / 48%);
+    background-color: rgb(24 70 52 / 44%);
     border: none;
     border-radius: 12px 4px 12px 4px;
   }
@@ -340,6 +540,7 @@ textarea:focus-visible {
   .panel {
     background:
       linear-gradient(145deg, rgb(255 255 255 / 2.5%), transparent 52%),
+      linear-gradient(200deg, transparent 48%, rgb(54 80 4 / 15%)),
       var(--color-panel);
     border: none;
     border-radius: var(--radius-pab) 5px var(--radius-pab) 5px;
@@ -348,9 +549,12 @@ textarea:focus-visible {
 
   .panel-kpi {
     position: relative;
-    min-height: 142px;
+    min-height: 124px;
     overflow: hidden;
     padding: 18px;
+    background-image:
+      linear-gradient(145deg, rgb(255 255 255 / 2.5%), transparent 52%),
+      linear-gradient(160deg, rgb(12 96 56 / 13%), transparent 58%);
   }
 
   .panel-kpi::after {
@@ -359,10 +563,18 @@ textarea:focus-visible {
     bottom: -54px;
     width: 124px;
     height: 124px;
-    background: radial-gradient(circle, rgb(241 210 161 / 10%), transparent 67%);
+    background: radial-gradient(circle, rgb(141 164 50 / 17%), transparent 67%);
     border: none;
     border-radius: 50%;
     content: "";
+  }
+
+  .panel-kpi[data-nivel="ADVERTENCIA"]::after {
+    background: radial-gradient(circle, rgb(237 227 131 / 16%), transparent 67%);
+  }
+
+  .panel-kpi[data-nivel="EMERGENCIA"]::after {
+    background: radial-gradient(circle, rgb(199 120 93 / 19%), transparent 67%);
   }
 
   .kpi-cabecera {
@@ -375,9 +587,9 @@ textarea:focus-visible {
   .kpi-marca {
     width: 8px;
     height: 8px;
-    background-color: var(--color-normal);
+    background-color: var(--color-manzana);
     border-radius: 50%;
-    box-shadow: 0 0 0 5px rgb(146 160 91 / 10%);
+    box-shadow: 0 0 0 5px rgb(141 164 50 / 15%);
   }
 
   .panel-kpi[data-nivel="ADVERTENCIA"] .kpi-marca {
@@ -390,38 +602,31 @@ textarea:focus-visible {
     box-shadow: 0 0 0 5px rgb(199 120 93 / 11%);
   }
 
+  /* El número es el dato que decide: va al color pleno del nivel, no a un
+     tinte apagado del texto. */
   .kpi-valor {
     position: relative;
     z-index: 1;
-    margin-top: 20px;
-    color: var(--color-texto);
-    font-size: 42px;
-    font-weight: 900;
+    margin-top: 22px;
+    color: #cfc35e;
+    font-size: 52px;
+    font-weight: 800;
     line-height: 0.8;
     letter-spacing: -0.05em;
   }
 
   .panel-kpi[data-nivel="ADVERTENCIA"] .kpi-valor {
-    color: #e5c68f;
+    color: #d4a94f;
   }
 
   .panel-kpi[data-nivel="EMERGENCIA"] .kpi-valor {
-    color: #dd927a;
-  }
-
-  .kpi-detalle {
-    position: relative;
-    z-index: 1;
-    margin-top: 14px;
-    color: var(--color-tenue);
-    font-size: 11px;
-    font-weight: 400;
+    color: #c4704f;
   }
 
   .rotulo {
     color: var(--color-tenue);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
@@ -439,7 +644,7 @@ textarea:focus-visible {
   .titulo-seccion {
     color: var(--color-texto);
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.01em;
   }
 
@@ -455,12 +660,12 @@ textarea:focus-visible {
     padding: 0 14px;
     color: #9fb0a5;
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.11em;
     text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
-    background-color: rgb(45 76 57 / 43%);
+    background-color: rgb(54 80 4 / 26%);
     border-bottom: none;
   }
 
@@ -479,7 +684,7 @@ textarea:focus-visible {
   }
 
   .tabla tbody tr:hover td {
-    background-color: rgb(45 76 57 / 36%);
+    background-color: rgb(54 80 4 / 20%);
   }
 
   .col-num {
@@ -492,7 +697,7 @@ textarea:focus-visible {
     height: 42px;
     padding: 0 12px;
     color: var(--color-texto);
-    font-weight: 500;
+    font-weight: 400;
     background-color: rgb(10 26 21 / 70%);
     border: 1px solid #29493e;
     border-radius: 10px 4px 10px 4px;
@@ -508,6 +713,60 @@ textarea:focus-visible {
     box-shadow: 0 0 0 3px rgb(216 192 132 / 10%);
   }
 
+  /* Campo de contraseña con el conmutador de visibilidad adentro. */
+  .campo-clave {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .campo-clave .campo {
+    padding-right: 46px;
+  }
+
+  .boton-ojo {
+    position: absolute;
+    right: 6px;
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    color: var(--color-tenue);
+    background-color: transparent;
+    border: none;
+    border-radius: 9px 3px 9px 3px;
+    outline: none;
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      transform 120ms ease;
+  }
+
+  .boton-ojo:hover {
+    color: var(--color-texto);
+    background-color: rgb(45 76 57 / 54%);
+  }
+
+  .boton-ojo:active {
+    transform: scale(0.94);
+  }
+
+  .boton-ojo:focus-visible {
+    color: var(--color-senal);
+    box-shadow: 0 0 0 3px rgb(216 192 132 / 18%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .boton-ojo {
+      transition: none;
+    }
+
+    .boton-ojo:active {
+      transform: none;
+    }
+  }
+
   .boton,
   .boton-plano {
     display: inline-flex;
@@ -516,27 +775,43 @@ textarea:focus-visible {
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
     border-radius: 10px 4px 10px 4px;
     cursor: pointer;
+    transition:
+      background-image 180ms ease,
+      box-shadow 180ms ease,
+      transform 120ms ease;
   }
 
+  /* Sin biselado: un degradado plano de lino a señal, en diagonal, para que
+     el amarillo tenga variación sin parecer un botón en relieve. */
   .boton {
-    color: var(--color-fondo);
+    color: var(--color-bistre);
+    background-image: linear-gradient(
+      140deg,
+      var(--color-lino) 0%,
+      var(--color-senal) 66%
+    );
     background-color: var(--color-senal);
     border: none;
-    box-shadow: 0 8px 18px rgb(5 16 12 / 18%);
+    box-shadow: 0 8px 18px rgb(5 16 12 / 20%);
   }
 
   .boton:hover {
-    background-color: var(--color-durazno);
-    border-color: var(--color-durazno);
+    background-image: linear-gradient(
+      140deg,
+      #f6efa6 0%,
+      var(--color-durazno) 66%
+    );
+    box-shadow: 0 10px 22px rgb(5 16 12 / 24%);
     transform: translateY(-1px);
   }
 
   .boton:disabled {
     opacity: 0.5;
+    box-shadow: none;
     cursor: default;
     transform: none;
   }
@@ -549,30 +824,21 @@ textarea:focus-visible {
 
   .boton-plano:hover {
     color: var(--color-texto);
-    background-color: var(--color-panel-alto);
+    background-color: var(--color-espacio);
     border-color: #577468;
   }
 
   .boton-peligro {
     color: #1d0f0b;
+    background-image: linear-gradient(140deg, #d68a6f 0%, var(--color-terracota) 66%);
     background-color: var(--color-terracota);
     border-color: transparent;
   }
 
   .boton-peligro:hover {
+    background-image: linear-gradient(140deg, #e5a288 0%, #dc9279 66%);
     background-color: #dc9279;
     border-color: transparent;
-  }
-
-  select.campo {
-    appearance: none;
-    padding-right: 30px;
-    background-image:
-      linear-gradient(45deg, transparent 50%, var(--color-senal) 50%),
-      linear-gradient(135deg, var(--color-senal) 50%, transparent 50%);
-    background-position: calc(100% - 16px) 18px, calc(100% - 11px) 18px;
-    background-repeat: no-repeat;
-    background-size: 5px 5px, 5px 5px;
   }
 
   textarea.campo {
@@ -607,12 +873,868 @@ textarea:focus-visible {
   .punto[data-nivel="EMERGENCIA"] {
     background-color: var(--color-emergencia);
   }
+
+  /* ------------------------------------------------------------------
+     Listas desplegables. La fila cerrada muestra lo mínimo para decidir
+     y la acción a mano; al abrirse crece como una ventana con la ficha
+     completa adentro, sin sacarte del listado.
+     ------------------------------------------------------------------ */
+  .lista {
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+  }
+
+  .lista-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px 10px;
+  }
+
+  .fila-desplegable {
+    position: relative;
+    border-radius: 12px 4px 12px 4px;
+    transition:
+      background-color 200ms ease,
+      box-shadow 260ms ease;
+  }
+
+  .fila-desplegable + .fila-desplegable::after {
+    position: absolute;
+    top: 0;
+    right: 14px;
+    left: 14px;
+    height: 1px;
+    background-color: rgb(255 255 255 / 6%);
+    content: "";
+  }
+
+  .fila-desplegable[data-abierta="si"]::after,
+  .fila-desplegable[data-abierta="si"] + .fila-desplegable::after {
+    opacity: 0;
+  }
+
+  .fila-linea::before {
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    width: 2px;
+    height: 24px;
+    background-color: transparent;
+    border-radius: 2px;
+    content: "";
+    transform: translateY(-50%);
+    transition: background-color 200ms ease;
+  }
+
+  .fila-desplegable[data-nivel="NORMAL"] .fila-linea::before {
+    background-color: var(--color-manzana);
+  }
+
+  .fila-desplegable[data-nivel="ADVERTENCIA"] .fila-linea::before {
+    background-color: var(--color-advertencia);
+  }
+
+  .fila-desplegable[data-nivel="EMERGENCIA"] .fila-linea::before {
+    background-color: var(--color-emergencia);
+  }
+
+  .fila-desplegable:hover {
+    background-color: rgb(54 80 4 / 24%);
+  }
+
+  .fila-desplegable[data-abierta="si"] {
+    background-color: rgb(28 64 51 / 78%);
+    box-shadow:
+      0 18px 44px rgb(2 12 9 / 30%),
+      inset 0 0 0 1px rgb(255 255 255 / 7%);
+  }
+
+  .fila-desplegable[data-tenue="si"] .fila-titulo {
+    color: #8a9a90;
+  }
+
+  .fila-linea {
+    position: relative;
+    display: flex;
+    min-height: 54px;
+    padding: 7px 14px 7px 16px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Ancho fijo: la acción de todas las filas queda en la misma columna. */
+  .fila-accion {
+    display: flex;
+    min-width: 104px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .fila-cabezal {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 7px 0;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .fila-titulo {
+    overflow: hidden;
+    flex: 0 0 auto;
+    max-width: 46%;
+    color: var(--color-texto);
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fila-resumen {
+    overflow: hidden;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--color-tenue);
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fila-marcas {
+    display: contents;
+  }
+
+  .fila-chevron {
+    flex: 0 0 auto;
+    color: #7d9186;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.9, 0.25, 1),
+      color 180ms ease;
+  }
+
+  .fila-desplegable[data-abierta="si"] .fila-chevron {
+    color: var(--color-senal);
+    transform: rotate(90deg);
+  }
+
+  .fila-cuerpo {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 320ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+
+  .fila-desplegable[data-abierta="si"] .fila-cuerpo {
+    grid-template-rows: 1fr;
+  }
+
+  .fila-cuerpo-interior {
+    overflow: hidden;
+  }
+
+  .fila-detalle {
+    display: grid;
+    margin: 0 16px;
+    padding: 15px 0 4px;
+    grid-template-columns: repeat(auto-fit, minmax(186px, 1fr));
+    gap: 15px 22px;
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .fila-pie {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 16px;
+    padding: 14px 0 16px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dato {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .dato-ancho {
+    grid-column: 1 / -1;
+  }
+
+  .dato-rotulo {
+    color: #8fa398;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .dato-valor {
+    color: var(--color-texto);
+    font-size: 13px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .lista-vacia {
+    padding: 38px 16px;
+    color: var(--color-tenue);
+    text-align: center;
+  }
+
+  .chip {
+    display: inline-flex;
+    height: 22px;
+    padding: 0 9px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-tenue);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background-color: rgb(45 76 57 / 34%);
+    border-radius: 7px 3px 7px 3px;
+  }
+
+  .chip[data-nivel="NORMAL"] {
+    color: #bcd06e;
+    background-color: rgb(141 164 50 / 17%);
+  }
+
+  .chip[data-nivel="ADVERTENCIA"] {
+    color: #e5c68f;
+    background-color: rgb(215 174 103 / 14%);
+  }
+
+  .chip[data-nivel="EMERGENCIA"] {
+    color: #e39c84;
+    background-color: rgb(199 120 93 / 16%);
+  }
+
+  .boton-chico {
+    height: 31px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .boton:active,
+  .boton-plano:active {
+    transform: scale(0.98);
+  }
+
+  /* ------------------------------------------------------------------
+     Selector estilo Notion: caja de texto que abre las opciones ya
+     creadas, permite elegir varias y crear una nueva escribiéndola.
+     ------------------------------------------------------------------ */
+  .selector {
+    position: relative;
+  }
+
+  .selector-caja {
+    display: flex;
+    min-height: 42px;
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    background-color: rgb(10 26 21 / 70%);
+    border: 1px solid #29493e;
+    border-radius: 10px 4px 10px 4px;
+    cursor: text;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .selector-caja:hover {
+    border-color: #4a6a5e;
+  }
+
+  .selector[data-abierto="si"] .selector-caja {
+    border-color: var(--color-borde-foco);
+    box-shadow: 0 0 0 3px rgb(216 192 132 / 10%);
+  }
+
+  .selector-ficha {
+    display: inline-flex;
+    height: 26px;
+    padding: 0 4px 0 9px;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-texto);
+    font-size: 12px;
+    font-weight: 600;
+    background-color: rgb(45 76 57 / 82%);
+    border-radius: 8px 3px 8px 3px;
+  }
+
+  .selector-quitar {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    color: #9db0a4;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .selector-quitar:hover {
+    color: var(--color-texto);
+    background-color: rgb(255 255 255 / 9%);
+  }
+
+  .selector-entrada {
+    flex: 1 1 80px;
+    min-width: 60px;
+    height: 28px;
+    color: var(--color-texto);
+    background: none;
+    border: none;
+    outline: none;
+  }
+
+  .selector-entrada::placeholder {
+    color: #7c8f85;
+    font-weight: 400;
+  }
+
+  .selector-menu {
+    position: fixed;
+    z-index: 70;
+    max-height: 264px;
+    padding: 6px;
+    overflow-y: auto;
+    background-color: #1b3a31;
+    border-radius: 12px 4px 12px 4px;
+    box-shadow:
+      0 24px 54px rgb(2 12 9 / 48%),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+
+  .selector-rotulo-menu {
+    padding: 6px 8px 5px;
+    color: #8fa398;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .selector-opcion {
+    display: flex;
+    width: 100%;
+    min-height: 33px;
+    padding: 0 8px;
+    align-items: center;
+    gap: 9px;
+    color: var(--color-texto);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px 3px 8px 3px;
+    cursor: pointer;
+  }
+
+  .selector-opcion[data-activa="si"] {
+    background-color: rgb(45 76 57 / 82%);
+  }
+
+  .selector-opcion-nueva {
+    color: var(--color-senal);
+    font-weight: 600;
+  }
+
+  .selector-tilde {
+    margin-left: auto;
+    color: var(--color-senal);
+  }
+
+  .selector-vacio {
+    padding: 11px 9px;
+    color: var(--color-tenue);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ------------------------------------------------------------------
+     Lista desplegable propia. Reemplaza a <select>: el menú de un select
+     nativo lo dibuja el sistema y no acepta estilos de la página.
+     ------------------------------------------------------------------ */
+  .desplegable {
+    display: flex;
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-texto);
+    font-weight: 400;
+    text-align: left;
+    background-color: rgb(10 26 21 / 70%);
+    border: 1px solid #29493e;
+    border-radius: 10px 4px 10px 4px;
+    outline: none;
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .desplegable:hover:not(:disabled) {
+    border-color: #4a6a5e;
+  }
+
+  .desplegable:focus-visible,
+  .desplegable[data-abierto="si"] {
+    border-color: var(--color-borde-foco);
+    box-shadow: 0 0 0 3px rgb(216 192 132 / 10%);
+  }
+
+  .desplegable:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .desplegable[data-vacio="si"] .desplegable-valor {
+    color: #7c8f85;
+    font-weight: 400;
+  }
+
+  .desplegable-valor {
+    overflow: hidden;
+    flex: 1 1 auto;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desplegable-chevron {
+    flex: 0 0 auto;
+    color: var(--color-senal);
+    transition: transform 180ms ease;
+  }
+
+  .desplegable[data-abierto="si"] .desplegable-chevron {
+    transform: rotate(180deg);
+  }
+
+  .desplegable-menu {
+    position: fixed;
+    z-index: 70;
+    padding: 6px;
+    overflow-y: auto;
+    background-color: #1b3a31;
+    border-radius: 12px 4px 12px 4px;
+    box-shadow:
+      0 24px 54px rgb(2 12 9 / 48%),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+
+  .desplegable-opcion {
+    display: flex;
+    width: 100%;
+    min-height: 33px;
+    padding: 0 8px;
+    align-items: center;
+    gap: 9px;
+    color: var(--color-texto);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px 3px 8px 3px;
+    cursor: pointer;
+  }
+
+  .desplegable-opcion[data-activa="si"] {
+    background-color: rgb(45 76 57 / 82%);
+  }
+
+  .desplegable-opcion:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .desplegable-tilde {
+    margin-left: auto;
+    flex: 0 0 auto;
+    color: var(--color-senal);
+  }
+
+  .desplegable-vacio {
+    padding: 11px 9px;
+    color: var(--color-tenue);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .desplegable-chevron {
+      transition: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Campo de fecha propio. Reemplaza a input type="date" y
+     type="datetime-local": el calendario del navegador no se puede estilar.
+     ------------------------------------------------------------------ */
+  .fecha {
+    position: relative;
+  }
+
+  .fecha-caja {
+    display: flex;
+    height: 42px;
+    padding: 0 4px 0 12px;
+    align-items: center;
+    gap: 4px;
+    background-color: rgb(10 26 21 / 70%);
+    border: 1px solid #29493e;
+    border-radius: 10px 4px 10px 4px;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .fecha-caja:hover {
+    border-color: #4a6a5e;
+  }
+
+  .fecha-caja:focus-within,
+  .fecha[data-abierto="si"] .fecha-caja {
+    border-color: var(--color-borde-foco);
+    box-shadow: 0 0 0 3px rgb(216 192 132 / 10%);
+  }
+
+  .fecha-entrada {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    color: var(--color-texto);
+    font-weight: 400;
+    background: none;
+    border: none;
+    outline: none;
+  }
+
+  .fecha-entrada::placeholder {
+    color: #7c8f85;
+    font-weight: 400;
+  }
+
+  .fecha-boton {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    place-items: center;
+    color: var(--color-tenue);
+    background: none;
+    border: none;
+    border-radius: 8px 3px 8px 3px;
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .fecha-boton:hover {
+    color: var(--color-senal);
+    background-color: rgb(54 80 4 / 34%);
+  }
+
+  .fecha-menu {
+    position: fixed;
+    z-index: 70;
+    padding: 10px;
+    background-color: #1b3a31;
+    border-radius: 12px 4px 12px 4px;
+    box-shadow:
+      0 24px 54px rgb(2 12 9 / 48%),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+  }
+
+  .fecha-cabecera {
+    display: flex;
+    padding-bottom: 8px;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .fecha-mes {
+    flex: 1 1 auto;
+    color: var(--color-texto);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  .fecha-paso {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+    place-items: center;
+    color: var(--color-tenue);
+    background: none;
+    border: none;
+    border-radius: 7px 3px 7px 3px;
+    cursor: pointer;
+  }
+
+  .fecha-paso:hover {
+    color: var(--color-texto);
+    background-color: rgb(45 76 57 / 62%);
+  }
+
+  .fecha-semana,
+  .fecha-grilla {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .fecha-semana {
+    padding-bottom: 4px;
+    color: #8fa398;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-align: center;
+  }
+
+  .fecha-dia {
+    height: 32px;
+    color: var(--color-texto);
+    font-size: 12px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    border-radius: 8px 3px 8px 3px;
+    cursor: pointer;
+    transition:
+      color 140ms ease,
+      background-color 140ms ease,
+      transform 120ms ease;
+  }
+
+  .fecha-dia:hover {
+    background-color: rgb(54 80 4 / 40%);
+  }
+
+  .fecha-dia:active {
+    transform: scale(0.94);
+  }
+
+  .fecha-dia[data-fuera="si"] {
+    color: #6f8378;
+    font-weight: 500;
+  }
+
+  /* Hoy se marca con un filo, no con relleno: el relleno es del elegido. */
+  .fecha-dia[data-hoy="si"] {
+    box-shadow: inset 0 0 0 1px rgb(216 192 132 / 45%);
+  }
+
+  .fecha-dia[data-elegido="si"] {
+    color: var(--color-bistre);
+    font-weight: 700;
+    background-image: linear-gradient(
+      140deg,
+      var(--color-lino) 0%,
+      var(--color-senal) 66%
+    );
+  }
+
+  .fecha-hora {
+    display: flex;
+    margin-top: 10px;
+    padding-top: 10px;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .fecha-hora .rotulo {
+    margin-right: auto;
+  }
+
+  .fecha-dospuntos {
+    color: var(--color-tenue);
+    font-weight: 600;
+  }
+
+  .fecha-pie {
+    display: flex;
+    margin-top: 10px;
+    padding-top: 10px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  /* ------------------------------------------------------------------
+     Diálogos flotantes. Fichas, avisos y confirmaciones comparten el
+     mismo armazón centrado.
+     ------------------------------------------------------------------ */
+  .capa-modal {
+    position: fixed;
+    z-index: 50;
+    inset: 0;
+    display: grid;
+    padding: 24px;
+    place-items: center;
+  }
+
+  .velo {
+    position: absolute;
+    inset: 0;
+    background-color: rgb(4 12 9 / 62%);
+    border: none;
+    cursor: default;
+    backdrop-filter: blur(5px);
+    animation: velo-entra 180ms ease both;
+  }
+
+  .dialogo {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-height: min(86dvh, 920px);
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      linear-gradient(160deg, rgb(255 255 255 / 3.5%), transparent 46%),
+      var(--color-panel);
+    border-radius: 18px 6px 18px 6px;
+    box-shadow:
+      0 40px 90px rgb(2 10 8 / 55%),
+      inset 0 0 0 1px rgb(255 255 255 / 8%);
+    outline: none;
+    animation: dialogo-entra 260ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+
+  .dialogo-cabecera {
+    display: flex;
+    flex: 0 0 auto;
+    padding: 16px 20px 14px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .dialogo-titulo {
+    color: var(--color-texto);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .dialogo-subtitulo {
+    margin-top: 4px;
+    color: var(--color-tenue);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .dialogo-cuerpo {
+    flex: 1 1 auto;
+    padding: 18px 20px;
+    overflow-y: auto;
+  }
+
+  .dialogo-pie {
+    display: flex;
+    flex: 0 0 auto;
+    padding: 14px 20px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+}
+
+@keyframes velo-entra {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogo-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velo,
+  .dialogo {
+    animation-duration: 1ms;
+  }
+
+  .boton-menu-linea,
+  .contenido-panel,
+  .nav-lateral,
+  .nav-item,
+  .fecha-dia {
+    transition: none;
+  }
+
+  .fecha-dia:active {
+    transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .capa-modal {
+    padding: 12px;
+  }
+
+  .dialogo {
+    max-height: 92dvh;
+  }
 }
 
 @media (max-width: 900px) {
   .barra-superior {
     height: 64px;
-    padding: 0 14px;
+    padding: 0 14px 0 64px;
+  }
+
+  .boton-menu {
+    top: 12px;
+    left: 14px;
   }
 
   .marca-sigla {
@@ -625,30 +1747,12 @@ textarea:focus-visible {
     display: none;
   }
 
+  .superficie-panel {
+    --ancho-menu: min(58vw, 232px);
+  }
+
   .nav-lateral {
     top: 64px;
-    right: 0;
-    bottom: auto;
-    display: flex;
-    width: auto;
-    height: 62px;
-    padding: 9px 12px;
-    gap: 5px;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: none;
-  }
-
-  .nav-lateral::before,
-  .nav-indice {
-    display: none;
-  }
-
-  .nav-item {
-    min-height: 40px;
-    margin: 0;
-    padding: 0 13px;
-    flex: 0 0 auto;
   }
 
   .nav-item[data-solo-movil="si"] {
@@ -656,8 +1760,7 @@ textarea:focus-visible {
   }
 
   .contenido-panel {
-    padding-top: 126px;
-    padding-left: 0;
+    padding-top: 64px;
   }
 
   .contenido-panel-interior {
@@ -672,6 +1775,252 @@ textarea:focus-visible {
   .contexto-tablero {
     min-width: 0;
     text-align: left;
+  }
+}
+
+/* Debajo de md —768 px, el mismo corte que usan hidden md:flex en la
+   hamburguesa y hidden md:block en el cajón— la navegación pasa a la barra
+   inferior. Sin hamburguesa a la izquierda, la barra superior recupera su
+   margen; y el contenido deja abajo el aire que ocupa la barra. */
+@media (max-width: 767px) {
+  .barra-superior {
+    padding-left: 14px;
+  }
+
+  .contenido-panel {
+    padding-bottom: var(--alto-barra);
+  }
+
+  /* El cajón pudo quedar abierto antes de angostar la ventana. Si ya no se ve,
+     el contenido tampoco tiene por qué seguir corrido. */
+  .contenido-panel[data-menu="abierto"] {
+    padding-left: 0;
+  }
+
+  /* Un modal a pantalla completa terminaría con sus botones debajo de la
+     barra: se le levanta el piso. */
+  .capa-modal {
+    padding-bottom: calc(12px + var(--alto-barra));
+  }
+
+  /* -- Controles ------------------------------------------------------ */
+
+  /* Los botones se achican para que entren de a dos por renglón y dejen de
+     comerse el ancho de la fila. Siguen midiendo 34 px de alto, que es una
+     superficie cómoda para el dedo. */
+  .boton,
+  .boton-plano {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 11.5px;
+  }
+
+  .boton-chico {
+    height: 29px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  /* -- Filas de las listas -------------------------------------------- */
+
+  /* La fila pasa a dos renglones: el código arriba y el nombre abajo. Antes
+     el nombre se escondía y la fila quedaba en un código suelto, que no dice
+     de qué se trata sin abrirla. */
+  .fila-linea {
+    min-height: 64px;
+    padding: 9px 12px 9px 14px;
+    gap: 10px;
+  }
+
+  .fila-linea::before {
+    left: 5px;
+    height: 29px;
+  }
+
+  .fila-accion {
+    min-width: 0;
+  }
+
+  /* La fila crece a tres renglones —título, resumen y marcas— en vez de
+     apretar todo en uno. Los chips como EMERGENCIA no se pueden encoger ni
+     cortar, así que en un solo renglón terminaban saliéndose de la fila;
+     abajo entran siempre, sin importar cuántos sean ni qué largo tengan. */
+  .fila-cabezal {
+    display: grid;
+    padding: 6px 0;
+    align-items: center;
+    gap: 2px 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "titulo  chevron"
+      "resumen chevron"
+      "marcas  chevron";
+  }
+
+  .fila-titulo {
+    max-width: none;
+    min-width: 0;
+    grid-area: titulo;
+  }
+
+  .fila-resumen {
+    display: block;
+    grid-area: resumen;
+    font-size: 11.5px;
+  }
+
+  /* Acá sí es una caja, y flexible: si hay más de un chip se acomodan y, si no
+     entran, pasan al renglón siguiente en vez de desbordar. */
+  .fila-marcas {
+    display: flex;
+    min-width: 0;
+    margin-top: 3px;
+    flex-wrap: wrap;
+    gap: 5px;
+    grid-area: marcas;
+  }
+
+  .fila-chevron {
+    align-self: center;
+    grid-area: chevron;
+  }
+
+  /* Un poco más chicos: son una marca, no un botón, y con tres renglones ya
+     no necesitan pelear por el espacio. */
+  .fila-cabezal .chip {
+    height: 20px;
+    padding: 0 7px;
+    font-size: 9px;
+  }
+
+  .fila-detalle {
+    margin: 0 14px;
+    grid-template-columns: 1fr;
+  }
+
+  /* Los botones del pie se reparten el renglón: quedan alineados con los
+     bordes de la fila en vez de amontonados a la izquierda. Crecen pero no se
+     encogen —hay pies de hasta seis botones, como el de usuarios— así que
+     cuando no entran pasan al renglón siguiente en vez de aplastarse. */
+  .fila-pie {
+    margin: 0 14px;
+  }
+
+  .fila-pie .boton,
+  .fila-pie .boton-plano {
+    flex: 1 0 auto;
+  }
+
+  /* -- Arrastre entre módulos ----------------------------------------- */
+
+  .pista-modulos {
+    position: relative;
+    display: block;
+    /* clip y no hidden: recorta lo que asoma al costado sin convertirse en un
+       contenedor de scroll, que se comería el scroll vertical de la página. */
+    overflow-x: clip;
+  }
+
+  /* El transform solo mientras dura el gesto. En reposo la pista tiene que
+     quedar sin él: con transform puesto pasa a ser el bloque contenedor de
+     todo lo que tenga adentro en position fixed, y los modales quedarían
+     recortados dentro de la pista en vez de ocupar la pantalla. */
+  .pista-modulos[data-activa="si"] {
+    transform: translate3d(var(--desliz, 0px), 0, 0);
+    transition: transform 300ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+
+  /* Con el dedo apoyado no hay transición: la pantalla va exactamente donde
+     está el dedo, sin ir atrás. */
+  .pista-modulos[data-arrastrando="si"] {
+    transition: none;
+  }
+
+  /* El módulo de al lado, esperando fuera de cuadro. Aparece a medida que el
+     contenido se corre, así se ve a dónde lleva el gesto antes de soltar. */
+  .adelanto-modulo {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: block;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  .adelanto-modulo[data-lado="anterior"] {
+    right: 100%;
+  }
+
+  .adelanto-modulo[data-lado="siguiente"] {
+    left: 100%;
+  }
+
+  /* Pegado a la mitad de la pantalla: la pista mide todo lo que mida la
+     página, y sin esto el rótulo caería en cualquier lado según el scroll. */
+  .adelanto-marca {
+    position: sticky;
+    top: calc(50dvh - 34px);
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    color: var(--color-senal);
+    opacity: 0.7;
+  }
+
+  .adelanto-etiqueta {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* Entrada del módulo nuevo, por el mismo lado por el que salió el anterior.
+     Dura lo mismo que ENTRADA_MS en el marco. */
+  .pista-modulos[data-entrando="siguiente"] .contenido-panel {
+    animation: entra-modulo-siguiente 300ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+
+  .pista-modulos[data-entrando="anterior"] .contenido-panel {
+    animation: entra-modulo-anterior 300ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+}
+
+@keyframes entra-modulo-siguiente {
+  from {
+    opacity: 0.4;
+    transform: translateX(24%);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes entra-modulo-anterior {
+  from {
+    opacity: 0.4;
+    transform: translateX(-24%);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Con ocho módulos y menos de 360 px el rótulo ya no se lee. Quedan los
+   íconos —se sigue viendo cuál es el activo por el fondo dorado— pero el
+   nombre no se borra del DOM, solo de la vista, así el lector de pantalla
+   sigue anunciando cada enlace. */
+@media (max-width: 359px) {
+  .barra-inferior-etiqueta {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -696,11 +2045,26 @@ textarea:focus-visible {
   }
 
   .panel-kpi {
-    min-height: 126px;
+    min-height: 110px;
     padding: 15px;
   }
 
   .kpi-valor {
-    font-size: 36px;
+    font-size: 44px;
+  }
+}
+
+/* Va al final a propósito: tiene la misma especificidad que las reglas de
+   arrastre de la consulta de angosto, así que solo gana si aparece después.
+   El gesto sigue funcionando y cambiando de módulo; lo que se apaga es el
+   deslizamiento y la entrada animada. */
+@media (prefers-reduced-motion: reduce) {
+  .pista-modulos[data-activa="si"] {
+    transition: none;
+  }
+
+  .pista-modulos[data-entrando="siguiente"] .contenido-panel,
+  .pista-modulos[data-entrando="anterior"] .contenido-panel {
+    animation: none;
   }
 }

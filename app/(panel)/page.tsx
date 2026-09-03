@@ -2,12 +2,14 @@
 // Tablero operativo. El rol EMPLEADO ve únicamente su área.
 // El uso de cookies() en getSesion() ya obliga a render dinámico.
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSesion } from "@/lib/auth";
 import { revisarNodosCaidos } from "@/lib/alertas";
 import { db } from "@/lib/db";
 import { entero, fechaHora, numero, SIN_DATO } from "@/lib/formato";
 import type { Area, Lectura, NivelEstado } from "@/lib/tipos";
+import { Chip, Dato, FilaDesplegable, Lista } from "./componentes/lista";
 
 /** Una lectura vieja no sirve para decidir: se marca como advertencia. */
 const MINUTOS_LECTURA_VIGENTE = 30;
@@ -129,12 +131,10 @@ function Indicador({
   rotulo,
   valor,
   nivel,
-  detalle,
 }: {
   rotulo: string;
   valor: number;
   nivel: NivelEstado;
-  detalle: string;
 }) {
   return (
     <div className="panel panel-kpi" data-nivel={nivel}>
@@ -143,7 +143,6 @@ function Indicador({
         <span className="kpi-marca" aria-hidden="true" />
       </div>
       <div className="kpi-valor">{entero(valor)}</div>
-      <div className="kpi-detalle">{detalle}</div>
     </div>
   );
 }
@@ -212,120 +211,83 @@ export default async function PaginaTablero() {
           rotulo="Llamados no atendidos"
           valor={noAtendidos}
           nivel={noAtendidos > 0 ? "ADVERTENCIA" : "NORMAL"}
-          detalle={noAtendidos > 0 ? "Requieren seguimiento" : "Sin tareas pendientes"}
         />
         <Indicador
           rotulo="Emergencias abiertas"
           valor={emergenciasAbiertas}
           nivel={emergenciasAbiertas > 0 ? "EMERGENCIA" : "NORMAL"}
-          detalle={emergenciasAbiertas > 0 ? "Atención prioritaria" : "Entorno estable"}
         />
         <Indicador
           rotulo="Áreas con alerta"
           valor={areasEnAlerta}
           nivel={areasEnAlerta > 0 ? "ADVERTENCIA" : "NORMAL"}
-          detalle={areasEnAlerta > 0 ? "Fuera del rango esperado" : "Todas dentro de rango"}
         />
         <Indicador
           rotulo="Lecturas última hora"
           valor={lecturasHora}
           nivel={lecturasHora === 0 ? "ADVERTENCIA" : "NORMAL"}
-          detalle={lecturasHora === 0 ? "Sin datos recientes" : "Sensores reportando"}
         />
       </div>
 
-      <section className="panel overflow-x-auto">
+      <div>
         <div className="cabecera-seccion">
           <span className="titulo-seccion">Última lectura por área</span>
           <span className="rotulo">{filas.length} áreas</span>
         </div>
 
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Estado</th>
-              <th>Código</th>
-              <th>Área</th>
-              <th>Tipo</th>
-              <th className="col-num">Temp. °C</th>
-              <th className="col-num">Rango temp.</th>
-              <th className="col-num">Hum. %</th>
-              <th className="col-num">Rango hum.</th>
-              <th>Tomada</th>
-              <th>Dispositivo</th>
-              <th>Observación</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filas.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="text-tenue">
-                  No hay áreas activas para mostrar.
-                </td>
-              </tr>
-            ) : (
-              filas.map(({ area, lectura, nivel, motivo }) => (
-                <tr key={area.id}>
-                  <td>
-                    <span className="punto" data-nivel={nivel} />
-                    <span
-                      className={
-                        nivel === "EMERGENCIA"
-                          ? "text-emergencia"
-                          : nivel === "ADVERTENCIA"
-                            ? "text-advertencia"
-                            : "text-tenue"
-                      }
-                    >
-                      {nivel}
+        <Lista
+          hayFilas={filas.length > 0}
+          vacio="No hay áreas activas para mostrar."
+        >
+          {filas.map(({ area, lectura, nivel, motivo }) => (
+            <FilaDesplegable
+              key={area.id}
+              clave={String(area.id)}
+              nivel={nivel}
+              accion={
+                <Link
+                  href={`/llamados?area=${area.id}`}
+                  className="boton-plano boton-chico"
+                >
+                  Llamados
+                </Link>
+              }
+              titulo={area.codigo}
+              marcas={nivel === "NORMAL" ? null : <Chip texto={nivel} nivel={nivel} />}
+              resumen={`${numero(lectura?.temperatura ?? null)} °C · ${numero(lectura?.humedad ?? null)} %`}
+              detalle={
+                <>
+                  <Dato rotulo="Área">{area.nombre}</Dato>
+                  <Dato rotulo="Tipo">{area.tipo}</Dato>
+                  <Dato rotulo="Observación">{motivo}</Dato>
+                  <Dato rotulo="Temperatura">
+                    {numero(lectura?.temperatura ?? null)} °C
+                    <span className="text-tenue">
+                      {" "}
+                      (rango {numero(area.temp_min, 0)} –{" "}
+                      {numero(area.temp_max, 0)})
                     </span>
-                  </td>
-                  <td className="text-texto">{area.codigo}</td>
-                  <td>{area.nombre}</td>
-                  <td className="text-tenue">{area.tipo}</td>
-                  <td
-                    className={`col-num ${
-                      fueraDeRango(
-                        lectura?.temperatura ?? null,
-                        area.temp_min,
-                        area.temp_max,
-                      )
-                        ? "text-advertencia"
-                        : ""
-                    }`}
-                  >
-                    {numero(lectura?.temperatura ?? null)}
-                  </td>
-                  <td className="col-num text-tenue">
-                    {numero(area.temp_min, 0)} – {numero(area.temp_max, 0)}
-                  </td>
-                  <td
-                    className={`col-num ${
-                      fueraDeRango(
-                        lectura?.humedad ?? null,
-                        area.hum_min,
-                        area.hum_max,
-                      )
-                        ? "text-advertencia"
-                        : ""
-                    }`}
-                  >
-                    {numero(lectura?.humedad ?? null)}
-                  </td>
-                  <td className="col-num text-tenue">
-                    {numero(area.hum_min, 0)} – {numero(area.hum_max, 0)}
-                  </td>
-                  <td>{fechaHora(lectura?.tomada_en ?? null)}</td>
-                  <td className="text-tenue">
+                  </Dato>
+                  <Dato rotulo="Humedad">
+                    {numero(lectura?.humedad ?? null)} %
+                    <span className="text-tenue">
+                      {" "}
+                      (rango {numero(area.hum_min, 0)} –{" "}
+                      {numero(area.hum_max, 0)})
+                    </span>
+                  </Dato>
+                  <Dato rotulo="Tomada">
+                    {fechaHora(lectura?.tomada_en ?? null)}
+                  </Dato>
+                  <Dato rotulo="Dispositivo">
                     {lectura?.dispositivo ?? SIN_DATO}
-                  </td>
-                  <td className="text-tenue">{motivo}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+                  </Dato>
+                </>
+              }
+            />
+          ))}
+        </Lista>
+      </div>
     </div>
   );
 }

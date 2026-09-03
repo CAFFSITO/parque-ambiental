@@ -1,23 +1,30 @@
 "use client";
 
 // app/(panel)/empleados/gestor.tsx
-// Listado con filtros y buscador + ficha completa en panel lateral.
+// Lista compacta con filtros y buscador + ficha completa en diálogo centrado.
 // Los filtros trabajan en memoria sobre la nómina ya cargada.
+//
+// Área, tarea y turno son selecciones múltiples: un empleado puede cubrir más
+// de un área, hacer más de una tarea y rotar por más de un turno.
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ESTADOS_EMPLEADO,
   nombreTurno,
-  TAREAS,
+  normalizarOpcion,
   TURNOS,
   type EstadoEmpleado,
 } from "@/lib/catalogos";
 import { fechaCorta, SIN_DATO } from "@/lib/formato";
 import type { Area, Empleado } from "@/lib/tipos";
-import { Aviso, Campo, Etiqueta } from "../componentes/campos";
-import { ConfirmarModal } from "../componentes/modal";
-import { PanelLateral } from "../componentes/panel-lateral";
+import { Aviso, Campo } from "../componentes/campos";
+import { Desplegable } from "../componentes/desplegable";
+import { Icono } from "../componentes/iconos";
+import { CampoFecha } from "../componentes/fecha";
+import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
+import { ConfirmarModal, ModalFicha } from "../componentes/modal";
+import { Selector, type OpcionSelector } from "../componentes/selector";
 import {
   actualizarEmpleado,
   cambiarEstadoEmpleado,
@@ -37,13 +44,33 @@ const FICHA_VACIA: Ficha = {
   telefono: "",
   email: "",
   domicilio: "",
-  area_id: null,
-  tarea: "",
-  turno: "M",
+  areas_ids: [],
+  tareas: [],
+  turnos: [],
   fecha_ingreso: "",
   estado: "activo",
   observaciones: "",
 };
+
+/**
+ * Los arreglos son la fuente de verdad, pero una ficha guardada antes de la
+ * migración solo tiene el valor único. Estos tres lectores devuelven siempre
+ * la lista completa, venga de donde venga.
+ */
+function areasDe(empleado: Empleado): number[] {
+  if (empleado.areas_ids?.length) return empleado.areas_ids;
+  return empleado.area_id === null ? [] : [empleado.area_id];
+}
+
+function tareasDe(empleado: Empleado): string[] {
+  if (empleado.tareas?.length) return empleado.tareas;
+  return empleado.tarea ? [empleado.tarea] : [];
+}
+
+function turnosDe(empleado: Empleado): string[] {
+  if (empleado.turnos?.length) return empleado.turnos;
+  return empleado.turno ? [empleado.turno] : [];
+}
 
 function aFicha(empleado: Empleado): Ficha {
   return {
@@ -56,9 +83,9 @@ function aFicha(empleado: Empleado): Ficha {
     telefono: empleado.telefono ?? "",
     email: empleado.email ?? "",
     domicilio: empleado.domicilio ?? "",
-    area_id: empleado.area_id,
-    tarea: empleado.tarea ?? "",
-    turno: empleado.turno ?? "",
+    areas_ids: areasDe(empleado),
+    tareas: tareasDe(empleado),
+    turnos: turnosDe(empleado),
     fecha_ingreso: empleado.fecha_ingreso ?? "",
     estado: empleado.estado,
     observaciones: empleado.observaciones ?? "",
@@ -67,18 +94,22 @@ function aFicha(empleado: Empleado): Ficha {
 
 function nivelDeEstado(
   estado: string,
-): "NORMAL" | "ADVERTENCIA" | "EMERGENCIA" | "NEUTRO" {
+): "NORMAL" | "ADVERTENCIA" | "EMERGENCIA" | "NINGUNO" {
   if (estado === "activo") return "NORMAL";
   if (estado === "licencia") return "ADVERTENCIA";
-  return "NEUTRO";
+  return "NINGUNO";
 }
 
 export function GestorEmpleados({
   empleados,
   areas,
+  tareasDisponibles,
+  turnosGuardados,
 }: {
   empleados: Empleado[];
   areas: Area[];
+  tareasDisponibles: string[];
+  turnosGuardados: string[];
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
@@ -94,15 +125,58 @@ export function GestorEmpleados({
 
   const nombrePorArea = useMemo(() => {
     const mapa = new Map<number, string>();
-    for (const area of areas) mapa.set(area.id, `${area.codigo} — ${area.nombre}`);
+    for (const area of areas) {
+      mapa.set(area.id, `${area.codigo} — ${area.nombre}`);
+    }
     return mapa;
   }, [areas]);
+
+  const codigoPorArea = useMemo(() => {
+    const mapa = new Map<number, string>();
+    for (const area of areas) mapa.set(area.id, area.codigo);
+    return mapa;
+  }, [areas]);
+
+  const opcionesArea = useMemo<OpcionSelector[]>(
+    () =>
+      areas.map((area) => ({
+        valor: String(area.id),
+        etiqueta: `${area.codigo} — ${area.nombre}`,
+      })),
+    [areas],
+  );
+
+  const opcionesTarea = useMemo<OpcionSelector[]>(
+    () => tareasDisponibles.map((tarea) => ({ valor: tarea, etiqueta: tarea })),
+    [tareasDisponibles],
+  );
+
+  // Los tres turnos históricos se guardan por código y se muestran con nombre.
+  // Uno creado a mano vale por su propio texto.
+  const opcionesTurno = useMemo<OpcionSelector[]>(() => {
+    const mapa = new Map<string, OpcionSelector>();
+    for (const turno of TURNOS) {
+      mapa.set(turno.codigo, {
+        valor: turno.codigo,
+        etiqueta: `${turno.codigo} — ${turno.nombre}`,
+      });
+    }
+    for (const guardado of turnosGuardados) {
+      const valor = normalizarOpcion(guardado);
+      if (valor === "" || mapa.has(valor)) continue;
+      mapa.set(valor, { valor, etiqueta: valor });
+    }
+    return [...mapa.values()];
+  }, [turnosGuardados]);
 
   const visibles = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
     return empleados.filter((empleado) => {
-      if (filtroArea !== "" && String(empleado.area_id ?? "") !== filtroArea) {
+      if (
+        filtroArea !== "" &&
+        !areasDe(empleado).some((id) => String(id) === filtroArea)
+      ) {
         return false;
       }
       if (filtroEstado !== "" && empleado.estado !== filtroEstado) return false;
@@ -166,10 +240,25 @@ export function GestorEmpleados({
     });
   }
 
+  /** Texto corto para la fila cerrada: códigos de área y turnos. */
+  function resumenDe(empleado: Empleado): string {
+    const codigos = areasDe(empleado)
+      .map((id) => codigoPorArea.get(id) ?? SIN_DATO)
+      .join(" · ");
+    const turnos = turnosDe(empleado).map(nombreTurno).join(" · ");
+
+    return [empleado.legajo, codigos || SIN_DATO, turnos]
+      .filter((parte) => parte !== "")
+      .join("  ·  ");
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between border-b border-borde pb-2">
-        <h1 className="text-[15px] font-semibold text-texto">Empleados</h1>
+        <h1 className="titulo-modulo">
+          <Icono nombre="empleados" tamano={18} />
+          Empleados
+        </h1>
         <div className="flex items-center gap-3">
           <span className="rotulo">
             {visibles.length} de {empleados.length}
@@ -195,37 +284,35 @@ export function GestorEmpleados({
 
         <div className="w-[240px]">
           <Campo etiqueta="Área" htmlFor="filtro-area">
-            <select
+            <Desplegable
               id="filtro-area"
-              className="campo"
-              value={filtroArea}
-              onChange={(e) => setFiltroArea(e.target.value)}
-            >
-              <option value="">Todas</option>
-              {areas.map((area) => (
-                <option key={area.id} value={String(area.id)}>
-                  {area.codigo} — {area.nombre}
-                </option>
-              ))}
-            </select>
+              valor={filtroArea}
+              opciones={[
+                { valor: "", etiqueta: "Todas" },
+                ...areas.map((area) => ({
+                  valor: String(area.id),
+                  etiqueta: `${area.codigo} — ${area.nombre}`,
+                })),
+              ]}
+              alCambiar={setFiltroArea}
+            />
           </Campo>
         </div>
 
         <div className="w-[150px]">
           <Campo etiqueta="Estado" htmlFor="filtro-estado">
-            <select
+            <Desplegable
               id="filtro-estado"
-              className="campo"
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {ESTADOS_EMPLEADO.map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
+              valor={filtroEstado}
+              opciones={[
+                { valor: "", etiqueta: "Todos" },
+                ...ESTADOS_EMPLEADO.map((estado) => ({
+                  valor: estado,
+                  etiqueta: estado,
+                })),
+              ]}
+              alCambiar={setFiltroEstado}
+            />
           </Campo>
         </div>
 
@@ -255,87 +342,108 @@ export function GestorEmpleados({
         </div>
       ) : null}
 
-      <section className="panel overflow-x-auto">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Legajo</th>
-              <th>Apellido y nombre</th>
-              <th className="col-num">DNI</th>
-              <th>Área</th>
-              <th>Tarea</th>
-              <th>Turno</th>
-              <th>Estado</th>
-              <th>Ingreso</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="text-tenue">
-                  Ningún empleado coincide con el filtro.
-                </td>
-              </tr>
-            ) : (
-              visibles.map((empleado) => (
-                <tr
-                  key={empleado.id}
-                  data-baja={empleado.estado === "baja" ? "si" : "no"}
+      <Lista
+        hayFilas={visibles.length > 0}
+        vacio="Ningún empleado coincide con el filtro."
+      >
+        {visibles.map((empleado) => {
+          const propias = areasDe(empleado);
+          const tareas = tareasDe(empleado);
+          const turnos = turnosDe(empleado);
+
+          return (
+            <FilaDesplegable
+              key={empleado.id}
+              clave={String(empleado.id)}
+              nivel={nivelDeEstado(empleado.estado)}
+              tenue={empleado.estado === "baja"}
+              accion={
+                <button
+                  type="button"
+                  className="boton boton-chico"
+                  onClick={() => abrirEdicion(empleado)}
                 >
-                  <td className="text-texto">{empleado.legajo}</td>
-                  <td>
-                    {empleado.apellido}, {empleado.nombre}
-                  </td>
-                  <td className="col-num">{empleado.dni}</td>
-                  <td className="text-tenue">
-                    {empleado.area_id === null
+                  Ficha
+                </button>
+              }
+              titulo={`${empleado.apellido}, ${empleado.nombre}`}
+              marcas={
+                empleado.estado === "activo" ? null : (
+                  <Chip
+                    texto={empleado.estado}
+                    nivel={nivelDeEstado(empleado.estado)}
+                  />
+                )
+              }
+              resumen={resumenDe(empleado)}
+              detalle={
+                <>
+                  <Dato rotulo="Legajo">{empleado.legajo}</Dato>
+                  <Dato rotulo="DNI">{empleado.dni}</Dato>
+                  <Dato rotulo="Fecha de nacimiento">
+                    {fechaCorta(empleado.fecha_nacimiento)}
+                  </Dato>
+                  <Dato rotulo="Teléfono">{empleado.telefono ?? SIN_DATO}</Dato>
+                  <Dato rotulo="Email">{empleado.email ?? SIN_DATO}</Dato>
+                  <Dato rotulo="Domicilio">
+                    {empleado.domicilio ?? SIN_DATO}
+                  </Dato>
+                  <Dato rotulo="Áreas">
+                    {propias.length === 0
                       ? SIN_DATO
-                      : (nombrePorArea.get(empleado.area_id) ?? SIN_DATO)}
-                  </td>
-                  <td className="text-tenue">{empleado.tarea ?? SIN_DATO}</td>
-                  <td className="text-tenue">{nombreTurno(empleado.turno)}</td>
-                  <td>
-                    <Etiqueta
-                      texto={empleado.estado}
-                      nivel={nivelDeEstado(empleado.estado)}
-                    />
-                  </td>
-                  <td>{fechaCorta(empleado.fecha_ingreso)}</td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="boton-plano"
-                        onClick={() => abrirEdicion(empleado)}
-                      >
-                        Ficha
-                      </button>
-                      <button
-                        type="button"
-                        className="boton-plano"
-                        onClick={() => setABajar(empleado)}
-                      >
-                        {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+                      : propias
+                          .map((id) => nombrePorArea.get(id) ?? SIN_DATO)
+                          .join(" · ")}
+                  </Dato>
+                  <Dato rotulo="Tareas">
+                    {tareas.length === 0 ? SIN_DATO : tareas.join(" · ")}
+                  </Dato>
+                  <Dato rotulo="Turnos">
+                    {turnos.length === 0
+                      ? SIN_DATO
+                      : turnos.map(nombreTurno).join(" · ")}
+                  </Dato>
+                  <Dato rotulo="Ingreso">
+                    {fechaCorta(empleado.fecha_ingreso)}
+                  </Dato>
+                  <Dato rotulo="Estado">{empleado.estado}</Dato>
+                  <Dato rotulo="Observaciones" ancho>
+                    {empleado.observaciones ?? SIN_DATO}
+                  </Dato>
+                </>
+              }
+              pie={
+                <>
+                  <button
+                    type="button"
+                    className="boton-plano"
+                    onClick={() => abrirEdicion(empleado)}
+                  >
+                    Abrir la ficha
+                  </button>
+                  <button
+                    type="button"
+                    className="boton-plano"
+                    onClick={() => setABajar(empleado)}
+                  >
+                    {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
+                  </button>
+                </>
+              }
+            />
+          );
+        })}
+      </Lista>
 
       {ficha ? (
-        <PanelLateral
+        <ModalFicha
           titulo={ficha.id === null ? "Nuevo empleado" : "Ficha del empleado"}
           subtitulo={
             ficha.id === null
               ? undefined
               : `${ficha.legajo} · ${ficha.apellido}, ${ficha.nombre}`
           }
-          ancho={480}
+          ancho={640}
           alCerrar={() => setFicha(null)}
           pie={
             <>
@@ -373,7 +481,11 @@ export function GestorEmpleados({
                 />
               </Campo>
 
-              <Campo etiqueta="DNI" htmlFor="dni" ayuda="7 u 8 dígitos, sin puntos">
+              <Campo
+                etiqueta="DNI"
+                htmlFor="dni"
+                ayuda="7 u 8 dígitos, sin puntos"
+              >
                 <input
                   id="dni"
                   className="campo"
@@ -404,12 +516,10 @@ export function GestorEmpleados({
               </Campo>
 
               <Campo etiqueta="Fecha de nacimiento" htmlFor="fecha_nacimiento">
-                <input
+                <CampoFecha
                   id="fecha_nacimiento"
-                  type="date"
-                  className="campo"
-                  value={ficha.fecha_nacimiento}
-                  onChange={(e) => editar("fecha_nacimiento", e.target.value)}
+                  valor={ficha.fecha_nacimiento}
+                  alCambiar={(valor) => editar("fecha_nacimiento", valor)}
                 />
               </Campo>
 
@@ -442,67 +552,61 @@ export function GestorEmpleados({
               />
             </Campo>
 
-            <div className="grid grid-cols-2 gap-3 border-t border-borde pt-3">
-              <Campo etiqueta="Área" htmlFor="area">
-                <select
-                  id="area"
-                  className="campo"
-                  value={ficha.area_id === null ? "" : String(ficha.area_id)}
-                  onChange={(e) =>
-                    editar(
-                      "area_id",
-                      e.target.value === "" ? null : Number(e.target.value),
-                    )
+            <div className="flex flex-col gap-3 border-t border-borde pt-3">
+              <Campo
+                etiqueta="Áreas"
+                htmlFor="areas"
+                ayuda="Se pueden asignar varias. La primera es la que hereda el usuario del sistema."
+              >
+                <Selector
+                  id="areas"
+                  multiple
+                  rotuloMenu="Áreas del parque"
+                  opciones={opcionesArea}
+                  valores={ficha.areas_ids.map(String)}
+                  alCambiar={(valores) =>
+                    editar("areas_ids", valores.map(Number))
                   }
-                >
-                  <option value="">Sin asignar</option>
-                  {areas.map((area) => (
-                    <option key={area.id} value={String(area.id)}>
-                      {area.codigo} — {area.nombre}
-                    </option>
-                  ))}
-                </select>
+                />
               </Campo>
 
-              <Campo etiqueta="Tarea" htmlFor="tarea">
-                <select
-                  id="tarea"
-                  className="campo"
-                  value={ficha.tarea}
-                  onChange={(e) => editar("tarea", e.target.value)}
-                >
-                  <option value="">Sin asignar</option>
-                  {TAREAS.map((tarea) => (
-                    <option key={tarea} value={tarea}>
-                      {tarea}
-                    </option>
-                  ))}
-                </select>
+              <Campo
+                etiqueta="Tareas"
+                htmlFor="tareas"
+                ayuda="Elegí las que ya existen o escribí una nueva y apretá Enter."
+              >
+                <Selector
+                  id="tareas"
+                  multiple
+                  creable
+                  rotuloMenu="Tareas"
+                  opciones={opcionesTarea}
+                  valores={ficha.tareas}
+                  alCambiar={(valores) => editar("tareas", valores)}
+                />
               </Campo>
 
-              <Campo etiqueta="Turno" htmlFor="turno">
-                <select
-                  id="turno"
-                  className="campo"
-                  value={ficha.turno}
-                  onChange={(e) => editar("turno", e.target.value)}
-                >
-                  <option value="">Sin asignar</option>
-                  {TURNOS.map((turno) => (
-                    <option key={turno.codigo} value={turno.codigo}>
-                      {turno.codigo} — {turno.nombre}
-                    </option>
-                  ))}
-                </select>
+              <Campo
+                etiqueta="Turnos"
+                htmlFor="turnos"
+                ayuda="Elegí los que ya existen o escribí uno nuevo y apretá Enter."
+              >
+                <Selector
+                  id="turnos"
+                  multiple
+                  creable
+                  rotuloMenu="Turnos"
+                  opciones={opcionesTurno}
+                  valores={ficha.turnos}
+                  alCambiar={(valores) => editar("turnos", valores)}
+                />
               </Campo>
 
               <Campo etiqueta="Fecha de ingreso" htmlFor="fecha_ingreso">
-                <input
+                <CampoFecha
                   id="fecha_ingreso"
-                  type="date"
-                  className="campo"
-                  value={ficha.fecha_ingreso}
-                  onChange={(e) => editar("fecha_ingreso", e.target.value)}
+                  valor={ficha.fecha_ingreso}
+                  alCambiar={(valor) => editar("fecha_ingreso", valor)}
                 />
               </Campo>
             </div>
@@ -512,18 +616,15 @@ export function GestorEmpleados({
               htmlFor="estado"
               ayuda="La baja es lógica: la ficha y su historial quedan en la base."
             >
-              <select
+              <Desplegable
                 id="estado"
-                className="campo"
-                value={ficha.estado}
-                onChange={(e) => editar("estado", e.target.value)}
-              >
-                {ESTADOS_EMPLEADO.map((estado) => (
-                  <option key={estado} value={estado}>
-                    {estado}
-                  </option>
-                ))}
-              </select>
+                valor={ficha.estado}
+                opciones={ESTADOS_EMPLEADO.map((estado) => ({
+                  valor: estado,
+                  etiqueta: estado,
+                }))}
+                alCambiar={(valor) => editar("estado", valor)}
+              />
             </Campo>
 
             <Campo etiqueta="Observaciones" htmlFor="observaciones">
@@ -536,7 +637,7 @@ export function GestorEmpleados({
               />
             </Campo>
           </div>
-        </PanelLateral>
+        </ModalFicha>
       ) : null}
 
       {aBajar ? (

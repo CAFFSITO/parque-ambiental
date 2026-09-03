@@ -30,9 +30,15 @@ export type Empleado = {
   telefono: string | null;
   email: string | null;
   domicilio: string | null;
+  // area_id, tarea y turno quedan como el valor principal (el primero de cada
+  // arreglo). Los consumen el tablero, los llamados y el área de los usuarios.
   area_id: number | null;
   tarea: string | null;
   turno: string | null;
+  // Selección múltiple real. Ver sql/04_multiseleccion.sql.
+  areas_ids: number[];
+  tareas: string[];
+  turnos: string[];
   fecha_ingreso: string | null;
   estado: string;
   observaciones: string | null;

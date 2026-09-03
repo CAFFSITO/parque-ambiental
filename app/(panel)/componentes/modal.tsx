@@ -1,59 +1,147 @@
 "use client";
 
 // app/(panel)/componentes/modal.tsx
-// Modal propio, con el estilo del panel. Reemplaza a alert() y confirm().
+// Diálogos propios, con el estilo del panel. Reemplazan a alert() y confirm().
+// Los tres flotan centrados sobre la pantalla: el velo apaga el fondo y el
+// cuadro entra con un rebote corto.
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-function useEscape(activo: boolean, alCerrar: () => void) {
+function useEscape(alCerrar: () => void) {
   useEffect(() => {
-    if (!activo) return;
     const manejar = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") alCerrar();
     };
     document.addEventListener("keydown", manejar);
     return () => document.removeEventListener("keydown", manejar);
-  }, [activo, alCerrar]);
+  }, [alCerrar]);
+}
+
+/**
+ * Mientras hay un diálogo abierto la página de atrás no se mueve, y al cerrarlo
+ * el foco vuelve al botón que lo abrió.
+ */
+function useFocoYScroll(dialogo: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const previo = document.activeElement as HTMLElement | null;
+    const scrollPrevio = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    dialogo.current?.focus();
+
+    return () => {
+      document.body.style.overflow = scrollPrevio;
+      previo?.focus?.();
+    };
+  }, [dialogo]);
+}
+
+/** Armazón compartido: velo, centrado, cabecera, cuerpo con scroll y pie. */
+function Dialogo({
+  titulo,
+  subtitulo,
+  children,
+  pie,
+  alCerrar,
+  ancho,
+}: {
+  titulo: string;
+  subtitulo?: string;
+  children: ReactNode;
+  pie?: ReactNode;
+  alCerrar: () => void;
+  ancho: number;
+}) {
+  const dialogo = useRef<HTMLDivElement>(null);
+
+  useEscape(alCerrar);
+  useFocoYScroll(dialogo);
+
+  return (
+    <div className="capa-modal">
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={alCerrar}
+        className="velo"
+      />
+
+      <div
+        ref={dialogo}
+        role="dialog"
+        aria-modal="true"
+        aria-label={titulo}
+        tabIndex={-1}
+        className="dialogo"
+        style={{ maxWidth: ancho }}
+      >
+        <header className="dialogo-cabecera">
+          <div>
+            <div className="dialogo-titulo">{titulo}</div>
+            {subtitulo ? (
+              <div className="dialogo-subtitulo">{subtitulo}</div>
+            ) : null}
+          </div>
+          <button type="button" onClick={alCerrar} className="boton-plano">
+            Cerrar
+          </button>
+        </header>
+
+        <div className="dialogo-cuerpo">{children}</div>
+
+        {pie ? <footer className="dialogo-pie">{pie}</footer> : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Ficha de alta y edición. Antes era un cajón pegado al borde derecho; ahora
+ * flota en el centro, que es donde ya está mirando quien apretó el botón.
+ */
+export function ModalFicha({
+  titulo,
+  subtitulo,
+  children,
+  pie,
+  alCerrar,
+  ancho = 560,
+}: {
+  titulo: string;
+  subtitulo?: string;
+  children: ReactNode;
+  pie: ReactNode;
+  alCerrar: () => void;
+  ancho?: number;
+}) {
+  return (
+    <Dialogo
+      titulo={titulo}
+      subtitulo={subtitulo}
+      pie={pie}
+      alCerrar={alCerrar}
+      ancho={ancho}
+    >
+      {children}
+    </Dialogo>
+  );
 }
 
 export function Modal({
   titulo,
   children,
   alCerrar,
-  ancho = 400,
+  ancho = 440,
 }: {
   titulo: string;
   children: ReactNode;
   alCerrar: () => void;
   ancho?: number;
 }) {
-  useEscape(true, alCerrar);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      <button
-        type="button"
-        aria-label="Cerrar"
-        onClick={alCerrar}
-        className="absolute inset-0 cursor-default bg-black/60"
-      />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titulo}
-        className="panel relative w-full"
-        style={{ maxWidth: ancho }}
-      >
-        <div className="flex items-center justify-between border-b border-borde px-3 py-2">
-          <span className="rotulo">{titulo}</span>
-          <button type="button" onClick={alCerrar} className="boton-plano">
-            Cerrar
-          </button>
-        </div>
-        <div className="p-3">{children}</div>
-      </div>
-    </div>
+    <Dialogo titulo={titulo} alCerrar={alCerrar} ancho={ancho}>
+      {children}
+    </Dialogo>
   );
 }
 
@@ -75,27 +163,32 @@ export function ConfirmarModal({
   alCancelar: () => void;
 }) {
   return (
-    <Modal titulo={titulo} alCerrar={alCancelar} ancho={380}>
+    <Dialogo
+      titulo={titulo}
+      alCerrar={alCancelar}
+      ancho={420}
+      pie={
+        <>
+          <button
+            type="button"
+            className="boton-plano"
+            onClick={alCancelar}
+            disabled={pendiente}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className={peligro ? "boton boton-peligro" : "boton"}
+            onClick={alConfirmar}
+            disabled={pendiente}
+          >
+            {pendiente ? "Aplicando…" : textoConfirmar}
+          </button>
+        </>
+      }
+    >
       <p className="text-texto">{mensaje}</p>
-
-      <div className="mt-4 flex items-center justify-end gap-2 border-t border-borde pt-3">
-        <button
-          type="button"
-          className="boton-plano"
-          onClick={alCancelar}
-          disabled={pendiente}
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          className={peligro ? "boton boton-peligro" : "boton"}
-          onClick={alConfirmar}
-          disabled={pendiente}
-        >
-          {pendiente ? "Aplicando…" : textoConfirmar}
-        </button>
-      </div>
-    </Modal>
+    </Dialogo>
   );
 }
