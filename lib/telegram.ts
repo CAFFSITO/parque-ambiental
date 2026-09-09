@@ -4,11 +4,10 @@
 // Dos reglas que no se negocian:
 //   1. Solo al CREAR. Las actualizaciones del antirrebote no avisan: si no,
 //      un nodo reportando cada pocos segundos inunda el grupo.
-//   2. Telegram nunca puede voltear un llamado. Todo va en try/catch y el
-//      envío se agenda con after(), así la respuesta al nodo no espera a la
-//      API de Telegram.
+//   2. Telegram nunca puede voltear un llamado. Todo va en try/catch, y quien
+//      llama agenda el envío con after() (ver lib/avisos.ts) para que la
+//      respuesta al nodo no espere a la API de Telegram.
 
-import { after } from "next/server";
 import { fechaHora } from "./formato";
 import type { TipoLlamado } from "./tipos";
 
@@ -95,18 +94,5 @@ export async function enviarAlerta(alerta: AlertaTelegram): Promise<boolean> {
     const motivo = fallo instanceof Error ? fallo.message : "desconocido";
     console.error(`[telegram] no se pudo avisar: ${motivo}`);
     return false;
-  }
-}
-
-/**
- * Agenda el aviso para después de responder. Si no hay contexto de request
- * (after() solo vive dentro de uno), cae a un envío suelto que igual se
- * atrapa. En ningún caso propaga el error a quien creó el llamado.
- */
-export function avisarEnSegundoPlano(alerta: AlertaTelegram): void {
-  try {
-    after(() => enviarAlerta(alerta));
-  } catch {
-    void enviarAlerta(alerta);
   }
 }

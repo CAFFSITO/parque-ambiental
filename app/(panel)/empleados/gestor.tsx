@@ -413,22 +413,13 @@ export function GestorEmpleados({
                 </>
               }
               pie={
-                <>
-                  <button
-                    type="button"
-                    className="boton-plano"
-                    onClick={() => abrirEdicion(empleado)}
-                  >
-                    Abrir la ficha
-                  </button>
-                  <button
-                    type="button"
-                    className="boton-plano"
-                    onClick={() => setABajar(empleado)}
-                  >
-                    {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className="boton-plano"
+                  onClick={() => setABajar(empleado)}
+                >
+                  {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
+                </button>
               }
             />
           );

@@ -14,7 +14,8 @@ export type NombreIcono =
   | "empleados"
   | "usuarios"
   | "dispositivos"
-  | "reportes";
+  | "reportes"
+  | "avisos";
 
 const TRAZOS: Record<NombreIcono, React.ReactNode> = {
   tablero: (
@@ -69,6 +70,15 @@ const TRAZOS: Record<NombreIcono, React.ReactNode> = {
     <>
       <path d="M3.5 20.5h17" />
       <path d="M7.5 20.5v-6M12 20.5v-11M16.5 20.5v-8" />
+    </>
+  ),
+  /* Ondas saliendo de un punto: el aviso que se emite, no la campana que ya
+     usa Llamados. */
+  avisos: (
+    <>
+      <circle cx="12" cy="12" r="1.9" />
+      <path d="M8.5 15.5a4.9 4.9 0 0 1 0-7M15.5 8.5a4.9 4.9 0 0 1 0 7" />
+      <path d="M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8" />
     </>
   ),
 };

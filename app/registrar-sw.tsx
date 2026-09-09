@@ -10,7 +10,12 @@ export default function RegistrarSW() {
     if (!("serviceWorker" in navigator)) return;
 
     try {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      // updateViaCache "none": el navegador vuelve a pedir el archivo en cada
+      // registro en vez de servir el suyo, así una versión nueva del worker
+      // —la que maneja los avisos push— entra sin esperar a que caduque.
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .catch(() => {});
     } catch {
       // Sin conexión, contexto no seguro o permisos denegados: se ignora.
     }

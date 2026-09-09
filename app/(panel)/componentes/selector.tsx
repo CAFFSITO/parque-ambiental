@@ -25,7 +25,13 @@ export type OpcionSelector = {
   etiqueta: string;
 };
 
-type Posicion = { top: number; left: number; width: number };
+type Posicion = {
+  top?: number;
+  bottom?: number;
+  left: number;
+  width: number;
+  alto: number;
+};
 
 /** Marcas diacríticas combinantes (bloque Unicode U+0300 a U+036F). */
 const MARCAS_DIACRITICAS = new RegExp("[\\u0300-\\u036f]", "g");
@@ -152,15 +158,18 @@ export function Selector({
     if (!nodo) return;
 
     const rect = nodo.getBoundingClientRect();
-    const abajo = window.innerHeight - rect.bottom;
-    const arriba = abajo < 180 && rect.top > abajo;
+    const abajo = window.innerHeight - rect.bottom - 8;
+    const encima = rect.top - 8;
+    const arriba = abajo < 180 && encima > abajo;
 
+    // Igual que en el Desplegable: hacia arriba se ancla el borde inferior,
+    // así el menú nace pegado al campo y no a media pantalla.
     setPosicion({
-      top: arriba
-        ? Math.max(8, rect.top - Math.min(264, rect.top - 8) - 6)
-        : rect.bottom + 6,
+      top: arriba ? undefined : rect.bottom + 6,
+      bottom: arriba ? window.innerHeight - rect.top + 6 : undefined,
       left: rect.left,
       width: rect.width,
+      alto: Math.max(120, Math.min(264, (arriba ? encima : abajo) - 6)),
     });
   }, []);
 
@@ -347,8 +356,10 @@ export function Selector({
           role="listbox"
           style={{
             top: posicion.top,
+            bottom: posicion.bottom,
             left: posicion.left,
             width: posicion.width,
+            maxHeight: posicion.alto,
           }}
           // Sostiene el foco en el input mientras se hace clic en una opción.
           onMouseDown={(evento) => evento.preventDefault()}

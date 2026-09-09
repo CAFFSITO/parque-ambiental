@@ -44,6 +44,7 @@ function Dialogo({
   pie,
   alCerrar,
   ancho,
+  cerrarEnCabecera = true,
 }: {
   titulo: string;
   subtitulo?: string;
@@ -51,6 +52,9 @@ function Dialogo({
   pie?: ReactNode;
   alCerrar: () => void;
   ancho: number;
+  /** El de confirmación ya tiene Cancelar en el pie: dos botones para lo
+      mismo, uno arriba y otro abajo, solo hacen dudar. */
+  cerrarEnCabecera?: boolean;
 }) {
   const dialogo = useRef<HTMLDivElement>(null);
 
@@ -82,9 +86,11 @@ function Dialogo({
               <div className="dialogo-subtitulo">{subtitulo}</div>
             ) : null}
           </div>
-          <button type="button" onClick={alCerrar} className="boton-plano">
-            Cerrar
-          </button>
+          {cerrarEnCabecera ? (
+            <button type="button" onClick={alCerrar} className="boton-plano">
+              Cerrar
+            </button>
+          ) : null}
         </header>
 
         <div className="dialogo-cuerpo">{children}</div>
@@ -167,6 +173,7 @@ export function ConfirmarModal({
       titulo={titulo}
       alCerrar={alCancelar}
       ancho={420}
+      cerrarEnCabecera={false}
       pie={
         <>
           <button

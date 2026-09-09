@@ -8,7 +8,7 @@ import type { Area } from "@/lib/tipos";
 import { GestorDispositivos } from "./gestor";
 
 export const metadata = {
-  title: "Dispositivos · Parque Ambiental Municipal de Berisso",
+  title: "Dispositivos · Parque Ambiental Municipal",
 };
 
 export default async function PaginaDispositivos() {

@@ -141,17 +141,25 @@ export function FilaDesplegable({
   );
 }
 
+/** `destacado` sube un escalón el peso del dato: se usa para el que tiene
+    que leerse primero dentro de la ficha abierta. */
 export function Dato({
   rotulo,
   children,
   ancho = false,
+  destacado = false,
 }: {
   rotulo: string;
   children: ReactNode;
   ancho?: boolean;
+  destacado?: boolean;
 }) {
+  const clases = ["dato"];
+  if (ancho) clases.push("dato-ancho");
+  if (destacado) clases.push("dato-destacado");
+
   return (
-    <div className={ancho ? "dato dato-ancho" : "dato"}>
+    <div className={clases.join(" ")}>
       <span className="dato-rotulo">{rotulo}</span>
       <span className="dato-valor">{children}</span>
     </div>

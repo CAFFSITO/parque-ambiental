@@ -8,7 +8,7 @@ import type { Area } from "@/lib/tipos";
 import { GestorAreas, type AreaConMetricas } from "./gestor";
 
 export const metadata = {
-  title: "Áreas · Parque Ambiental Municipal de Berisso",
+  title: "Áreas · Parque Ambiental Municipal",
 };
 
 function agrupar(filas: { area_id: number | null }[]): Map<number, number> {

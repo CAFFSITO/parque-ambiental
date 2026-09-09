@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { exigirSesion } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { LISTA_MOTIVOS } from "@/lib/catalogos";
-import { avisarEnSegundoPlano } from "@/lib/telegram";
+import { avisarNuevoLlamado } from "@/lib/avisos";
 import type { Resultado, TipoLlamado } from "@/lib/tipos";
 
 export type EntradaLlamado = {
@@ -81,6 +81,62 @@ export async function atenderLlamado(id: number): Promise<Resultado> {
   return { ok: true, mensaje: `Llamado #${id} atendido.` };
 }
 
+/**
+ * Deshace un "atendido" puesto por error: el llamado vuelve a NO_ATENDIDO y
+ * pierde la firma de quien lo había atendido. Rige el mismo candado de área
+ * que para atenderlo.
+ */
+export async function cancelarAtencion(id: number): Promise<Resultado> {
+  const sesion = await exigirSesion();
+
+  if (typeof id !== "number" || !Number.isInteger(id)) {
+    return { ok: false, error: "Identificador de llamado inválido." };
+  }
+
+  const { data: llamado, error: errorLectura } = await db()
+    .from("llamados")
+    .select("id, area_id, estado")
+    .eq("id", id)
+    .maybeSingle()
+    .overrideTypes<
+      { id: number; area_id: number | null; estado: string },
+      { merge: false }
+    >();
+
+  if (errorLectura || !llamado) {
+    return { ok: false, error: "El llamado no existe." };
+  }
+
+  if (sesion.rol === "EMPLEADO" && llamado.area_id !== sesion.area_id) {
+    return {
+      ok: false,
+      error: "No podés cambiar llamados de otra área.",
+    };
+  }
+
+  if (llamado.estado !== "ATENDIDO") {
+    return { ok: false, error: "Ese llamado no está atendido." };
+  }
+
+  const { error } = await db()
+    .from("llamados")
+    .update({
+      estado: "NO_ATENDIDO",
+      atendido_por: null,
+      atendido_en: null,
+    })
+    .eq("id", id)
+    // Si alguien más ya lo reabrió, este update no toca nada.
+    .eq("estado", "ATENDIDO");
+
+  if (error) {
+    return { ok: false, error: `No se pudo cancelar: ${error.message}` };
+  }
+
+  refrescar();
+  return { ok: true, mensaje: `Llamado #${id} vuelve a estar sin atender.` };
+}
+
 export async function crearLlamado(
   entrada: EntradaLlamado,
 ): Promise<Resultado> {
@@ -136,7 +192,7 @@ export async function crearLlamado(
     .maybeSingle()
     .overrideTypes<{ nombre: string }, { merge: false }>();
 
-  avisarEnSegundoPlano({
+  avisarNuevoLlamado({
     tipo,
     area: area?.nombre ?? `Área ${areaId}`,
     motivo,

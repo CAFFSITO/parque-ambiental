@@ -3,12 +3,11 @@
 // ítems dependen del rol.
 
 import type { ReactNode } from "react";
-import Image from "next/image";
 import { redirect } from "next/navigation";
-import marcaBerisso from "../marca-berisso.png";
 import { getSesion } from "@/lib/auth";
 import type { Rol } from "@/lib/tipos";
 import { cerrarSesion } from "./acciones";
+import { Marca } from "./componentes/marca";
 import { MarcoPanel } from "./marco";
 import type { ItemNav } from "./navegacion";
 
@@ -21,12 +20,14 @@ const NAV_ADMINISTRADOR: ItemNav[] = [
   { etiqueta: "Usuarios", href: "/usuarios", icono: "usuarios" },
   { etiqueta: "Dispositivos", href: "/dispositivos", icono: "dispositivos" },
   { etiqueta: "Reportes", href: "/reportes", icono: "reportes" },
+  { etiqueta: "Avisos", href: "/avisos", icono: "avisos" },
 ];
 
 const NAV_EMPLEADO: ItemNav[] = [
   { etiqueta: "Tablero", href: "/", icono: "tablero" },
   { etiqueta: "Llamados", href: "/llamados", icono: "llamados" },
   { etiqueta: "Móvil", href: "/movil", icono: "movil" },
+  { etiqueta: "Avisos", href: "/avisos", icono: "avisos" },
 ];
 
 function itemsPara(rol: Rol): ItemNav[] {
@@ -46,17 +47,10 @@ export default async function LayoutPanel({
       <header className="barra-superior">
         <div className="marca-panel">
           <span className="marca-sigla">
-            <Image
-              src={marcaBerisso}
-              alt="Municipalidad de Berisso"
-              width={22}
-              height={28}
-              priority
-            />
+            <Marca tamano={26} />
           </span>
           <span className="marca-texto">
             <span className="marca-titulo">Parque Ambiental</span>
-            <span className="marca-subtitulo">Municipalidad de Berisso</span>
           </span>
         </div>
 

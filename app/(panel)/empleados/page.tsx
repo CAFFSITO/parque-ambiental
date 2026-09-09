@@ -8,7 +8,7 @@ import type { Area, Empleado } from "@/lib/tipos";
 import { GestorEmpleados } from "./gestor";
 
 export const metadata = {
-  title: "Empleados · Parque Ambiental Municipal de Berisso",
+  title: "Empleados · Parque Ambiental Municipal",
 };
 
 /** Las opciones vigentes son el catálogo base más todo lo ya creado a mano. */

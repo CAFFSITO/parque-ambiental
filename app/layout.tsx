@@ -39,9 +39,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  title: "Parque Ambiental | Municipalidad de Berisso",
+  title: "Parque Ambiental",
   description:
-    "Gestión ambiental clara y conectada para el Parque Ambiental Municipal de Berisso.",
+    "Gestión ambiental clara y conectada para el Parque Ambiental Municipal.",
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/favicon-32.png",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     title: "Parque Ambiental",
   },
   openGraph: {
-    title: "Parque Ambiental | Municipalidad de Berisso",
+    title: "Parque Ambiental",
     description: "Gestión ambiental, clara y conectada.",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
     locale: "es_AR",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Parque Ambiental | Municipalidad de Berisso",
+    title: "Parque Ambiental",
     description: "Gestión ambiental, clara y conectada.",
     images: ["/og.png"],
   },

@@ -4,10 +4,11 @@
 
 import { redirect } from "next/navigation";
 import { getSesion } from "@/lib/auth";
+import { Marca } from "@/app/(panel)/componentes/marca";
 import { FormularioLogin } from "./formulario";
 
 export const metadata = {
-  title: "Gestión · Parque Ambiental Municipal de Berisso",
+  title: "Gestión · Parque Ambiental Municipal",
 };
 
 export default async function PaginaLogin(props: PageProps<"/login">) {
@@ -24,9 +25,11 @@ export default async function PaginaLogin(props: PageProps<"/login">) {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="panel w-full max-w-[340px] p-5">
-        <div className="mb-4 border-b border-borde pb-0">
-          <p className="rotulo">Municipalidad de Berisso</p>
-          <h1 className="mt-1.5 text-[17px] font-semibold text-texto">
+        <div className="mb-4 flex items-center gap-3 border-b border-borde pb-0">
+          <span className="marca-sigla">
+            <Marca tamano={24} />
+          </span>
+          <h1 className="text-[17px] font-semibold text-texto">
             Parque Ambiental Municipal
           </h1>
         </div>

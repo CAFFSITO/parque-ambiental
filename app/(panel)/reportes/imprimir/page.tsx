@@ -23,7 +23,7 @@ import { BotonImprimir } from "./boton-imprimir";
 import "./imprimir.css";
 
 export const metadata = {
-  title: "Reporte de llamados · Parque Ambiental Municipal de Berisso",
+  title: "Reporte de llamados · Parque Ambiental Municipal",
 };
 
 /** Tope de filas del detalle impreso: más que esto no es un reporte, es un log. */
@@ -102,9 +102,9 @@ export default async function PaginaImprimir(
       </div>
 
       <header className="hoja-encabezado">
-        <h1>Parque Ambiental Municipal de Berisso — Reporte de llamados</h1>
+        <h1>Parque Ambiental Municipal — Reporte de llamados</h1>
         <p style={{ marginTop: 4 }}>
-          Municipalidad de Berisso · Emitido el {emision} por {sesion.usuario}
+          Emitido el {emision} por {sesion.usuario}
         </p>
       </header>
 
@@ -213,7 +213,7 @@ export default async function PaginaImprimir(
           ? `Se imprimen los ${TOPE_DETALLE} llamados más recientes del filtro. Para el listado completo, exportá el CSV. `
           : ""}
         Documento generado por el sistema de gestión del Parque Ambiental
-        Municipal de Berisso.
+        Municipal.
       </footer>
     </div>
   );

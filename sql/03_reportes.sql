@@ -1,6 +1,6 @@
 -- =====================================================================
 -- sql/03_reportes.sql
--- Parque Ambiental Municipal de Berisso — funciones de agregación
+-- Parque Ambiental Municipal — funciones de agregación
 -- Pegar TERCERO en el SQL Editor de Supabase, después de 02_datos.sql.
 --
 -- Las agregaciones de la pantalla de Reportes se resuelven acá, en el motor.

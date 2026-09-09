@@ -7,7 +7,7 @@
 import { db } from "./db";
 import { MOTIVOS } from "./catalogos";
 import { fechaHora, numero } from "./formato";
-import { avisarEnSegundoPlano } from "./telegram";
+import { avisarNuevoLlamado } from "./avisos";
 import type { Area, OrigenLlamado, TipoLlamado } from "./tipos";
 
 /** Hasta acá el desvío es NORMAL; pasado esto, EMERGENCIA. */
@@ -177,8 +177,9 @@ export async function registrarLlamado(entrada: {
   if (error) return "error";
 
   // Solo acá se avisa: en la rama del antirrebote, no. Y se agenda para
-  // después de la respuesta, así el nodo no espera a Telegram.
-  avisarEnSegundoPlano({
+  // después de la respuesta, así el nodo no espera ni a Telegram ni al
+  // servicio de push.
+  avisarNuevoLlamado({
     tipo: entrada.tipo,
     area: entrada.areaNombre,
     motivo: entrada.motivo,

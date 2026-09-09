@@ -1,6 +1,6 @@
 -- =====================================================================
 -- sql/02_datos.sql
--- Parque Ambiental Municipal de Berisso — datos sembrados
+-- Parque Ambiental Municipal — datos sembrados
 -- Pegar SEGUNDO en el SQL Editor de Supabase, después de 01_esquema.sql.
 --
 -- Los hashes bcrypt de la tabla usuarios fueron generados con

@@ -97,6 +97,48 @@ textarea:focus-visible {
   color: var(--color-fondo);
 }
 
+/* Barra de desplazamiento propia: la del sistema es gris y con flechas, y en
+   los diálogos y menús del panel cantaba. Angosta, sin flechas, sin pista y
+   con el pulgar en el dorado de la marca. Firefox solo entiende las dos
+   propiedades scrollbar-*; el resto del mundo, el bloque ::-webkit. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(216 192 132 / 42%) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(216 192 132 / 34%);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(216 192 132 / 62%);
+}
+
+/* Sin flechas arriba y abajo: son de otra época y de otro diseño. */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Los deslizadores toman el dorado de la marca en vez del azul del navegador.
+   accent-color pinta el relleno y el pulgar en Chrome, Firefox y Safari. */
+input[type="range"] {
+  accent-color: var(--color-senal);
+  cursor: pointer;
+}
+
 @layer components {
   .superficie-panel {
     /* El mismo valor gobierna el ancho del cajón y cuánto se achica el
@@ -147,8 +189,8 @@ textarea:focus-visible {
     gap: 12px;
   }
 
-  /* Pastilla clara: el isotipo de la Municipalidad es azul marino y sobre el
-     verde del panel no se leería. Acá contrasta y no hay que recolorearlo. */
+  /* Pastilla clara para el isotipo: sobre el verde del panel el verde de la
+     marca no se leería; acá contrasta y no hay que recolorearlo. */
   .marca-sigla {
     display: grid;
     width: 40px;
@@ -176,15 +218,6 @@ textarea:focus-visible {
     letter-spacing: -0.02em;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .marca-subtitulo {
-    margin-top: 5px;
-    color: var(--color-tenue);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.17em;
-    text-transform: uppercase;
   }
 
   .usuario-panel {
@@ -916,31 +949,6 @@ textarea:focus-visible {
     opacity: 0;
   }
 
-  .fila-linea::before {
-    position: absolute;
-    top: 50%;
-    left: 6px;
-    width: 2px;
-    height: 24px;
-    background-color: transparent;
-    border-radius: 2px;
-    content: "";
-    transform: translateY(-50%);
-    transition: background-color 200ms ease;
-  }
-
-  .fila-desplegable[data-nivel="NORMAL"] .fila-linea::before {
-    background-color: var(--color-manzana);
-  }
-
-  .fila-desplegable[data-nivel="ADVERTENCIA"] .fila-linea::before {
-    background-color: var(--color-advertencia);
-  }
-
-  .fila-desplegable[data-nivel="EMERGENCIA"] .fila-linea::before {
-    background-color: var(--color-emergencia);
-  }
-
   .fila-desplegable:hover {
     background-color: rgb(54 80 4 / 24%);
   }
@@ -1007,7 +1015,7 @@ textarea:focus-visible {
     min-width: 0;
     color: var(--color-tenue);
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -1043,11 +1051,14 @@ textarea:focus-visible {
     overflow: hidden;
   }
 
+  /* Cada dato queda centrado en su celda: la ficha abierta se lee como un
+     bloque simétrico y no como una columna pegada al borde izquierdo. */
   .fila-detalle {
     display: grid;
     margin: 0 16px;
-    padding: 15px 0 4px;
+    padding: 20px 10px 22px;
     grid-template-columns: repeat(auto-fit, minmax(186px, 1fr));
+    justify-items: center;
     gap: 15px 22px;
     border-top: 1px solid rgb(255 255 255 / 7%);
   }
@@ -1065,7 +1076,9 @@ textarea:focus-visible {
     display: flex;
     min-width: 0;
     flex-direction: column;
+    align-items: center;
     gap: 5px;
+    text-align: center;
   }
 
   .dato-ancho {
@@ -1075,7 +1088,7 @@ textarea:focus-visible {
   .dato-rotulo {
     color: #8fa398;
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -1083,8 +1096,19 @@ textarea:focus-visible {
   .dato-valor {
     color: var(--color-texto);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 700;
     overflow-wrap: anywhere;
+  }
+
+  /* Un escalón más de peso que el resto de los atributos: el dato que tiene
+     que saltar a la vista dentro de la ficha abierta. */
+  .dato-destacado .dato-rotulo {
+    color: #a8bcae;
+    font-weight: 900;
+  }
+
+  .dato-destacado .dato-valor {
+    font-weight: 800;
   }
 
   .lista-vacia {
@@ -1742,7 +1766,6 @@ textarea:focus-visible {
     height: 36px;
   }
 
-  .marca-subtitulo,
   .usuario-identidad {
     display: none;
   }
@@ -1830,11 +1853,6 @@ textarea:focus-visible {
     min-height: 64px;
     padding: 9px 12px 9px 14px;
     gap: 10px;
-  }
-
-  .fila-linea::before {
-    left: 5px;
-    height: 29px;
   }
 
   .fila-accion {

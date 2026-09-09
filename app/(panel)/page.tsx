@@ -193,8 +193,7 @@ export default async function PaginaTablero() {
     <div className="flex flex-col gap-6">
       <div className="encabezado-tablero">
         <div>
-          <div className="encabezado-eyebrow">Estado ambiental</div>
-          <h1 className="titulo-tablero">Panorama del parque</h1>
+          <h1 className="titulo-tablero">Estadisticas del parque</h1>
           <p className="subtitulo-tablero">
             Lecturas, alertas y actividad operativa reunidas en una vista clara.
           </p>
@@ -276,10 +275,10 @@ export default async function PaginaTablero() {
                       {numero(area.hum_max, 0)})
                     </span>
                   </Dato>
-                  <Dato rotulo="Tomada">
+                  <Dato rotulo="Fecha">
                     {fechaHora(lectura?.tomada_en ?? null)}
                   </Dato>
-                  <Dato rotulo="Dispositivo">
+                  <Dato rotulo="Dispositivo" destacado>
                     {lectura?.dispositivo ?? SIN_DATO}
                   </Dato>
                 </>

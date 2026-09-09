@@ -24,7 +24,7 @@ import { Icono } from "../componentes/iconos";
 import { CampoFecha } from "../componentes/fecha";
 import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
 import { ModalFicha } from "../componentes/modal";
-import { atenderLlamado, crearLlamado } from "./acciones";
+import { atenderLlamado, cancelarAtencion, crearLlamado } from "./acciones";
 
 const MS_SONDEO = 10_000;
 
@@ -106,6 +106,14 @@ export function GestorLlamados({
   function atender(id: number) {
     iniciar(async () => {
       const resultado = await atenderLlamado(id);
+      setAviso(resultado.ok ? (resultado.mensaje ?? "Listo.") : resultado.error);
+      if (resultado.ok) router.refresh();
+    });
+  }
+
+  function cancelar(id: number) {
+    iniciar(async () => {
+      const resultado = await cancelarAtencion(id);
       setAviso(resultado.ok ? (resultado.mensaje ?? "Listo.") : resultado.error);
       if (resultado.ok) router.refresh();
     });
@@ -352,16 +360,16 @@ export function GestorLlamados({
                 </>
               }
               pie={
-                atendido ? null : (
+                atendido ? (
                   <button
                     type="button"
-                    className="boton"
+                    className="boton-plano"
                     disabled={pendiente}
-                    onClick={() => atender(llamado.id)}
+                    onClick={() => cancelar(llamado.id)}
                   >
-                    {pendiente ? "Marcando…" : "Marcar como atendido"}
+                    {pendiente ? "Cancelando…" : "Cancelar el atendido"}
                   </button>
-                )
+                ) : null
               }
             />
           );

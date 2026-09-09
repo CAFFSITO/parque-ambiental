@@ -1,6 +1,6 @@
 -- =====================================================================
 -- sql/04_multiseleccion.sql
--- Parque Ambiental Municipal de Berisso — área, tarea y turno pasan a ser
+-- Parque Ambiental Municipal — área, tarea y turno pasan a ser
 -- multivaluados en la ficha del empleado.
 --
 -- Pegar en el SQL Editor de Supabase DESPUÉS de 01_esquema.sql y 02_datos.sql.

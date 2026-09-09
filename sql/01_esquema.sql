@@ -1,6 +1,6 @@
 -- =====================================================================
 -- sql/01_esquema.sql
--- Parque Ambiental Municipal de Berisso — esquema de base de datos
+-- Parque Ambiental Municipal — esquema de base de datos
 -- Pegar PRIMERO en el SQL Editor de Supabase.
 -- Sin RLS: el acceso es exclusivamente server-side con la service role key.
 -- =====================================================================

@@ -8,7 +8,7 @@ import type { Area, Llamado } from "@/lib/tipos";
 import { GestorMovil } from "./gestor";
 
 export const metadata = {
-  title: "Móvil · Parque Ambiental Municipal de Berisso",
+  title: "Móvil · Parque Ambiental Municipal",
 };
 
 const TOPE = 60;

@@ -7,7 +7,7 @@ import type { Area } from "@/lib/tipos";
 import { GestorUsuarios, type UsuarioListado } from "./gestor";
 
 export const metadata = {
-  title: "Usuarios · Parque Ambiental Municipal de Berisso",
+  title: "Usuarios · Parque Ambiental Municipal",
 };
 
 export default async function PaginaUsuarios() {

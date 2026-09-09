@@ -28,7 +28,14 @@ export type OpcionDesplegable = {
   deshabilitada?: boolean;
 };
 
-type Posicion = { top: number; left: number; ancho: number; arriba: boolean };
+type Posicion = {
+  top?: number;
+  bottom?: number;
+  left: number;
+  ancho: number;
+  alto: number;
+  arriba: boolean;
+};
 
 const ALTO_MENU = 268;
 
@@ -110,15 +117,19 @@ export function Desplegable({
     if (!nodo) return;
 
     const rect = nodo.getBoundingClientRect();
-    const abajo = window.innerHeight - rect.bottom;
-    const arriba = abajo < ALTO_MENU && rect.top > abajo;
+    const abajo = window.innerHeight - rect.bottom - 8;
+    const encima = rect.top - 8;
+    const arriba = abajo < ALTO_MENU && encima > abajo;
 
+    // Abriendo hacia arriba se ancla el borde de abajo del menú, no el de
+    // arriba: con pocas opciones el menú es más bajo que ALTO_MENU y anclando
+    // por arriba quedaba flotando lejos del botón.
     setPosicion({
-      top: arriba
-        ? Math.max(8, rect.top - Math.min(ALTO_MENU, rect.top - 8) - 6)
-        : rect.bottom + 6,
+      top: arriba ? undefined : rect.bottom + 6,
+      bottom: arriba ? window.innerHeight - rect.top + 6 : undefined,
       left: rect.left,
       ancho: rect.width,
+      alto: Math.max(120, Math.min(ALTO_MENU, (arriba ? encima : abajo) - 6)),
       arriba,
     });
   }, []);
@@ -280,9 +291,10 @@ export function Desplegable({
               aria-label={etiquetaAccesible}
               style={{
                 top: posicion.top,
+                bottom: posicion.bottom,
                 left: posicion.left,
                 minWidth: posicion.ancho,
-                maxHeight: ALTO_MENU,
+                maxHeight: posicion.alto,
               }}
               // Sostiene el foco en el botón mientras se hace clic en la lista.
               onMouseDown={(evento) => evento.preventDefault()}

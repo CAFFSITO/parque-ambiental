@@ -199,22 +199,13 @@ export function GestorAreas({
               </>
             }
             pie={
-              <>
-                <button
-                  type="button"
-                  className="boton-plano"
-                  onClick={() => abrirEdicion(area)}
-                >
-                  Editar el área
-                </button>
-                <button
-                  type="button"
-                  className="boton-plano"
-                  onClick={() => setABajar(area)}
-                >
-                  {area.activa ? "Dar de baja" : "Reactivar"}
-                </button>
-              </>
+              <button
+                type="button"
+                className="boton-plano"
+                onClick={() => setABajar(area)}
+              >
+                {area.activa ? "Dar de baja" : "Reactivar"}
+              </button>
             }
           />
         ))}

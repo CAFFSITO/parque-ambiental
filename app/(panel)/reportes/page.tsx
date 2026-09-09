@@ -26,7 +26,7 @@ import {
 import { POR_PAGINA, TablaDetalle } from "./tabla";
 
 export const metadata = {
-  title: "Reportes · Parque Ambiental Municipal de Berisso",
+  title: "Reportes · Parque Ambiental Municipal",
 };
 
 function Indicador({

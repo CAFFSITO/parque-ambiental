@@ -9,7 +9,7 @@ import type { Area, Llamado } from "@/lib/tipos";
 import { GestorLlamados, type Filtros } from "./gestor";
 
 export const metadata = {
-  title: "Llamados · Parque Ambiental Municipal de Berisso",
+  title: "Llamados · Parque Ambiental Municipal",
 };
 
 const TOPE_FILAS = 400;
