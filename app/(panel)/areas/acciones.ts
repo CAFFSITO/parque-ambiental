@@ -30,6 +30,7 @@
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { eliminarArea as borrarArea } from "@/lib/borrado";
 import { LARGO_MAXIMO_OPCION, normalizarOpcion } from "@/lib/catalogos";
 import type { Resultado } from "@/lib/tipos";
 
@@ -235,4 +236,38 @@ export async function cambiarActivaArea(
     ok: true,
     mensaje: activa ? "Área reactivada." : "Área dada de baja.",
   };
+}
+
+/**
+ * BORRADO DEFINITIVO del área. No es lo mismo que darla de baja.
+ *
+ *   * Dar de baja (cambiarActivaArea) dice "esta área ya no opera". Toda su
+ *     historia queda y se puede reactivar.
+ *   * Borrar dice "esta área nunca tuvo que existir". Es para el área creada
+ *     con el código mal escrito o duplicada por error. NO se puede deshacer.
+ *
+ * Por eso solo procede si al área no le cuelga NADA: ni lecturas, ni llamados,
+ * ni dispositivos, ni empleados, ni usuarios. Un área con historia se da de
+ * baja; la historia no se tira.
+ *
+ * La regla y el recuento viven en lib/borrado.ts, que vuelve a contar antes de
+ * borrar: el conteo que dibujó el botón puede tener minutos, y en el medio
+ * alguien pudo asignarle un dispositivo.
+ */
+export async function eliminarAreaVacia(id: number): Promise<Resultado> {
+  await exigirAdmin();
+
+  if (typeof id !== "number" || !Number.isInteger(id)) {
+    return { ok: false, error: "Identificador inválido." };
+  }
+
+  const resultado = await borrarArea(id);
+  if (!resultado.ok) return { ok: false, error: resultado.error };
+
+  refrescar();
+  // Empleados y Usuarios muestran el área de cada ficha.
+  revalidatePath("/empleados");
+  revalidatePath("/usuarios");
+
+  return { ok: true, mensaje: "Área eliminada." };
 }

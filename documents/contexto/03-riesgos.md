@@ -11,7 +11,9 @@ R3, R4 y R5**. El resto apareció durante la auditoría.
 
 ## R1 — El simulador genera identidades idénticas a las del nodo físico
 
-**Confirmado.**
+**Confirmado — y RESUELTO el 2026-09-10.** El relevamiento original queda
+abajo tal cual estaba; la evidencia del cierre está al final de la sección.
+Detalle completo en `80-simulador.md`.
 
 `app/(panel)/dispositivos/gestor.tsx:39-42`:
 
@@ -58,6 +60,51 @@ Consecuencias verificables:
 
 Severidad: **alta**. Contamina el dato que es la razón de ser del sistema, y no
 es reversible sobre lo ya escrito.
+
+### R1 — Cierre
+
+**Fecha: 2026-09-10.** Ver `80-simulador.md` para el detalle y las siete
+pruebas completas.
+
+**Qué se eliminó.** `nodoDe()` no existe más: un `grep` sobre el árbol no
+devuelve ninguna coincidencia. El simulador se fue de `/dispositivos` a
+`/diagnostico`, ya no recibe el nombre del nodo como texto libre —recibe un
+`dispositivoId` numérico— y ya no manda la `DEVICE_KEY` global: usa una
+credencial `sha256-v1` **del dispositivo simulado**, con vencimiento de 15
+minutos, que el servidor se emite a sí mismo y nunca persiste en claro.
+
+**Por qué ahora es una garantía y no una convención.** La identidad la
+determina la credencial, y una credencial pertenece a exactamente un
+dispositivo. Aunque alguien postee `"dispositivo": "NODO-INV-N-01"`, la lectura
+se atribuye al dueño de la credencial. Además `/api/ingest` pasó a guardar en
+`lecturas.dispositivo` el código **resuelto** y no el declarado: sin ese
+cambio, un cuerpo mentiroso todavía podía escribir el texto del nodo físico en
+la columna por la que agrupa la vigilancia, y mantenerlo "vivo" estando
+apagado. Ese defecto se encontró probando, se corrigió y se volvió a probar.
+
+**Evidencia.** Pruebas por HTTP contra la base real, con `SIM-INV-N` (id 37):
+
+| Comprobación | Resultado |
+|---|---|
+| Simular contra un dispositivo simulado | **200**, atribuido a `SIM-INV-N`, dos llamados creados, `compatibilidad: false` |
+| Simular con el id del dispositivo **físico** | rechazado por el servidor, con mensaje explícito |
+| Código del nodo físico inyectado en el cuerpo | descartado: el cuerpo que sale lo arma el servidor desde la base |
+| `POST` directo a `/api/ingest` mintiendo el código | la fila queda con texto `SIM-INV-N` y `dispositivo_id` del simulado |
+| Lecturas nuevas con `dispositivo_id = 11` | **0** |
+| Total histórico del nodo físico | **299**, y su última lectura sigue siendo la id 5716 |
+| Sesión de EMPLEADO | **403** en la pantalla y en la Server Action |
+
+**Lo que el cierre NO alcanza.** Las 299 filas históricas de `NODO-INV-N-01`
+siguen siendo indistinguibles entre sí: lo que se arregló es que **no se pueda
+producir una más**. Y queda una fila de prueba, la **5720**, con el texto viejo
+y el `dispositivo_id` correcto; `80-simulador.md` §7 deja la sentencia para
+corregirla.
+
+Los efectos de R1 sobre la vigilancia se cerraron por otro lado: la barrida solo
+mira dispositivos `FISICO` y activos, así que una simulación ya no mantiene
+vivo a ningún nodo ni genera falsas emergencias.
+
+Severidad residual: **baja**, y acotada a la historia ya escrita.
 
 ---
 
@@ -560,7 +607,7 @@ Severidad: **media** por el punto 1, **baja** por el resto.
 | # | Riesgo | Severidad |
 |---|---|---|
 | R3 | `sql/01` y `sql/02` destruyen la base entera | crítica (si se ejecutan) |
-| R1 | Simulador y nodo físico comparten identidad | alta |
+| ~~R1~~ | ~~Simulador y nodo físico comparten identidad~~ | **resuelto 2026-09-10** |
 | R2 | `DEVICE_KEY` única, en el repositorio, que además abre `/api/vigilancia` | alta |
 | R8 | Alarma por área: hoy suena en las 8 áreas por datos sembrados | alta |
 | R4 | Sin ningún test automatizado | media-alta |
@@ -588,7 +635,9 @@ Se deja constancia para que ninguna etapa siguiente lo dé por sabido:
   prueba que la base no los tenga.
 - **Estado de RLS por tabla.** El comentario de `sql/01_esquema.sql:5` dice que
   no hay, y la app usa service role key, que en cualquier caso lo saltearía.
-- **Si el nodo físico está encendido ahora mismo.** Su última lectura es del
-  2026-09-09T18:57Z; no se pudo distinguir si es hardware o simulación (R1).
+- **Si el nodo físico está encendido ahora mismo.** Al 2026-09-10T13:47Z su
+  última lectura era del 2026-09-10T02:59Z, once horas antes: estaba apagado.
+  Con R1 cerrado, de ahora en más sus lecturas sí se distinguen de una
+  simulación, por `dispositivo_id` y por `naturaleza`.
 - **Comportamiento del sistema en producción bajo carga.** No se ejecutó ninguna
   prueba contra el despliegue de Vercel.

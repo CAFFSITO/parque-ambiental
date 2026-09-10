@@ -1,6 +1,6 @@
 # 70 — Pruebas reproducibles de permisos
 
-Fecha UTC: 2026-09-10T00:46:29.361Z. Fixture: PB4F04D97. Resultado: **PASS**.
+Fecha UTC: 2026-09-10T15:09:36.173Z. Fixture: PC03CF629. Resultado: **PASS**.
 
 ## Reproducción y alcance
 
@@ -34,15 +34,15 @@ Login es necesariamente público: exigir sesión antes de autenticarse impedirí
 | app/(panel)/avisos/acciones.ts:180 | cambiarSuscripcion | exigirSesion |
 | app/(panel)/avisos/acciones.ts:208 | probarPush | exigirSesion |
 | app/(panel)/avisos/acciones.ts:234 | cambiarTelegram | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:64 | simularLectura | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:216 | crearDispositivoNuevo | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:250 | guardarDispositivo | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:288 | cambiarAreaDispositivo | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:315 | cambiarActivoDispositivo | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:342 | eliminarDispositivoSinLecturas | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:371 | emitirCredencial | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:403 | rotarCredencialDispositivo | exigirAdmin |
-| app/(panel)/dispositivos/acciones.ts:438 | revocarCredencialDispositivo | exigirAdmin |
+| app/(panel)/diagnostico/acciones.ts:159 | simularLectura | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:114 | crearDispositivoNuevo | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:148 | guardarDispositivo | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:186 | cambiarAreaDispositivo | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:213 | cambiarActivoDispositivo | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:240 | eliminarDispositivoSinLecturas | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:269 | emitirCredencial | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:301 | rotarCredencialDispositivo | exigirAdmin |
+| app/(panel)/dispositivos/acciones.ts:336 | revocarCredencialDispositivo | exigirAdmin |
 | app/(panel)/empleados/acciones.ts:164 | crearEmpleado | exigirAdmin |
 | app/(panel)/empleados/acciones.ts:192 | actualizarEmpleado | exigirAdmin |
 | app/(panel)/empleados/acciones.ts:228 | cambiarEstadoEmpleado | exigirAdmin |
@@ -57,6 +57,7 @@ Login es necesariamente público: exigir sesión antes de autenticarse impedirí
 | app/login/acciones.ts:25 | accionLogin | pública (login) |
 | app/(panel)/areas/page.tsx:33 | PaginaAreas | exigirAdmin |
 | app/(panel)/avisos/page.tsx:15 | PaginaAvisos | exigirSesion |
+| app/(panel)/diagnostico/page.tsx:29 | PaginaDiagnostico | exigirAdmin |
 | app/(panel)/dispositivos/page.tsx:24 | PaginaDispositivos | exigirAdmin |
 | app/(panel)/empleados/page.tsx:28 | PaginaEmpleados | exigirAdmin |
 | app/(panel)/llamados/page.tsx:33 | PaginaLlamados | exigirSesion |
@@ -126,8 +127,8 @@ Cada acción administrativa se envía con sesión EMPLEADO y sin sesión antes d
 
 ## Comprobaciones adicionales
 
-- 31 acciones y 10 páginas: guardia inicial; login público como excepción necesaria.
-- 22 módulos use client: sin dependencias runtime transitivas de db/credenciales.
+- 31 acciones y 11 páginas: guardia inicial; login público como excepción necesaria.
+- 23 módulos use client: sin dependencias runtime transitivas de db/credenciales.
 - RUTAS_PUBLICAS: exactamente /login, /api/ingest, /api/vigilancia.
 - guardarSuscripcion: EMPLEADO no modifica, borra ni se apropia de endpoint ajeno (fila verificada).
 - asegurarSuscripcion: EMPLEADO no modifica, borra ni se apropia de endpoint ajeno (fila verificada).
@@ -140,7 +141,7 @@ Cada acción administrativa se envía con sesión EMPLEADO y sin sesión antes d
 - GET vigilancia sin sesión, credencial SHA vigente: 200.
 - POST vigilancia sin sesión, credencial SHA vigente: 200.
 - POST ingest sin sesión: 200 con credencial; ignora área declarada y guarda área asignada.
-- Simulador probado solo con DEVICE_KEY temporal registrada al fixture SIMULADO; R1 productivo NO se considera cerrado.
+- Simulador aislado en /diagnostico: recibe el id de un dispositivo SIMULADO, se autentica con una credencial efímera propia y no usa DEVICE_KEY. R1 cerrado, ver 80-simulador.md.
 - Vigilancia credencial REVOCADA: 401.
 - Vigilancia credencial EXPIRADA: 401.
 - Vigilancia credencial INACTIVO: 401.
@@ -151,7 +152,7 @@ Cada acción administrativa se envía con sesión EMPLEADO y sin sesión antes d
 
 ## Aislamiento y limpieza observados
 
-Operaciones PostgREST: 346. Operaciones bloqueadas por aislamiento: 0.
+Operaciones PostgREST: 344. Operaciones bloqueadas por aislamiento: 0.
 
 ```json
 {
@@ -167,4 +168,4 @@ Operaciones PostgREST: 346. Operaciones bloqueadas por aislamiento: 0.
 }
 ```
 
-Matriz de autorización OBJETIVO satisfecha por las pruebas anteriores. R1 del simulador sigue pendiente y no se presenta como un problema de permisos resuelto.
+Matriz de autorización OBJETIVO satisfecha por las pruebas anteriores. El aislamiento del simulador (R1) se verifica aparte, en scripts/probar-ingest.mjs y 80-simulador.md.

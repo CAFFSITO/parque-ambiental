@@ -117,6 +117,38 @@ export function detalleDeDesvio(
 export type ResultadoRegistro = "creado" | "actualizado" | "error";
 
 /**
+ * La decisión del antirrebote, sin base de datos.
+ *
+ * Recibe el tipo del llamado que ya estaba abierto para ese par (área, motivo)
+ * y el tipo del que se acaba de detectar, y dice qué hacer:
+ *
+ *   - `"crear"`      no había ninguno abierto: es un llamado nuevo.
+ *   - `"escalar"`    había uno NORMAL y ahora la condición es EMERGENCIA:
+ *                    se refresca el detalle Y sube de tipo.
+ *   - `"refrescar"`  había uno y no hay que subirlo de tipo: solo se le
+ *                    actualiza el detalle con la lectura más nueva.
+ *
+ * **Nunca devuelve "bajar de tipo".** Una emergencia abierta no se degrada a
+ * NORMAL porque la lectura siguiente haya mejorado un poco: se atiende o se
+ * cierra, pero no se la disimula sola.
+ *
+ * Está separada de registrarLlamado() por lo mismo que el resto del proyecto
+ * parte las decisiones del acceso a datos (ver 30-modelo-dispositivos.md §1):
+ * probar esta regla contra un cliente de Supabase simulado solo verificaría que
+ * el simulacro coincide consigo mismo.
+ */
+export type AccionAntirrebote = "crear" | "escalar" | "refrescar";
+
+export function decidirAntirrebote(
+  abierto: { tipo: TipoLlamado } | null | undefined,
+  entrante: TipoLlamado,
+): AccionAntirrebote {
+  if (!abierto) return "crear";
+  if (entrante === "EMERGENCIA" && abierto.tipo === "NORMAL") return "escalar";
+  return "refrescar";
+}
+
+/**
  * ANTIRREBOTE. Si ya hay un llamado NO_ATENDIDO de la misma área y el mismo
  * motivo, no crea otro: le refresca el detalle con la lectura más nueva.
  * Sin esto, un nodo reportando cada pocos segundos genera decenas de llamados
@@ -124,6 +156,8 @@ export type ResultadoRegistro = "creado" | "actualizado" | "error";
  *
  * Además escala el tipo: si el llamado abierto era NORMAL y la condición
  * empeoró a EMERGENCIA, sube de tipo en lugar de quedar subestimado.
+ *
+ * La regla vive en decidirAntirrebote(); acá queda solo el acceso a datos.
  */
 export async function registrarLlamado(entrada: {
   areaId: number;
@@ -147,15 +181,13 @@ export async function registrarLlamado(entrada: {
   if (errorBusqueda) return "error";
 
   const abierto = abiertos?.[0];
+  const accion = decidirAntirrebote(abierto, entrada.tipo);
 
-  if (abierto) {
-    const escalaAEmergencia =
-      entrada.tipo === "EMERGENCIA" && abierto.tipo === "NORMAL";
-
+  if (abierto && accion !== "crear") {
     const { error } = await db()
       .from("llamados")
       .update(
-        escalaAEmergencia
+        accion === "escalar"
           ? { detalle: entrada.detalle, tipo: "EMERGENCIA" }
           : { detalle: entrada.detalle },
       )
@@ -202,53 +234,127 @@ export async function hayEmergenciaAbierta(areaId: number): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
+// =====================================================================
+// VIGILANCIA DE NODOS CAÍDOS
+//
+// Esta sección se reescribió el 2026-09-10 para apoyarse en la tabla
+// `dispositivos` en vez de barrer `lecturas`. El motivo, en orden de peso:
+//
+//   1. **Naturaleza.** Un simulador que deja de simular no es una emergencia.
+//      Antes había que filtrar a mano contra una lista de códigos; ahora la
+//      consulta misma solo trae dispositivos FISICO y activos.
+//   2. **Punto ciego de 24 horas (R10).** La versión anterior solo miraba
+//      lecturas de las últimas 24 h: un nodo caído hace más de un día
+//      desaparecía de la vigilancia y su llamado dejaba de refrescarse. El
+//      nodo pasaba de "caído, en emergencia" a "inexistente".
+//   3. **Costo.** Con un nodo reportando cada 10 s, la barrida anterior
+//      transfería hasta 8 640 filas por nodo por día para agruparlas en
+//      memoria, porque PostgREST no agrupa. Ahora es una consulta por índice
+//      que devuelve una fila por dispositivo físico.
+//   4. **Identidad.** Agrupar por el texto `lecturas.dispositivo` era agrupar
+//      por lo que el cuerpo declaraba. `dispositivos.codigo` es la identidad
+//      registrada, la misma que resuelve la credencial en /api/ingest.
+//
+// `ultimo_contacto_en` es la columna materializada que /api/ingest actualiza
+// en cada ingesta, dentro de `after()` (ver 10-arquitectura.md §1.6). Se
+// verificó el 2026-09-10 que coincide con `max(tomada_en)` en las 14 filas de
+// la tabla. Si alguna vez quedara desfasada, la sentencia de reparación está
+// en 20-migraciones-aplicadas.md §1.2, backfill 3.
+// =====================================================================
+
 export type NodoVigilado = {
+  /** Código registrado del dispositivo, no el texto que declaró el cuerpo. */
   dispositivo: string;
+  /** Área vigente asignada al dispositivo. */
   area_id: number | null;
-  ultima: string;
-  segundos: number;
+  /** Último contacto conocido, o null si nunca reportó. */
+  ultima: string | null;
+  /** Segundos desde el último contacto, o null si nunca reportó. */
+  segundos: number | null;
+};
+
+/** Fila mínima que necesita la vigilancia. */
+type FilaVigilada = {
+  codigo: string;
+  area_id: number | null;
+  ultimo_contacto_en: string | null;
 };
 
 /**
- * Último reporte de cada dispositivo visto en las últimas 24 horas.
- * PostgREST no agrupa, así que se agrupa acá sobre una ventana acotada.
+ * Los dispositivos que la vigilancia mira, con su antigüedad de contacto.
+ *
+ * SOLO dispositivos con `naturaleza = 'FISICO'` y `activo = true`:
+ *
+ *   - Un **simulado** que deja de simular no es una emergencia. Es la regla
+ *     aprobada en 10-arquitectura.md §9.4 y documentada en 80-simulador.md.
+ *   - Un dispositivo **dado de baja** salió de servicio a propósito; que su
+ *     silencio marque el área en alerta sería ruido, y además /api/ingest ya
+ *     ni siquiera lo autentica.
+ *
+ * Un nodo que **nunca reportó** (`ultimo_contacto_en` null) devuelve
+ * `segundos: null` y no se considera caído: recién dado de alta todavía no
+ * prometió nada. La pantalla de Dispositivos sí lo muestra como
+ * "Nunca reportó", que es donde esa distinción sirve.
+ *
+ * Devuelve vacío si la consulta falla. Quien decida en función de esto tiene
+ * que tratar "no sé" como "no": ver revisarNodosCaidos().
  */
-export async function estadoDeNodos(): Promise<NodoVigilado[]> {
-  const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+export async function estadoDeNodos(
+  ahora: Date = new Date(),
+): Promise<NodoVigilado[]> {
+  const { data, error } = await db()
+    .from("dispositivos")
+    .select("codigo, area_id, ultimo_contacto_en")
+    .eq("naturaleza", "FISICO")
+    .eq("activo", true)
+    .order("codigo", { ascending: true })
+    .overrideTypes<FilaVigilada[], { merge: false }>();
 
-  const { data } = await db()
-    .from("lecturas")
-    .select("dispositivo, area_id, tomada_en")
-    .gte("tomada_en", desde)
-    .order("tomada_en", { ascending: false })
-    .overrideTypes<
-      { dispositivo: string | null; area_id: number | null; tomada_en: string }[],
-      { merge: false }
-    >();
-
-  const ahora = Date.now();
-  const ultimos = new Map<string, NodoVigilado>();
-
-  for (const fila of data ?? []) {
-    if (!fila.dispositivo) continue;
-    // Vienen ordenadas de más nueva a más vieja: la primera de cada
-    // dispositivo es su último reporte.
-    if (ultimos.has(fila.dispositivo)) continue;
-
-    ultimos.set(fila.dispositivo, {
-      dispositivo: fila.dispositivo,
-      area_id: fila.area_id,
-      ultima: fila.tomada_en,
-      segundos: Math.max(
-        0,
-        Math.round((ahora - new Date(fila.tomada_en).getTime()) / 1000),
-      ),
-    });
+  if (error) {
+    console.error(
+      `[alertas] no se pudo leer la flota vigilada: ${error.message}`,
+    );
+    return [];
   }
 
-  return [...ultimos.values()].sort((a, b) =>
-    a.dispositivo.localeCompare(b.dispositivo),
-  );
+  const referencia = ahora.getTime();
+
+  return (data ?? []).map((fila) => {
+    const contacto =
+      fila.ultimo_contacto_en === null
+        ? null
+        : new Date(fila.ultimo_contacto_en);
+
+    const valido = contacto !== null && !Number.isNaN(contacto.getTime());
+
+    return {
+      dispositivo: fila.codigo,
+      area_id: fila.area_id,
+      ultima: valido ? fila.ultimo_contacto_en : null,
+      // Mismo redondeo y mismo recorte en cero que segundosSinReportar() de
+      // lib/dispositivos.ts, para que las dos pantallas no difieran en un
+      // segundo por usar aritmética distinta.
+      segundos: valido
+        ? Math.max(0, Math.round((referencia - contacto.getTime()) / 1000))
+        : null,
+    };
+  });
+}
+
+/**
+ * ¿Este nodo está caído?
+ *
+ * El corte es **estrictamente mayor**: a los 90 segundos exactos todavía está
+ * en línea, a los 91 ya no. Es el mismo criterio que estadoDeConexion() de
+ * lib/dispositivos.ts, y hay un test que lo fija en los tres bordes.
+ *
+ * Sin área asignada no se puede crear el llamado —`llamados.area_id` es a
+ * quién avisarle—, así que no cuenta como caído para esta barrida.
+ */
+export function estaCaido(nodo: NodoVigilado): boolean {
+  if (nodo.segundos === null) return false;
+  if (nodo.area_id === null) return false;
+  return nodo.segundos > SEGUNDOS_SIN_SENAL;
 }
 
 // Evita repetir la barrida en cada request cuando el tablero se recarga
@@ -266,9 +372,13 @@ export type ResumenVigilancia = {
 };
 
 /**
- * Marca como EMERGENCIA los nodos que dejaron de reportar. Se llama desde
- * /api/vigilancia y también directo desde el tablero, así no depende de un
- * cron externo.
+ * Marca como EMERGENCIA los nodos físicos que dejaron de reportar. Se llama
+ * desde /api/vigilancia y también directo desde el tablero, así no depende de
+ * un cron externo.
+ *
+ * Es idempotente: el antirrebote de registrarLlamado() agrupa por
+ * (área, motivo), así que repetir la barrida refresca el llamado abierto en
+ * vez de crear otro.
  */
 export async function revisarNodosCaidos(
   forzar = false,
@@ -285,10 +395,8 @@ export async function revisarNodosCaidos(
   }
   ultimaRevision = ahora;
 
-  const nodos = await estadoDeNodos();
-  const caidos = nodos.filter(
-    (nodo) => nodo.segundos > SEGUNDOS_SIN_SENAL && nodo.area_id !== null,
-  );
+  const nodos = await estadoDeNodos(new Date(ahora));
+  const caidos = nodos.filter(estaCaido);
 
   // Nombre de cada área, para que el aviso de Telegram diga algo legible.
   const { data: areas } = await db()

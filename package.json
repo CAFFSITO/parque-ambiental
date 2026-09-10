@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "probar:ingest": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/probar-ingest.mjs",
+    "probar:permisos": "node scripts/pruebas-permisos.mjs",
+    "verificar": "yarn lint && yarn test && yarn build && yarn probar:ingest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

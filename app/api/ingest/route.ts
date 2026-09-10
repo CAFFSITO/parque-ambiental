@@ -24,6 +24,14 @@
 //   * El antirrebote de registrarLlamado() y los textos de MOTIVOS no se tocan:
 //     son la clave de deduplicación de los llamados abiertos.
 //
+// OBSERVABILIDAD
+// Cada petición emite UNA línea JSON con registrarIngesta() (lib/registro.ts):
+// quién declaró ser, a qué dispositivo se lo atribuyó, cómo autenticó, el área
+// resuelta, si hubo discrepancia con lo declarado y qué se decidió del relé.
+// Sin claves, sin hashes y sin prefijos de credencial. Es lo que permite
+// responder desde los logs de Vercel si el nodo entra por credencial propia o
+// por el fallback global, que es la compuerta del paso 9 del despliegue.
+//
 // SOBRE LOS CÓDIGOS DE RESPUESTA
 // El firmware trata CUALQUIER 200 con JSON válido como "servidor vivo" y le
 // resetea el failsafe de 45 segundos. Cualquier cosa que no sea 200 deja el
@@ -50,6 +58,7 @@ import {
   registrarContacto,
   resolverArea,
 } from "@/lib/dispositivos";
+import { registrarIngesta } from "@/lib/registro";
 import type { AreaConAutomatizacion, Dispositivo } from "@/lib/tipos";
 
 type Boton = "NINGUNO" | "NORMAL" | "EMERGENCIA";
@@ -210,15 +219,30 @@ async function autenticar(
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // El firmware corta a los 6 segundos (HTTP_TIMEOUT_MS). Medir cuánto tarda
+  // el handler es la única forma de ver ese margen achicarse antes de que el
+  // nodo empiece a perder respuestas.
+  const inicio = Date.now();
+
   // 1. La cabecera tiene que estar. Sin clave no hay nada que resolver.
   const clave = request.headers.get("x-device-key");
   if (clave === null || clave.trim() === "") {
+    registrarIngesta({
+      resultado: "SIN_CLAVE",
+      estado_http: 401,
+      ms: Date.now() - inicio,
+    });
     return json({ ok: false, error: "Clave de dispositivo inválida." }, 401);
   }
 
   // 2. Tope de tamaño antes de parsear nada.
   const largo = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(largo) && largo > MAXIMO_BYTES_CUERPO) {
+    registrarIngesta({
+      resultado: "CUERPO_INVALIDO",
+      estado_http: 400,
+      ms: Date.now() - inicio,
+    });
     return json({ ok: false, error: "El cuerpo es demasiado grande." }, 400);
   }
 
@@ -226,11 +250,21 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     crudo = await request.json();
   } catch {
+    registrarIngesta({
+      resultado: "CUERPO_INVALIDO",
+      estado_http: 400,
+      ms: Date.now() - inicio,
+    });
     return json({ ok: false, error: "El cuerpo no es JSON válido." }, 400);
   }
 
   const cuerpo = leerCuerpo(crudo);
   if (typeof cuerpo === "string") {
+    registrarIngesta({
+      resultado: "CUERPO_INVALIDO",
+      estado_http: 400,
+      ms: Date.now() - inicio,
+    });
     return json({ ok: false, error: cuerpo }, 400);
   }
 
@@ -238,15 +272,29 @@ export async function POST(request: NextRequest): Promise<Response> {
   const acceso = await autenticar(clave, cuerpo.dispositivo);
 
   if (acceso.estado === "RECHAZADO") {
+    registrarIngesta({
+      declarado: cuerpo.dispositivo,
+      resultado: "RECHAZADO",
+      area_declarada: cuerpo.area,
+      boton: cuerpo.boton,
+      estado_http: 401,
+      ms: Date.now() - inicio,
+    });
     // Mismo cuerpo que la versión anterior: es el 401 que el firmware ya sabe
     // registrar en el monitor serie.
     return json({ ok: false, error: "Clave de dispositivo inválida." }, 401);
   }
 
   if (acceso.estado === "NO_REGISTRADO") {
-    console.warn(
-      `[ingest] clave global válida para un dispositivo no registrado: ${acceso.codigo}`,
-    );
+    registrarIngesta({
+      declarado: cuerpo.dispositivo,
+      resultado: "DISPOSITIVO_NO_REGISTRADO",
+      modo: "compatibilidad",
+      area_declarada: cuerpo.area,
+      boton: cuerpo.boton,
+      estado_http: 404,
+      ms: Date.now() - inicio,
+    });
     return json(
       {
         ok: false,
@@ -261,9 +309,20 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Se responde 200 con rele:false para que el relé se apague en el acto en
     // vez de dentro de 45 segundos, y para que el nodo no quede reintentando
     // un botón que nadie va a confirmar.
-    console.warn(
-      `[ingest] el dispositivo ${acceso.codigo} está dado de baja y sigue reportando`,
-    );
+    registrarIngesta({
+      declarado: cuerpo.dispositivo,
+      dispositivo: acceso.codigo,
+      resultado: "DISPOSITIVO_INACTIVO",
+      area_declarada: cuerpo.area,
+      discrepancia_dispositivo: cuerpo.dispositivo !== acceso.codigo,
+      rele: false,
+      alarma: false,
+      temperatura: cuerpo.temperatura,
+      humedad: cuerpo.humedad,
+      boton: cuerpo.boton,
+      estado_http: 200,
+      ms: Date.now() - inicio,
+    });
     return json(
       {
         ok: true,
@@ -365,13 +424,40 @@ export async function POST(request: NextRequest): Promise<Response> {
     humedad = null;
   }
 
+  // 6.bis Discrepancia entre el código que el nodo declara y el dueño real de
+  //       la credencial. Gana la credencial, igual que con el área.
+  //
+  //       Esto importa más de lo que parece. `lecturas.dispositivo` es la
+  //       columna por la que agrupa la vigilancia de nodos caídos
+  //       (lib/alertas.ts, estadoDeNodos()). Si se guardara el texto declarado
+  //       tal cual, cualquiera con una credencial de un dispositivo simulado
+  //       podría escribir filas rotuladas "NODO-INV-N-01" y mantener "vivo" al
+  //       nodo físico aunque estuviera apagado — que es exactamente el efecto
+  //       combinado descrito en R1 y R10 de 03-riesgos.md.
+  //
+  //       Se guarda entonces el código RESUELTO. El declarado no se pierde:
+  //       queda en el aviso de la respuesta y en el log del servidor, que es
+  //       donde corresponde auditar una discrepancia, no en la columna que el
+  //       resto del sistema lee como si fuera identidad.
+  if (cuerpo.dispositivo !== dispositivo.codigo) {
+    avisos.push(
+      `El nodo se declaró ${cuerpo.dispositivo} pero su credencial es de ` +
+        `${dispositivo.codigo}. La lectura se atribuyó a ${dispositivo.codigo}.`,
+    );
+    console.warn(
+      `[ingest] cuerpo declara ${cuerpo.dispositivo} y la credencial es de ${dispositivo.codigo}`,
+    );
+  }
+
   // 7. La lectura se guarda siempre, incluso si el área está dada de baja o si
   //    el dispositivo no tiene área (en ese caso, con area_id en null).
-  //    Se guardan las dos identidades: el texto que el nodo declaró y el
-  //    dispositivo al que el servidor lo atribuyó.
+  //    Las dos columnas de identidad guardan lo mismo —el código resuelto— y
+  //    eso sostiene el invariante que verifica 20-migraciones-aplicadas.md
+  //    §1.3 (d): el texto de lecturas.dispositivo siempre coincide con el
+  //    codigo del dispositivo vinculado.
   const momento = new Date();
   const { error: errorLectura } = await db().from("lecturas").insert({
-    dispositivo: cuerpo.dispositivo,
+    dispositivo: dispositivo.codigo,
     dispositivo_id: dispositivo.id,
     area_id: area?.id ?? null,
     temperatura,
@@ -380,6 +466,20 @@ export async function POST(request: NextRequest): Promise<Response> {
   });
 
   if (errorLectura) {
+    registrarIngesta({
+      declarado: cuerpo.dispositivo,
+      dispositivo: dispositivo.codigo,
+      resultado: compatibilidad ? "CLAVE_GLOBAL" : "CREDENCIAL_PROPIA",
+      modo: compatibilidad ? "compatibilidad" : "credencial",
+      credencial_id: credencialId,
+      area: area?.codigo ?? null,
+      area_declarada: cuerpo.area,
+      temperatura,
+      humedad,
+      boton: cuerpo.boton,
+      estado_http: 500,
+      ms: Date.now() - inicio,
+    });
     return json(
       {
         ok: false,
@@ -478,6 +578,27 @@ export async function POST(request: NextRequest): Promise<Response> {
   } catch {
     void registrar();
   }
+
+  registrarIngesta({
+    declarado: cuerpo.dispositivo,
+    dispositivo: dispositivo.codigo,
+    resultado: compatibilidad ? "CLAVE_GLOBAL" : "CREDENCIAL_PROPIA",
+    modo: compatibilidad ? "compatibilidad" : "credencial",
+    credencial_id: credencialId,
+    area: area?.codigo ?? null,
+    area_declarada: cuerpo.area,
+    discrepancia_area: cuerpo.area !== null && area !== null && cuerpo.area !== area.codigo,
+    discrepancia_dispositivo: cuerpo.dispositivo !== dispositivo.codigo,
+    rele,
+    alarma,
+    motivos_rele: decision?.motivos ?? [],
+    temperatura,
+    humedad,
+    boton: cuerpo.boton,
+    llamados: llamados.length,
+    estado_http: 200,
+    ms: Date.now() - inicio,
+  });
 
   return json(
     {

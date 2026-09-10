@@ -53,6 +53,7 @@ import { cambiarAreaDispositivo } from "../dispositivos/acciones";
 import {
   actualizarArea,
   cambiarActivaArea,
+  eliminarAreaVacia,
   crearArea,
   type EntradaArea,
 } from "./acciones";
@@ -61,6 +62,14 @@ export type AreaConMetricas = AreaConAutomatizacion & {
   empleados: number;
   llamados_abiertos: number;
   dispositivos: number;
+  /**
+   * Por qué NO se puede borrar el área, ya resuelto por el servidor.
+   *
+   *   null -> no se pudo averiguar (falta sql/12). No se ofrece borrar.
+   *   []   -> no cuelga nada: se puede borrar.
+   *   [..] -> tiene historia: solo se puede dar de baja.
+   */
+  bloqueos: string[] | null;
 };
 
 type Ficha = EntradaArea & { id: number | null };
@@ -146,6 +155,7 @@ export function GestorAreas({
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [errorFicha, setErrorFicha] = useState<string | null>(null);
   const [aBajar, setABajar] = useState<AreaConMetricas | null>(null);
+  const [aBorrar, setABorrar] = useState<AreaConMetricas | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [aAsignar, setAAsignar] = useState<string>("");
 
@@ -231,6 +241,22 @@ export function GestorAreas({
     iniciar(async () => {
       const resultado = await cambiarActivaArea(objetivo.id, !objetivo.activa);
       setABajar(null);
+      setAviso(resultado.ok ? (resultado.mensaje ?? "Listo.") : resultado.error);
+      if (resultado.ok) router.refresh();
+    });
+  }
+
+  /**
+   * Borrado definitivo. Es OTRA acción que dar de baja, a propósito: borrar no
+   * se puede deshacer, y el servidor vuelve a contar antes de hacerlo.
+   */
+  function confirmarBorrado() {
+    if (!aBorrar) return;
+    const objetivo = aBorrar;
+
+    iniciar(async () => {
+      const resultado = await eliminarAreaVacia(objetivo.id);
+      setABorrar(null);
       setAviso(resultado.ok ? (resultado.mensaje ?? "Listo.") : resultado.error);
       if (resultado.ok) router.refresh();
     });
@@ -356,16 +382,46 @@ export function GestorAreas({
                   <Dato rotulo="Llamados abiertos">
                     {entero(area.llamados_abiertos)}
                   </Dato>
+                  <Dato rotulo="Borrado" ancho>
+                    {area.bloqueos === null ? (
+                      <span className="text-tenue">
+                        No se puede saber qué depende de esta área: falta correr
+                        sql/12_borrado_seguro.sql. Sin certeza no se ofrece
+                        borrar.
+                      </span>
+                    ) : area.bloqueos.length === 0 ? (
+                      "No le cuelga nada: se puede borrar definitivamente."
+                    ) : (
+                      <span className="text-tenue">
+                        No se puede borrar porque tiene {area.bloqueos.join(", ")}.
+                        Dala de baja, o reasigná lo que cuelga primero.
+                      </span>
+                    )}
+                  </Dato>
                 </>
               }
               pie={
-                <button
-                  type="button"
-                  className="boton-plano"
-                  onClick={() => setABajar(area)}
-                >
-                  {area.activa ? "Dar de baja" : "Reactivar"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="boton-plano"
+                    onClick={() => setABajar(area)}
+                  >
+                    {area.activa ? "Dar de baja" : "Reactivar"}
+                  </button>
+
+                  {/* Borrar solo se OFRECE cuando no cuelga nada. La pantalla
+                      no es el control: eliminarAreaVacia() vuelve a contar. */}
+                  {area.bloqueos !== null && area.bloqueos.length === 0 ? (
+                    <button
+                      type="button"
+                      className="boton-plano"
+                      onClick={() => setABorrar(area)}
+                    >
+                      Eliminar
+                    </button>
+                  ) : null}
+                </>
               }
             />
           );
@@ -687,6 +743,18 @@ export function GestorAreas({
           pendiente={pendiente}
           alConfirmar={confirmarCambioDeEstado}
           alCancelar={() => setABajar(null)}
+        />
+      ) : null}
+
+      {aBorrar ? (
+        <ConfirmarModal
+          titulo="Eliminar el área"
+          mensaje={`El área ${aBorrar.codigo} — ${aBorrar.nombre} se borra de la base y no se puede recuperar. Se ofrece porque no tiene ninguna lectura, ningún llamado, ningún dispositivo, ningún empleado y ningún usuario asociado: no hay historia que perder. Si el área operó alguna vez, dala de baja en vez de borrarla.`}
+          textoConfirmar="Eliminar"
+          peligro
+          pendiente={pendiente}
+          alConfirmar={confirmarBorrado}
+          alCancelar={() => setABorrar(null)}
         />
       ) : null}
     </div>

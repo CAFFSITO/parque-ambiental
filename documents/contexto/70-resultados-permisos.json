@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-10T00:46:29.364Z",
-  "prefix": "PB4F04D97",
+  "date": "2026-09-10T15:09:36.175Z",
+  "prefix": "PC03CF629",
   "pass": true,
   "actions": [
     {
@@ -64,57 +64,57 @@
       "guard": "exigirAdmin"
     },
     {
-      "file": "app/(panel)/dispositivos/acciones.ts",
+      "file": "app/(panel)/diagnostico/acciones.ts",
       "name": "simularLectura",
-      "line": 64,
+      "line": 159,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "crearDispositivoNuevo",
-      "line": 216,
+      "line": 114,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "guardarDispositivo",
-      "line": 250,
+      "line": 148,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "cambiarAreaDispositivo",
-      "line": 288,
+      "line": 186,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "cambiarActivoDispositivo",
-      "line": 315,
+      "line": 213,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "eliminarDispositivoSinLecturas",
-      "line": 342,
+      "line": 240,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "emitirCredencial",
-      "line": 371,
+      "line": 269,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "rotarCredencialDispositivo",
-      "line": 403,
+      "line": 301,
       "guard": "exigirAdmin"
     },
     {
       "file": "app/(panel)/dispositivos/acciones.ts",
       "name": "revocarCredencialDispositivo",
-      "line": 438,
+      "line": 336,
       "guard": "exigirAdmin"
     },
     {
@@ -204,6 +204,12 @@
       "guard": "exigirSesion"
     },
     {
+      "file": "app/(panel)/diagnostico/page.tsx",
+      "name": "PaginaDiagnostico",
+      "line": 29,
+      "guard": "exigirAdmin"
+    },
+    {
       "file": "app/(panel)/dispositivos/page.tsx",
       "name": "PaginaDispositivos",
       "line": 24,
@@ -252,7 +258,7 @@
       "guard": "exigirAdmin"
     }
   ],
-  "clientCount": 22,
+  "clientCount": 23,
   "rows": [
     {
       "kind": "ruta",
@@ -624,8 +630,8 @@
     }
   ],
   "checks": [
-    "31 acciones y 10 páginas: guardia inicial; login público como excepción necesaria.",
-    "22 módulos use client: sin dependencias runtime transitivas de db/credenciales.",
+    "31 acciones y 11 páginas: guardia inicial; login público como excepción necesaria.",
+    "23 módulos use client: sin dependencias runtime transitivas de db/credenciales.",
     "RUTAS_PUBLICAS: exactamente /login, /api/ingest, /api/vigilancia.",
     "guardarSuscripcion: EMPLEADO no modifica, borra ni se apropia de endpoint ajeno (fila verificada).",
     "asegurarSuscripcion: EMPLEADO no modifica, borra ni se apropia de endpoint ajeno (fila verificada).",
@@ -638,7 +644,7 @@
     "GET vigilancia sin sesión, credencial SHA vigente: 200.",
     "POST vigilancia sin sesión, credencial SHA vigente: 200.",
     "POST ingest sin sesión: 200 con credencial; ignora área declarada y guarda área asignada.",
-    "Simulador probado solo con DEVICE_KEY temporal registrada al fixture SIMULADO; R1 productivo NO se considera cerrado.",
+    "Simulador aislado en /diagnostico: recibe el id de un dispositivo SIMULADO, se autentica con una credencial efímera propia y no usa DEVICE_KEY. R1 cerrado, ver 80-simulador.md.",
     "Vigilancia credencial REVOCADA: 401.",
     "Vigilancia credencial EXPIRADA: 401.",
     "Vigilancia credencial INACTIVO: 401.",
@@ -661,77 +667,17 @@
   "failure": null,
   "gatewayEvents": [
     {
-      "table": "lecturas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "lecturas",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "usuarios",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
       "table": "llamados",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "lecturas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "lecturas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
@@ -746,12 +692,22 @@
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "llamados",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "empleados",
+      "table": "llamados",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
@@ -766,8 +722,18 @@
       "status": 200
     },
     {
-      "table": "usuarios",
-      "method": "GET",
+      "table": "lecturas",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "HEAD",
       "status": 200
     },
     {
@@ -776,17 +742,7 @@
       "status": 200
     },
     {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "usuarios",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
       "method": "GET",
       "status": 200
     },
@@ -801,12 +757,32 @@
       "status": 200
     },
     {
-      "table": "usuarios",
+      "table": "dispositivos",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "lecturas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "lecturas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
       "method": "GET",
       "status": 200
     },
     {
       "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
@@ -822,11 +798,6 @@
     },
     {
       "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
       "method": "GET",
       "status": 200
     },
@@ -836,7 +807,37 @@
       "status": 200
     },
     {
-      "table": "ajustes",
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "usuarios",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "usuarios",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -856,12 +857,22 @@
       "status": 200
     },
     {
-      "table": "llamados",
+      "table": "ajustes",
       "method": "GET",
       "status": 200
     },
     {
       "table": "empleados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
@@ -882,16 +893,6 @@
     },
     {
       "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -901,12 +902,17 @@
       "status": 200
     },
     {
-      "table": "dispositivos",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
     {
       "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -916,17 +922,42 @@
       "status": 200
     },
     {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "rpc/dispositivos_ultima_lectura",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "rpc/reporte_distribucion",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "rpc/reporte_por_area",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "rpc/reporte_clima_por_dia",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "rpc/reporte_resumen",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "rpc/reporte_por_dia",
       "method": "POST",
       "status": 200
     },
@@ -936,8 +967,8 @@
       "status": 200
     },
     {
-      "table": "rpc/reporte_por_area",
-      "method": "POST",
+      "table": "areas",
+      "method": "GET",
       "status": 200
     },
     {
@@ -956,48 +987,23 @@
       "status": 200
     },
     {
-      "table": "rpc/reporte_distribucion",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "rpc/reporte_por_dia",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "rpc/reporte_distribucion",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "rpc/reporte_resumen",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "rpc/reporte_clima_por_dia",
-      "method": "POST",
-      "status": 200
-    },
-    {
       "table": "rpc/reporte_por_area",
       "method": "POST",
       "status": 200
     },
     {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
       "table": "rpc/reporte_por_dia",
       "method": "POST",
       "status": 200
     },
     {
-      "table": "areas",
-      "method": "GET",
+      "table": "rpc/reporte_distribucion",
+      "method": "POST",
       "status": 200
     },
     {
@@ -1011,7 +1017,7 @@
       "status": 200
     },
     {
-      "table": "lecturas",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -1031,17 +1037,17 @@
       "status": 200
     },
     {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
       "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
     {
       "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
       "method": "GET",
       "status": 200
     },
@@ -1051,6 +1057,16 @@
       "status": 204
     },
     {
+      "table": "empleados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
       "table": "dispositivos",
       "method": "GET",
       "status": 200
@@ -1059,6 +1075,11 @@
       "table": "areas",
       "method": "GET",
       "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "PATCH",
+      "status": 204
     },
     {
       "table": "empleados",
@@ -1072,26 +1093,11 @@
     },
     {
       "table": "areas",
-      "method": "PATCH",
-      "status": 204
+      "method": "GET",
+      "status": 200
     },
     {
       "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "empleados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
       "method": "GET",
       "status": 200
     },
@@ -1101,12 +1107,12 @@
       "status": 201
     },
     {
-      "table": "empleados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1116,12 +1122,12 @@
       "status": 204
     },
     {
-      "table": "empleados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1131,12 +1137,12 @@
       "status": 204
     },
     {
-      "table": "empleados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1151,12 +1157,12 @@
       "status": 201
     },
     {
-      "table": "empleados",
+      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "usuarios",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1176,12 +1182,12 @@
       "status": 204
     },
     {
-      "table": "empleados",
+      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "usuarios",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1196,7 +1202,7 @@
       "status": 204
     },
     {
-      "table": "empleados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
@@ -1206,7 +1212,7 @@
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1216,12 +1222,12 @@
       "status": 204
     },
     {
-      "table": "usuarios",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "usuarios",
       "method": "GET",
       "status": 200
     },
@@ -1241,129 +1247,99 @@
       "status": 200
     },
     {
-      "table": "empleados",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "usuarios",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "dispositivos",
-      "method": "POST",
-      "status": 201
-    },
-    {
-      "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "rpc/dispositivos_historial_areas",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "rpc/dispositivos_ultima_lectura",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivos",
-      "method": "PATCH",
-      "status": 204
-    },
-    {
-      "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "rpc/dispositivos_historial_areas",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "rpc/dispositivos_ultima_lectura",
-      "method": "POST",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivos",
-      "method": "PATCH",
-      "status": 204
-    },
-    {
-      "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "empleados",
       "method": "GET",
       "status": 200
     },
     {
       "table": "dispositivos",
-      "method": "PATCH",
-      "status": 204
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "table": "rpc/dispositivos_historial_areas",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
     },
     {
       "table": "dispositivos",
       "method": "GET",
       "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "rpc/dispositivos_ultima_lectura",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "PATCH",
+      "status": 204
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "rpc/dispositivos_historial_areas",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "rpc/dispositivos_ultima_lectura",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "PATCH",
+      "status": 204
     },
     {
       "table": "empleados",
@@ -1382,11 +1358,21 @@
     },
     {
       "table": "dispositivos",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
       "method": "PATCH",
       "status": 204
     },
     {
-      "table": "dispositivos",
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1396,8 +1382,28 @@
       "status": 200
     },
     {
+      "table": "dispositivos",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "PATCH",
+      "status": 204
+    },
+    {
       "table": "rpc/dispositivos_historial_areas",
       "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "GET",
       "status": 200
     },
     {
@@ -1426,11 +1432,6 @@
       "status": 201
     },
     {
-      "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "rpc/dispositivos_historial_areas",
       "method": "POST",
       "status": 200
@@ -1441,18 +1442,23 @@
       "status": 200
     },
     {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
     {
       "table": "rpc/dispositivos_ultima_lectura",
       "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
       "status": 200
     },
     {
@@ -1471,11 +1477,6 @@
       "status": 201
     },
     {
-      "table": "dispositivos",
-      "method": "GET",
-      "status": 200
-    },
-    {
       "table": "rpc/dispositivos_historial_areas",
       "method": "POST",
       "status": 200
@@ -1486,12 +1487,7 @@
       "status": 200
     },
     {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -1503,6 +1499,16 @@
     {
       "table": "rpc/dispositivos_ultima_lectura",
       "method": "POST",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
       "status": 200
     },
     {
@@ -1511,8 +1517,8 @@
       "status": 204
     },
     {
-      "table": "dispositivos",
-      "method": "GET",
+      "table": "rpc/dispositivos_historial_areas",
+      "method": "POST",
       "status": 200
     },
     {
@@ -1521,8 +1527,13 @@
       "status": 200
     },
     {
-      "table": "rpc/dispositivos_historial_areas",
-      "method": "POST",
+      "table": "dispositivos",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "GET",
       "status": 200
     },
     {
@@ -1541,9 +1552,14 @@
       "status": 200
     },
     {
-      "table": "dispositivo_credenciales",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
+    },
+    {
+      "table": "dispositivo_credenciales",
+      "method": "POST",
+      "status": 201
     },
     {
       "table": "dispositivo_credenciales",
@@ -1581,7 +1597,7 @@
       "status": 200
     },
     {
-      "table": "rpc/dispositivos_historial_areas",
+      "table": "rpc/dispositivos_ultima_lectura",
       "method": "POST",
       "status": 200
     },
@@ -1592,28 +1608,8 @@
     },
     {
       "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "dispositivo_credenciales",
       "method": "PATCH",
       "status": 204
-    },
-    {
-      "table": "rpc/dispositivos_ultima_lectura",
-      "method": "POST",
-      "status": 200
     },
     {
       "table": "lecturas",
@@ -1646,16 +1642,16 @@
       "status": 200
     },
     {
-      "table": "rpc/dispositivos_ultima_lectura",
-      "method": "POST",
-      "status": 200
-    },
-    {
       "table": "dispositivo_credenciales",
       "method": "GET",
       "status": 200
     },
     {
+      "table": "rpc/dispositivos_ultima_lectura",
+      "method": "POST",
+      "status": 200
+    },
+    {
       "table": "ajustes",
       "method": "GET",
       "status": 200
@@ -1671,12 +1667,12 @@
       "status": 201
     },
     {
-      "table": "ajustes",
+      "table": "suscripciones_push",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "suscripciones_push",
+      "table": "ajustes",
       "method": "GET",
       "status": 200
     },
@@ -1696,12 +1692,12 @@
       "status": 200
     },
     {
-      "table": "areas",
+      "table": "llamados",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "llamados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
@@ -1742,61 +1738,6 @@
     },
     {
       "table": "ajustes",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "PATCH",
-      "status": 204
-    },
-    {
-      "table": "usuarios",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "PATCH",
-      "status": 204
-    },
-    {
-      "table": "usuarios",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -1856,6 +1797,61 @@
       "status": 200
     },
     {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "PATCH",
+      "status": 204
+    },
+    {
+      "table": "usuarios",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "PATCH",
+      "status": 204
+    },
+    {
+      "table": "usuarios",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "empleados",
+      "method": "GET",
+      "status": 200
+    },
+    {
       "table": "suscripciones_push",
       "method": "POST",
       "status": 201
@@ -1904,6 +1900,11 @@
       "table": "suscripciones_push",
       "method": "POST",
       "status": 201
+    },
+    {
+      "table": "empleados",
+      "method": "GET",
+      "status": 200
     },
     {
       "table": "dispositivos",
@@ -1911,17 +1912,12 @@
       "status": 200
     },
     {
-      "table": "empleados",
+      "table": "areas",
       "method": "GET",
       "status": 200
     },
     {
       "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
       "method": "GET",
       "status": 200
     },
@@ -2011,12 +2007,12 @@
       "status": 200
     },
     {
-      "table": "empleados",
+      "table": "llamados",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "llamados",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
@@ -2086,12 +2082,12 @@
       "status": 204
     },
     {
-      "table": "dispositivos",
+      "table": "empleados",
       "method": "GET",
       "status": 200
     },
     {
-      "table": "empleados",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -2136,7 +2132,7 @@
       "status": 200
     },
     {
-      "table": "lecturas",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -2156,7 +2152,7 @@
       "status": 200
     },
     {
-      "table": "lecturas",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -2176,7 +2172,7 @@
       "status": 200
     },
     {
-      "table": "lecturas",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -2271,42 +2267,7 @@
       "status": 200
     },
     {
-      "table": "lecturas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "lecturas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "lecturas",
-      "method": "HEAD",
-      "status": 200
-    },
-    {
-      "table": "usuarios",
+      "table": "dispositivos",
       "method": "GET",
       "status": 200
     },
@@ -2321,8 +2282,43 @@
       "status": 200
     },
     {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "GET",
+      "status": 200
+    },
+    {
       "table": "llamados",
       "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "lecturas",
+      "method": "HEAD",
+      "status": 200
+    },
+    {
+      "table": "usuarios",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "dispositivos",
+      "method": "GET",
       "status": 200
     },
     {
@@ -2342,7 +2338,12 @@
     },
     {
       "table": "llamados",
-      "method": "HEAD",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "areas",
+      "method": "GET",
       "status": 200
     },
     {
@@ -2357,22 +2358,17 @@
     },
     {
       "table": "llamados",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "areas",
-      "method": "GET",
-      "status": 200
-    },
-    {
-      "table": "llamados",
       "method": "HEAD",
       "status": 200
     },
     {
       "table": "dispositivos",
       "method": "GET",
+      "status": 200
+    },
+    {
+      "table": "llamados",
+      "method": "HEAD",
       "status": 200
     },
     {

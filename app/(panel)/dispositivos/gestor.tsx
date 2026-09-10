@@ -1,16 +1,20 @@
 "use client";
 
 // app/(panel)/dispositivos/gestor.tsx
-// Administración de la flota de nodos + simulador. Densidad de tablero: la
-// fila cerrada dice código, área, estado y último contacto; abierta muestra la
-// ficha completa y las acciones.
+// Administración de la flota de nodos. Densidad de tablero: la fila cerrada
+// dice código, área, estado y último contacto; abierta muestra la ficha
+// completa y las acciones.
 //
 // Nada de acá inventa datos: todo llega de la tabla dispositivos y de lo que
 // esos dispositivos escribieron. No hay ningún código de área ni de nodo
-// escrito a mano en este archivo, salvo el del simulador, que queda tal cual
-// estaba y se rehace en la etapa siguiente.
+// escrito a mano en este archivo.
+//
+// El simulador ya no está en esta pantalla: vive en /diagnostico, se autentica
+// con una credencial del dispositivo SIMULADO que simula y no puede escribir
+// bajo la identidad de un nodo físico. Ver documents/contexto/80-simulador.md.
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { entero, fechaHora, hace, numero, SIN_DATO } from "@/lib/formato";
 import type { TramoDeArea, UltimaLectura } from "@/lib/dispositivos";
@@ -35,7 +39,6 @@ import {
   guardarDispositivo,
   revocarCredencialDispositivo,
   rotarCredencialDispositivo,
-  simularLectura,
   type EntradaFichaDispositivo,
 } from "./acciones";
 
@@ -133,18 +136,6 @@ function textoCredencial(dispositivo: FilaDispositivo): string {
   return `${dispositivo.vigentes.length} vigente${dispositivo.vigentes.length === 1 ? "" : "s"} de ${dispositivo.credenciales.length}`;
 }
 
-/** Nombre de nodo que se le propone al simulador para cada área. */
-function nodoDe(codigo: string): string {
-  return `NODO-${codigo}-01`;
-}
-
-type Simulacion = {
-  area: string;
-  temperatura: number;
-  humedad: number;
-  boton: string;
-};
-
 type Confirmacion = {
   titulo: string;
   mensaje: string;
@@ -188,20 +179,10 @@ export function GestorDispositivos({
     [areas],
   );
 
-  const primerArea = areas[0];
-  const [simulacion, setSimulacion] = useState<Simulacion>({
-    area: primerArea?.codigo ?? "",
-    temperatura: primerArea ? Number(primerArea.temp_max) : 25,
-    humedad: primerArea ? Number(primerArea.hum_min) : 60,
-    boton: "NINGUNO",
-  });
-
   useEffect(() => {
     const id = setInterval(() => router.refresh(), MS_SONDEO);
     return () => clearInterval(id);
   }, [router]);
-
-  const areaSimulada = areas.find((area) => area.codigo === simulacion.area);
 
   function nombreDeArea(id: number | null): string {
     if (id === null) return "Sin área";
@@ -282,53 +263,6 @@ export function GestorDispositivos({
     });
   }
 
-  function enviarSimulacion() {
-    setError(null);
-    setAviso(null);
-
-    iniciar(async () => {
-      const resultado = await simularLectura({
-        dispositivo: nodoDe(simulacion.area),
-        area: simulacion.area,
-        temperatura: simulacion.temperatura,
-        humedad: simulacion.humedad,
-        boton: simulacion.boton,
-      });
-
-      if (!resultado.ok) {
-        setError(resultado.error);
-        return;
-      }
-
-      setAviso(resultado.mensaje ?? "Lectura enviada.");
-      router.refresh();
-    });
-  }
-
-  function cambiarAreaSimulada(codigo: string) {
-    const area = areas.find((item) => item.codigo === codigo);
-    setSimulacion((actual) => ({
-      ...actual,
-      area: codigo,
-      temperatura: area
-        ? Math.round(((Number(area.temp_min) + Number(area.temp_max)) / 2) * 10) / 10
-        : actual.temperatura,
-      humedad: area
-        ? Math.round(((Number(area.hum_min) + Number(area.hum_max)) / 2) * 10) / 10
-        : actual.humedad,
-    }));
-  }
-
-  const fueraDeTemp =
-    areaSimulada !== undefined &&
-    (simulacion.temperatura > Number(areaSimulada.temp_max) ||
-      simulacion.temperatura < Number(areaSimulada.temp_min));
-
-  const fueraDeHum =
-    areaSimulada !== undefined &&
-    (simulacion.humedad > Number(areaSimulada.hum_max) ||
-      simulacion.humedad < Number(areaSimulada.hum_min));
-
   const fisicos = dispositivos.filter((d) => d.naturaleza === "FISICO").length;
   const enLinea = dispositivos.filter(
     (d) => d.activo && d.conexion === "EN_LINEA",
@@ -346,6 +280,12 @@ export function GestorDispositivos({
             {dispositivos.length} nodos · {fisicos} físicos · {enLinea} en línea
             · sin señal a los {umbralSegundos} s
           </span>
+          {/* El simulador se fue a su propia pantalla. El enlace queda acá
+              porque es desde donde se llega naturalmente: se crea el
+              dispositivo simulado, y desde ahí se lo ejercita. */}
+          <Link href="/diagnostico" className="boton-plano">
+            Simulador
+          </Link>
           <button
             type="button"
             className="boton"
@@ -1014,137 +954,6 @@ export function GestorDispositivos({
           alCancelar={() => setConfirmacion(null)}
         />
       ) : null}
-
-      {/* ---------------- Simulador (se rehace en la etapa siguiente) ------- */}
-      <section className="panel">
-        <div className="border-b border-borde px-3 py-2">
-          <span className="rotulo">Simulador</span>
-        </div>
-
-        <div className="flex flex-col gap-3 p-3">
-          <p className="text-tenue">
-            Envía una lectura real a <code>/api/ingest</code> con la clave del
-            dispositivo. Sirve para demostrar el sistema completo sin nodo
-            físico.
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Campo etiqueta="Área" htmlFor="s-area">
-              <Desplegable
-                id="s-area"
-                valor={simulacion.area}
-                opciones={areas.map((area) => ({
-                  valor: area.codigo,
-                  etiqueta: `${area.codigo} — ${area.nombre}`,
-                }))}
-                alCambiar={cambiarAreaSimulada}
-              />
-            </Campo>
-
-            <Campo etiqueta="Dispositivo" htmlFor="s-nodo">
-              <input
-                id="s-nodo"
-                className="campo"
-                readOnly
-                value={nodoDe(simulacion.area)}
-              />
-            </Campo>
-          </div>
-
-          <Campo
-            etiqueta={`Temperatura: ${numero(simulacion.temperatura)} °C`}
-            htmlFor="s-temp"
-            ayuda={
-              areaSimulada
-                ? `Rango del área: ${numero(Number(areaSimulada.temp_min), 0)} a ${numero(Number(areaSimulada.temp_max), 0)} °C`
-                : undefined
-            }
-          >
-            <input
-              id="s-temp"
-              type="range"
-              min={-10}
-              max={60}
-              step={0.5}
-              className="w-full"
-              value={simulacion.temperatura}
-              onChange={(e) =>
-                setSimulacion((actual) => ({
-                  ...actual,
-                  temperatura: Number(e.target.value),
-                }))
-              }
-            />
-          </Campo>
-
-          <Campo
-            etiqueta={`Humedad: ${numero(simulacion.humedad)} %`}
-            htmlFor="s-hum"
-            ayuda={
-              areaSimulada
-                ? `Rango del área: ${numero(Number(areaSimulada.hum_min), 0)} a ${numero(Number(areaSimulada.hum_max), 0)} %`
-                : undefined
-            }
-          >
-            <input
-              id="s-hum"
-              type="range"
-              min={0}
-              max={100}
-              step={0.5}
-              className="w-full"
-              value={simulacion.humedad}
-              onChange={(e) =>
-                setSimulacion((actual) => ({
-                  ...actual,
-                  humedad: Number(e.target.value),
-                }))
-              }
-            />
-          </Campo>
-
-          <Campo
-            etiqueta="Botón del nodo"
-            htmlFor="s-boton"
-            ayuda="Simula el pulsador físico del ESP32."
-          >
-            <Desplegable
-              id="s-boton"
-              valor={simulacion.boton}
-              opciones={[
-                { valor: "NINGUNO", etiqueta: "NINGUNO" },
-                { valor: "NORMAL", etiqueta: "NORMAL — solicitud de asistencia" },
-                { valor: "EMERGENCIA", etiqueta: "EMERGENCIA — botón de emergencia" },
-              ]}
-              alCambiar={(valor) =>
-                setSimulacion((actual) => ({ ...actual, boton: valor }))
-              }
-            />
-          </Campo>
-
-          <div className="flex items-center justify-between border-t border-borde pt-3">
-            <span className="rotulo">
-              {fueraDeTemp || fueraDeHum
-                ? `Fuera de rango: ${[
-                    fueraDeTemp ? "temperatura" : null,
-                    fueraDeHum ? "humedad" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" y ")} · el servidor va a generar llamado`
-                : "Dentro de rango · sin llamado, salvo que uses el botón"}
-            </span>
-
-            <button
-              type="button"
-              className="boton"
-              onClick={enviarSimulacion}
-              disabled={pendiente || areas.length === 0}
-            >
-              {pendiente ? "Enviando…" : "Enviar lectura"}
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

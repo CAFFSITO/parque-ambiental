@@ -5,17 +5,57 @@ Cubre `sql/06_dispositivos.sql`, `sql/07_automatizacion_areas.sql` y
 
 ## Estado
 
-| Migración | Escrita | Sintaxis validada | **Aplicada** |
-|---|---|---|---|
-| `sql/06_dispositivos.sql` | sí | sí | **NO** |
-| `sql/07_automatizacion_areas.sql` | sí | sí | **NO** |
-| `sql/08_credenciales_dispositivos.sql` | sí | sí | **NO** |
+**Actualizado el 2026-09-10.** La tabla decía que ninguna migración estaba
+aplicada. **Ya lo están, todas, en producción.** Lo que sigue es el estado
+verificado, no el planeado.
 
-**Ninguna de las tres fue aplicada.** El motivo está en §6: no hay base de
-desarrollo ni branch de Supabase disponible en este entorno, y las únicas
-credenciales presentes apuntan a **producción**, donde está prohibido probarlas.
-Este documento es el procedimiento para que las aplique y las verifique quien
-tenga acceso a una base de prueba.
+| Migración | Escrita | **Aplicada en producción** | Verificado el |
+|---|---|---|---|
+| `sql/06_dispositivos.sql` | sí | **SÍ** | 2026-09-10 |
+| `sql/07_automatizacion_areas.sql` | sí | **SÍ** | 2026-09-10 |
+| `sql/08_credenciales_dispositivos.sql` | sí | **SÍ** | 2026-09-10 |
+| `sql/09_credencial_nodo_fisico.sql` | sí | **SÍ** | 2026-09-10 |
+| `sql/10_dispositivos_consultas.sql` | sí | **SÍ** | 2026-09-10 |
+| `sql/11_observabilidad.sql` | sí | **NO** | — |
+
+Evidencia de la verificación, de solo lectura, contra
+`hrsfblpvvclauyqmwraf.supabase.co`:
+
+```
+sql/06 -> tabla dispositivos: 14 filas
+sql/06 -> columna lecturas.dispositivo_id: EXISTE
+sql/07 -> columnas areas.auto_*: EXISTEN
+sql/08 -> tabla dispositivo_credenciales: 5 filas
+sql/09 -> credencial 1 (bcrypt-v1, ACTIVA) del dispositivo 11:
+          VERIFICA la clave grabada en el firmware
+sql/10 -> dispositivos_ultima_lectura(): EXISTE
+sql/10 -> dispositivos_historial_areas(): EXISTE
+```
+
+**Solo queda por aplicar `sql/11_observabilidad.sql`**, que agrega una vista de
+lectura y nada más. Ningún camino del código la consulta: si no se aplica, no se
+rompe nada. Ver `99-deploy.md`.
+
+> **Cómo quedó desactualizado este documento.** Se escribió el 2026-09-09
+> describiendo el plan, y las migraciones se aplicaron después sin volver acá.
+> Durante casi un día el documento afirmaba lo contrario de lo que decía la
+> base, y el plan de despliegue `99-deploy.md` se apoyaba en él. Queda anotado
+> como precedente: un documento de estado que no se actualiza al ejecutar es
+> peor que no tenerlo.
+
+### Lo que sigue vigente de este documento
+
+El procedimiento, las verificaciones por migración (§1.3, §2.3, §3.3), los
+**rollbacks** (§1.4, §2.4, §3.4) y el baseline de §5. Los rollbacks son la
+referencia del nivel 3 de `99-deploy.md`.
+
+### Lo que ya NO aplica
+
+§6.2 decía que las tres migraciones "no se ejecutaron contra ninguna base" y
+que las pruebas estaban pendientes. Se ejecutaron contra producción. Lo que
+**sigue sin hacerse** es la corrida de las mismas migraciones dos veces sobre
+una base de prueba para demostrar idempotencia: en producción se aplicaron una
+sola vez.
 
 ## Orden de aplicación
 

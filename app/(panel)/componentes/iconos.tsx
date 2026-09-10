@@ -14,6 +14,7 @@ export type NombreIcono =
   | "empleados"
   | "usuarios"
   | "dispositivos"
+  | "diagnostico"
   | "reportes"
   | "avisos";
 
@@ -64,6 +65,14 @@ const TRAZOS: Record<NombreIcono, React.ReactNode> = {
     <>
       <rect x="7" y="7" width="10" height="10" rx="2.2" />
       <path d="M10 2.5V5M14 2.5V5M10 19v2.5M14 19v2.5M2.5 10H5M2.5 14H5M19 10h2.5M19 14h2.5" />
+    </>
+  ),
+  /* Un pulso sobre una línea de base: la señal que se inyecta para ver cómo
+     responde el sistema. Se distingue de "dispositivos" (el chip) y de
+     "reportes" (las barras) por ser un trazo continuo. */
+  diagnostico: (
+    <>
+      <path d="M2.5 12h4l2.2-6 3.4 12 2.4-8 1.6 2h5.4" />
     </>
   ),
   reportes: (

@@ -132,6 +132,20 @@ export default async function PaginaReportes(props: PageProps<"/reportes">) {
 
       <GraficoEvolucion llamados={datos.porDia} clima={datos.clima} />
 
+      {/* La decisión está tomada y documentada en
+          documents/contexto/80-simulador.md §5: las lecturas simuladas SÍ
+          entran en los reportes. La pantalla lo dice en vez de que haya que
+          deducirlo, que es la diferencia entre un dato con una salvedad y un
+          dato que engaña. */}
+      <p className="text-tenue">
+        Los promedios de clima incluyen las lecturas de dispositivos simulados.
+        Cada lectura queda atribuida a su dispositivo, así que se pueden separar
+        por naturaleza: hoy la mayor parte de la serie histórica proviene de
+        nodos simulados, y excluirlos dejaría el gráfico casi vacío. Los
+        dispositivos simulados aparecen marcados como tales en el Tablero y en
+        Dispositivos.
+      </p>
+
       <TablaDetalle
         llamados={detalle.filas}
         areas={areas}

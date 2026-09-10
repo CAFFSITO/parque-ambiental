@@ -255,6 +255,12 @@ export default async function PaginaTablero() {
   const mias = new Set(areasPropias);
   const lecturas = await Promise.all(areas.map((area) => ultimaLectura(area.id)));
 
+  // Código público -> naturaleza. Es lo que permite marcar como simulación la
+  // lectura que se muestra, que se identifica por el texto que el nodo declaró.
+  const naturalezaPorCodigo = new Map(
+    dispositivos.map((dispositivo) => [dispositivo.codigo, dispositivo.naturaleza]),
+  );
+
   const dispositivosPorArea = new Map<number, DispositivoConEstado[]>();
   for (const dispositivo of dispositivos) {
     if (dispositivo.area_id === null) continue;
@@ -344,6 +350,13 @@ export default async function PaginaTablero() {
               marcas={
                 <>
                   {mias.has(area.id) ? <Chip texto="A cargo" /> : null}
+                  {/* Un área cuyo sensor es simulado se dice en la fila
+                      cerrada, no solo adentro de la ficha: quien mira el
+                      tablero tiene que saber, sin abrir nada, que esos
+                      números no salieron de un aparato. */}
+                  {sensor.dispositivo?.naturaleza === "SIMULADO" ? (
+                    <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                  ) : null}
                   {nivel === "NORMAL" ? null : (
                     <Chip texto={nivel} nivel={nivel} />
                   )}
@@ -381,6 +394,12 @@ export default async function PaginaTablero() {
                       <>
                         {sensor.dispositivo.codigo} ·{" "}
                         {sensor.estado === "EN_LINEA" ? "en línea" : "sin señal"}
+                        {sensor.dispositivo.naturaleza === "SIMULADO" ? (
+                          <>
+                            {" "}
+                            <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                          </>
+                        ) : null}
                         <span className="text-tenue">
                           {" "}
                           ({hace(sensor.dispositivo.segundos_sin_reportar)} ·
@@ -391,6 +410,18 @@ export default async function PaginaTablero() {
                   </Dato>
                   <Dato rotulo="Dispositivo de la lectura">
                     {lectura?.dispositivo ?? SIN_DATO}
+                    {/* La lectura mostrada puede venir de otro nodo del área,
+                        no necesariamente del que evaluó el semáforo. Por eso
+                        la naturaleza se resuelve por el código de la lectura y
+                        no se hereda del sensor de arriba. */}
+                    {lectura?.dispositivo !== undefined &&
+                    lectura.dispositivo !== null &&
+                    naturalezaPorCodigo.get(lectura.dispositivo) === "SIMULADO" ? (
+                      <>
+                        {" "}
+                        <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                      </>
+                    ) : null}
                   </Dato>
                 </>
               }

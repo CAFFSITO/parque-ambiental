@@ -19,6 +19,9 @@ const NAV_ADMINISTRADOR: ItemNav[] = [
   { etiqueta: "Empleados", href: "/empleados", icono: "empleados" },
   { etiqueta: "Usuarios", href: "/usuarios", icono: "usuarios" },
   { etiqueta: "Dispositivos", href: "/dispositivos", icono: "dispositivos" },
+  // El simulador. Va solo acá: /diagnostico exige ADMINISTRADOR en la página y
+  // en su Server Action, así que esconderlo del menú no es lo que lo protege.
+  { etiqueta: "Diagnóstico", href: "/diagnostico", icono: "diagnostico" },
   { etiqueta: "Reportes", href: "/reportes", icono: "reportes" },
   { etiqueta: "Avisos", href: "/avisos", icono: "avisos" },
 ];

@@ -1,6 +1,7 @@
 // app/(panel)/areas/page.tsx
 // Exclusiva del rol ADMINISTRADOR: exigirAdmin() corre antes de leer nada.
 
+import { bloqueosDeArea, dependenciasDeAreas } from "@/lib/borrado";
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { TIPOS_AREA, unirOpciones } from "@/lib/catalogos";
@@ -33,8 +34,13 @@ function agrupar(filas: { area_id: number | null }[]): Map<number, number> {
 export default async function PaginaAreas() {
   await exigirAdmin();
 
-  const [areasResultado, empleadosResultado, llamadosResultado, dispositivos] =
-    await Promise.all([
+  const [
+    areasResultado,
+    empleadosResultado,
+    llamadosResultado,
+    dispositivos,
+    dependencias,
+  ] = await Promise.all([
       db()
         .from("areas")
         .select(COLUMNAS_AREA)
@@ -61,6 +67,11 @@ export default async function PaginaAreas() {
       // Se traen todos, no solo los asignados, porque el selector de "Asignar
       // dispositivo" necesita también los que están sin área o en otra.
       leerDispositivosConEstado(),
+
+      // Qué cuelga de cada área, para decidir si se puede BORRAR o solo dar de
+      // baja. Una sola consulta agregada (sql/12); si esa migración no está
+      // aplicada, devuelve no disponible y la pantalla deja de ofrecer borrar.
+      dependenciasDeAreas(),
     ]);
 
   const empleadosPorArea = agrupar(empleadosResultado.data ?? []);
@@ -74,6 +85,18 @@ export default async function PaginaAreas() {
     empleados: empleadosPorArea.get(area.id) ?? 0,
     llamados_abiertos: llamadosPorArea.get(area.id) ?? 0,
     dispositivos: dispositivosPorArea.get(area.id) ?? 0,
+
+    // null = no se pudo saber, y entonces no se ofrece borrar.
+    // [] = no cuelga nada: se puede borrar.
+    // [motivos] = hay historia; solo se puede dar de baja.
+    //
+    // Los motivos se calculan ACÁ, en el servidor, y viajan como texto: el
+    // gestor es un componente cliente y lib/borrado.ts es server-only.
+    bloqueos: (() => {
+      const dep = dependencias.por.get(area.id);
+      if (!dependencias.disponible || dep === undefined) return null;
+      return bloqueosDeArea(dep);
+    })(),
   }));
 
   // El selector de tipo ofrece el catálogo base más los tipos ya inventados.

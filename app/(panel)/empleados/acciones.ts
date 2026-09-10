@@ -4,6 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/lib/auth";
+import { eliminarEmpleado as borrarEmpleado } from "@/lib/borrado";
 import { COLUMNA_INEXISTENTE, COLUMNA_SIN_CACHE, db } from "@/lib/db";
 import {
   esEstadoEmpleado,
@@ -252,4 +253,32 @@ export async function cambiarEstadoEmpleado(
         ? "Empleado dado de baja."
         : `Empleado marcado como ${estado}.`,
   };
+}
+
+/**
+ * BORRADO DEFINITIVO del empleado. No es lo mismo que darlo de baja.
+ *
+ *   * Dar de baja (cambiarEstadoEmpleado) lo pasa a estado 'baja'. La ficha
+ *     queda y se puede reactivar.
+ *   * Borrar es para la ficha cargada dos veces o con el legajo equivocado.
+ *     NO se puede deshacer.
+ *
+ * Solo procede si no tiene un usuario ligado, que es la única referencia con
+ * clave foránea. Los llamados que lleven su legajo en creado_por o
+ * atendido_por NO lo bloquean: esas columnas son texto libre y no se rompen.
+ * Lo que se pierde es poder resolver ese texto a una ficha, y la pantalla lo
+ * advierte antes de confirmar.
+ */
+export async function eliminarEmpleadoSinUsuario(id: number): Promise<Resultado> {
+  await exigirAdmin();
+
+  if (typeof id !== "number" || !Number.isInteger(id)) {
+    return { ok: false, error: "Identificador inválido." };
+  }
+
+  const resultado = await borrarEmpleado(id);
+  if (!resultado.ok) return { ok: false, error: resultado.error };
+
+  refrescar();
+  return { ok: true, mensaje: "Empleado eliminado." };
 }

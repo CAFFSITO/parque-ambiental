@@ -383,15 +383,30 @@ export async function listarCredenciales(
  *
  * No toca las credenciales anteriores: emitir es emitir. Para reemplazar una
  * credencial existe rotarCredencial(), que además cierra la vieja.
+ *
+ * `expiraEn` fija un vencimiento. Es opcional y por omisión no hay ninguno,
+ * que es lo que corresponde a la credencial de un aparato: se graba en el
+ * firmware y tiene que seguir sirviendo hasta que alguien la rote.
+ *
+ * Existe por el simulador (ver lib/simulador.ts): esa credencial se emite
+ * desde el servidor, se usa en el acto y su secreto no se persiste en ningún
+ * lado. Sin vencimiento, un reinicio del servidor dejaría una credencial
+ * ACTIVA que ya nadie tiene y que nadie va a revocar. Con vencimiento, se
+ * muere sola.
  */
 export async function crearCredencial(
   dispositivoId: number,
   usuario: string,
-  opciones: { motivo?: string | null } = {},
+  opciones: { motivo?: string | null; expiraEn?: Date | null } = {},
 ): Promise<{ ok: true; emitida: CredencialEmitida } | { ok: false; error: string }> {
   if (!Number.isInteger(dispositivoId)) {
     return { ok: false, error: "Identificador de dispositivo inválido." };
   }
+
+  const vence =
+    opciones.expiraEn instanceof Date && !Number.isNaN(opciones.expiraEn.getTime())
+      ? opciones.expiraEn.toISOString()
+      : null;
 
   const nuevo = generarSecreto();
 
@@ -404,6 +419,7 @@ export async function crearCredencial(
       prefijo: nuevo.prefijo,
       estado: "ACTIVA",
       origen: "GENERADA",
+      expira_en: vence,
       creada_por: usuario,
       motivo: opciones.motivo?.trim() || null,
     })

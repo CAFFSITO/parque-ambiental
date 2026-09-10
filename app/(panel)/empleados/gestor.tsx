@@ -28,6 +28,7 @@ import { Selector, type OpcionSelector } from "../componentes/selector";
 import {
   actualizarEmpleado,
   cambiarEstadoEmpleado,
+  eliminarEmpleadoSinUsuario,
   crearEmpleado,
   type EntradaEmpleado,
 } from "./acciones";
@@ -100,14 +101,31 @@ function nivelDeEstado(
   return "NINGUNO";
 }
 
+/**
+ * Qué impide borrar a cada empleado, ya resuelto por el servidor.
+ *
+ *   bloqueos []   -> se puede borrar.
+ *   bloqueos [..] -> tiene un usuario ligado; solo se puede dar de baja.
+ *
+ * `llamados_legajo` NO bloquea: llamados.creado_por y atendido_por son texto
+ * libre sin clave foránea. Se muestra como advertencia antes de confirmar.
+ */
+export type InfoBorrado = {
+  bloqueos: string[];
+  llamados_legajo: number;
+};
+
 export function GestorEmpleados({
   empleados,
   areas,
+  borrado,
   tareasDisponibles,
   turnosGuardados,
 }: {
   empleados: Empleado[];
   areas: Area[];
+  /** null = falta sql/12: no se ofrece borrar. */
+  borrado: Record<number, InfoBorrado> | null;
   tareasDisponibles: string[];
   turnosGuardados: string[];
 }) {
@@ -115,6 +133,28 @@ export function GestorEmpleados({
   const [pendiente, iniciar] = useTransition();
 
   const [filtroArea, setFiltroArea] = useState<string>("");
+  const [aBorrar, setABorrar] = useState<Empleado | null>(null);
+
+  /** Lo que el servidor dijo de este empleado, o null si no se pudo saber. */
+  function infoBorrado(empleado: Empleado): InfoBorrado | null {
+    return borrado?.[empleado.id] ?? null;
+  }
+
+  /**
+   * Borrado definitivo. Es OTRA acción que dar de baja, a propósito: borrar no
+   * se puede deshacer, y el servidor vuelve a contar antes de hacerlo.
+   */
+  function confirmarBorrado() {
+    if (!aBorrar) return;
+    const objetivo = aBorrar;
+
+    iniciar(async () => {
+      const resultado = await eliminarEmpleadoSinUsuario(objetivo.id);
+      setABorrar(null);
+      setAviso(resultado.ok ? (resultado.mensaje ?? "Listo.") : resultado.error);
+      if (resultado.ok) router.refresh();
+    });
+  }
   const [filtroEstado, setFiltroEstado] = useState<string>("");
   const [busqueda, setBusqueda] = useState<string>("");
 
@@ -410,16 +450,57 @@ export function GestorEmpleados({
                   <Dato rotulo="Observaciones" ancho>
                     {empleado.observaciones ?? SIN_DATO}
                   </Dato>
+                  <Dato rotulo="Borrado" ancho>
+                    {(() => {
+                      const info = infoBorrado(empleado);
+                      if (info === null) {
+                        return (
+                          <span className="text-tenue">
+                            No se puede saber qué depende de esta ficha: falta
+                            correr sql/12_borrado_seguro.sql. Sin certeza no se
+                            ofrece borrar.
+                          </span>
+                        );
+                      }
+                      if (info.bloqueos.length > 0) {
+                        return (
+                          <span className="text-tenue">
+                            No se puede borrar porque tiene{" "}
+                            {info.bloqueos.join(", ")}. Borrá o desvinculá el
+                            usuario primero, o dalo de baja.
+                          </span>
+                        );
+                      }
+                      return info.llamados_legajo > 0
+                        ? `Se puede borrar. Quedan ${info.llamados_legajo} llamado${info.llamados_legajo === 1 ? "" : "s"} con su legajo escrito, que no se van a poder resolver a esta ficha.`
+                        : "No tiene usuario ligado: se puede borrar definitivamente.";
+                    })()}
+                  </Dato>
                 </>
               }
               pie={
-                <button
-                  type="button"
-                  className="boton-plano"
-                  onClick={() => setABajar(empleado)}
-                >
-                  {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="boton-plano"
+                    onClick={() => setABajar(empleado)}
+                  >
+                    {empleado.estado === "baja" ? "Reactivar" : "Dar de baja"}
+                  </button>
+
+                  {/* Borrar solo se OFRECE cuando no hay usuario ligado. La
+                      pantalla no es el control: eliminarEmpleadoSinUsuario()
+                      vuelve a verificar. */}
+                  {infoBorrado(empleado)?.bloqueos.length === 0 ? (
+                    <button
+                      type="button"
+                      className="boton-plano"
+                      onClick={() => setABorrar(empleado)}
+                    >
+                      Eliminar
+                    </button>
+                  ) : null}
+                </>
               }
             />
           );
@@ -648,6 +729,18 @@ export function GestorEmpleados({
           pendiente={pendiente}
           alConfirmar={confirmarBaja}
           alCancelar={() => setABajar(null)}
+        />
+      ) : null}
+
+      {aBorrar ? (
+        <ConfirmarModal
+          titulo="Eliminar al empleado"
+          mensaje={`La ficha de ${aBorrar.apellido}, ${aBorrar.nombre} (${aBorrar.legajo}) se borra de la base y no se puede recuperar.${(infoBorrado(aBorrar)?.llamados_legajo ?? 0) > 0 ? ` Quedan ${infoBorrado(aBorrar)?.llamados_legajo} llamado(s) con su legajo escrito: no se borran, pero dejan de poder resolverse a una ficha.` : ""} Si la persona trabajó acá, dala de baja en vez de borrarla.`}
+          textoConfirmar="Eliminar"
+          peligro
+          pendiente={pendiente}
+          alConfirmar={confirmarBorrado}
+          alCancelar={() => setABorrar(null)}
         />
       ) : null}
     </div>
