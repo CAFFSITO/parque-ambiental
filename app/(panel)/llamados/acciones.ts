@@ -2,9 +2,12 @@
 
 // app/(panel)/llamados/acciones.ts
 //
-// Regla de área verificada en el servidor: un EMPLEADO solo atiende llamados
-// de su area_id, y los que crea quedan en su área sí o sí. Lo que mande el
-// cliente en area_id se ignora para ese rol.
+// El área no restringe: cualquiera con sesión puede crear y atender llamados
+// de cualquier área. El parque se recorre entero y quien ve un problema lo
+// reporta donde lo ve, sin importar de qué sector esté a cargo.
+//
+// Las áreas a cargo (empleados.areas_ids, que pueden ser varias) se usan solo
+// para ordenar las pantallas: lo propio arriba. Ver lib/areas-propias.ts.
 
 import { revalidatePath } from "next/cache";
 import { exigirSesion } from "@/lib/auth";
@@ -50,14 +53,6 @@ export async function atenderLlamado(id: number): Promise<Resultado> {
     return { ok: false, error: "El llamado no existe." };
   }
 
-  // El candado de área: no alcanza con que la UI no muestre el botón.
-  if (sesion.rol === "EMPLEADO" && llamado.area_id !== sesion.area_id) {
-    return {
-      ok: false,
-      error: "No podés atender llamados de otra área.",
-    };
-  }
-
   if (llamado.estado === "ATENDIDO") {
     return { ok: false, error: "Ese llamado ya estaba atendido." };
   }
@@ -87,7 +82,9 @@ export async function atenderLlamado(id: number): Promise<Resultado> {
  * que para atenderlo.
  */
 export async function cancelarAtencion(id: number): Promise<Resultado> {
-  const sesion = await exigirSesion();
+  // Sigue exigiendo sesión: lo que ya no exige es que el llamado sea del
+  // área de quien lo deshace.
+  await exigirSesion();
 
   if (typeof id !== "number" || !Number.isInteger(id)) {
     return { ok: false, error: "Identificador de llamado inválido." };
@@ -105,13 +102,6 @@ export async function cancelarAtencion(id: number): Promise<Resultado> {
 
   if (errorLectura || !llamado) {
     return { ok: false, error: "El llamado no existe." };
-  }
-
-  if (sesion.rol === "EMPLEADO" && llamado.area_id !== sesion.area_id) {
-    return {
-      ok: false,
-      error: "No podés cambiar llamados de otra área.",
-    };
   }
 
   if (llamado.estado !== "ATENDIDO") {
@@ -156,17 +146,11 @@ export async function crearLlamado(
     return { ok: false, error: "El motivo no pertenece al catálogo." };
   }
 
-  // Para EMPLEADO el área es la suya, venga lo que venga del cliente.
-  const areaId = sesion.rol === "EMPLEADO" ? sesion.area_id : areaPedida;
+  // El área es la que se eligió, sea cual sea el rol.
+  const areaId = areaPedida;
 
   if (areaId === null) {
-    return {
-      ok: false,
-      error:
-        sesion.rol === "EMPLEADO"
-          ? "Tu usuario no tiene área asignada."
-          : "Elegí un área para el llamado.",
-    };
+    return { ok: false, error: "Elegí un área para el llamado." };
   }
 
   const { error } = await db().from("llamados").insert({

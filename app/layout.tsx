@@ -43,8 +43,15 @@ export const metadata: Metadata = {
   description:
     "Gestión ambiental clara y conectada para el Parque Ambiental Municipal.",
   manifest: "/manifest.json",
+  // A 32 px el isologo entero es una mancha con un borrón amarillo: las
+  // pestañas se quedan con la mancha sola, que es la parte reconocible, y el
+  // isologo completo queda para los tamaños donde se lee (app/icon.png y los
+  // íconos de la PWA).
   icons: {
-    icon: "/icons/favicon-32.png",
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-64.png", sizes: "64x64", type: "image/png" },
+    ],
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: {

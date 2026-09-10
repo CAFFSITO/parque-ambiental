@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getSesion } from "@/lib/auth";
 import type { Rol } from "@/lib/tipos";
 import { cerrarSesion } from "./acciones";
+import { AvisosAutomaticos } from "./avisos-automaticos";
 import { Marca } from "./componentes/marca";
 import { MarcoPanel } from "./marco";
 import type { ItemNav } from "./navegacion";
@@ -46,8 +47,8 @@ export default async function LayoutPanel({
     <div className="superficie-panel">
       <header className="barra-superior">
         <div className="marca-panel">
-          <span className="marca-sigla">
-            <Marca tamano={26} />
+          <span className="marca-logotipo">
+            <Marca alto={22} />
           </span>
           <span className="marca-texto">
             <span className="marca-titulo">Parque Ambiental</span>
@@ -68,6 +69,12 @@ export default async function LayoutPanel({
       </header>
 
       <MarcoPanel items={itemsPara(sesion.rol)}>{children}</MarcoPanel>
+
+      {/* Deja este dispositivo suscripto apenas se entra. Se apaga desde
+          Avisos, y esa decisión se respeta. */}
+      <AvisosAutomaticos
+        clavePublica={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+      />
     </div>
   );
 }

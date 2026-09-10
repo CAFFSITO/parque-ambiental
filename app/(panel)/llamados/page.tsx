@@ -1,9 +1,12 @@
 // app/(panel)/llamados/page.tsx
 // Los filtros viven en la URL, así el sondeo de 10 s los respeta.
-// Para el rol EMPLEADO el filtro de área se fuerza a la suya en el servidor:
-// no hay forma de ver otra área cambiando el querystring.
+//
+// Todos ven todas las áreas. Las que la persona tiene a cargo no filtran:
+// ordenan. Sus llamados van arriba de todo y, dentro de cada grupo, se
+// mantiene el orden por fecha.
 
 import { exigirSesion } from "@/lib/auth";
+import { areasDelUsuario, propiasPrimero } from "@/lib/areas-propias";
 import { db } from "@/lib/db";
 import type { Area, Llamado } from "@/lib/tipos";
 import { GestorLlamados, type Filtros } from "./gestor";
@@ -40,12 +43,6 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
     hasta: fechaValida(texto(parametros.hasta)),
   };
 
-  // El área de un EMPLEADO no es negociable desde la URL.
-  const areaForzada = sesion.rol === "EMPLEADO" ? sesion.area_id : null;
-  if (areaForzada !== null) {
-    filtros.area = String(areaForzada);
-  }
-
   let consulta = db()
     .from("llamados")
     .select(
@@ -54,9 +51,7 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
     .order("creado_en", { ascending: false })
     .limit(TOPE_FILAS);
 
-  if (areaForzada !== null) {
-    consulta = consulta.eq("area_id", areaForzada);
-  } else if (filtros.area !== "" && Number.isFinite(Number(filtros.area))) {
+  if (filtros.area !== "" && Number.isFinite(Number(filtros.area))) {
     consulta = consulta.eq("area_id", Number(filtros.area));
   }
 
@@ -71,7 +66,7 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
     consulta = consulta.lte("creado_en", `${filtros.hasta}T23:59:59`);
   }
 
-  const [llamadosResultado, areasResultado] = await Promise.all([
+  const [llamadosResultado, areasResultado, areasPropias] = await Promise.all([
     consulta.overrideTypes<Llamado[], { merge: false }>(),
     db()
       .from("areas")
@@ -80,17 +75,19 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
       )
       .order("codigo", { ascending: true })
       .overrideTypes<Area[], { merge: false }>(),
+    areasDelUsuario(sesion),
   ]);
 
-  const llamados = llamadosResultado.data ?? [];
+  const crudos = llamadosResultado.data ?? [];
 
   return (
     <GestorLlamados
-      llamados={llamados}
+      llamados={propiasPrimero(crudos, areasPropias)}
       areas={areasResultado.data ?? []}
+      areasPropias={areasPropias}
       sesion={sesion}
       filtros={filtros}
-      truncado={llamados.length === TOPE_FILAS}
+      truncado={crudos.length === TOPE_FILAS}
     />
   );
 }

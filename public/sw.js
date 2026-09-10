@@ -30,10 +30,11 @@ self.addEventListener("push", (event) => {
       body: aviso.cuerpo || "Hay un llamado nuevo.",
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
-      // Las emergencias suenan y quedan hasta que alguien las toca; un
-      // llamado normal no interrumpe.
+      // La emergencia queda en pantalla hasta que alguien la toca; el
+      // llamado normal se puede descartar solo. Ninguno de los dos va en
+      // silencio: un aviso mudo en la bandeja de Windows se pierde, y el
+      // sistema existe para que no se pierda.
       requireInteraction: emergencia,
-      silent: !emergencia,
       vibrate: emergencia ? [120, 60, 120, 60, 240] : [80],
       // Un tag por tipo: dos llamados seguidos se apilan en un solo aviso en
       // vez de tapar la pantalla.

@@ -25,9 +25,9 @@ export default async function PaginaLogin(props: PageProps<"/login">) {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="panel w-full max-w-[340px] p-5">
-        <div className="mb-4 flex items-center gap-3 border-b border-borde pb-0">
-          <span className="marca-sigla">
-            <Marca tamano={24} />
+        <div className="mb-4 flex flex-col gap-2 border-b border-borde pb-0">
+          <span className="marca-logotipo">
+            <Marca alto={22} />
           </span>
           <h1 className="text-[17px] font-semibold text-texto">
             Parque Ambiental Municipal

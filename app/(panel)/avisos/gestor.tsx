@@ -1,10 +1,15 @@
 "use client";
 
 // app/(panel)/avisos/gestor.tsx
-// Los avisos push se piden por dispositivo: el permiso lo da el navegador, no
-// la cuenta. Por eso la pantalla separa "este dispositivo" del resto: en el
-// celular se prende el push y se silencia el grupo de Telegram, en la compu
-// se puede hacer al revés, y la elección de una persona no toca la de otra.
+// Los avisos vienen prendidos: el panel deja suscripto cada dispositivo desde
+// el que se entra (ver avisos-automaticos.tsx). Esta pantalla existe sobre
+// todo para lo contrario —apagarlos donde molesten— y para volver a
+// prenderlos si uno se arrepiente.
+//
+// El permiso lo da el navegador, no la cuenta: por eso todo se decide por
+// dispositivo. En el celular se puede dejar solo el push y silenciar el grupo
+// de Telegram, en la compu al revés, y lo que elige una persona no toca lo de
+// las demás.
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +19,13 @@ import type { Sesion } from "@/lib/tipos";
 import { Aviso } from "../componentes/campos";
 import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
 import {
+  desuscribir,
+  endpointActual,
+  marcarApagadoAca,
+  soportaPush,
+  suscribir,
+} from "../componentes/push-cliente";
+import {
   borrarSuscripcion,
   cambiarSuscripcion,
   cambiarTelegram,
@@ -22,54 +34,6 @@ import {
 } from "./acciones";
 
 type Soporte = "midiendo" | "si" | "no";
-
-/**
- * La clave VAPID viaja en base64url y pushManager.subscribe espera bytes.
- * El ArrayBuffer se crea a mano: el Uint8Array genérico que devuelve el
- * constructor puede estar respaldado por un SharedArrayBuffer y ahí no
- * encaja en BufferSource.
- */
-function aBytes(base64url: string): ArrayBuffer {
-  const relleno = "=".repeat((4 - (base64url.length % 4)) % 4);
-  const base64 = (base64url + relleno).replace(/-/g, "+").replace(/_/g, "/");
-  const crudo = window.atob(base64);
-
-  const bufer = new ArrayBuffer(crudo.length);
-  const salida = new Uint8Array(bufer);
-  for (let i = 0; i < crudo.length; i += 1) salida[i] = crudo.charCodeAt(i);
-  return bufer;
-}
-
-/** Nombre legible del dispositivo, para distinguirlo en la lista. */
-function nombreDelNavegador(): string {
-  const ua = navigator.userAgent;
-
-  const navegador = /Edg\//.test(ua)
-    ? "Edge"
-    : /OPR\//.test(ua)
-      ? "Opera"
-      : /Firefox\//.test(ua)
-        ? "Firefox"
-        : /Chrome\//.test(ua)
-          ? "Chrome"
-          : /Safari\//.test(ua)
-            ? "Safari"
-            : "Navegador";
-
-  const sistema = /Android/.test(ua)
-    ? "Android"
-    : /iPhone|iPad|iPod/.test(ua)
-      ? "iPhone o iPad"
-      : /Windows/.test(ua)
-        ? "Windows"
-        : /Mac OS X/.test(ua)
-          ? "Mac"
-          : /Linux/.test(ua)
-            ? "Linux"
-            : "escritorio";
-
-  return `${navegador} en ${sistema}`;
-}
 
 export function GestorAvisos({
   sesion,
@@ -105,21 +69,14 @@ export function GestorAvisos({
     let vigente = true;
 
     const medir = async () => {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      if (!soportaPush()) {
         if (vigente) setSoporte("no");
         return;
       }
 
-      let endpoint: string | null = null;
-      try {
-        const registro = await navigator.serviceWorker.ready;
-        endpoint = (await registro.pushManager.getSubscription())?.endpoint ?? null;
-      } catch {
-        // El service worker puede no estar listo todavía: el soporte se
-        // informa igual y la suscripción se lee la próxima vez.
-      }
-
+      const endpoint = await endpointActual();
       if (!vigente) return;
+
       setSoporte("si");
       setPermiso(Notification.permission);
       setEndpointLocal(endpoint);
@@ -150,50 +107,24 @@ export function GestorAvisos({
     }
   }
 
-  /** Pide permiso, se suscribe en el navegador y guarda la suscripción. */
+  /** Vuelve a prender los avisos en este dispositivo. */
   function activarAca() {
     setError(null);
     setAviso(null);
 
     iniciar(async () => {
-      try {
-        const respuesta = await Notification.requestPermission();
-        setPermiso(respuesta);
+      const resultado = await suscribir(clavePublica, true);
+      setPermiso(Notification.permission);
 
-        if (respuesta !== "granted") {
-          setError(
-            "El navegador no dio permiso. Habilitá las notificaciones para este sitio y volvé a intentar.",
-          );
-          return;
-        }
-
-        const registro = await navigator.serviceWorker.ready;
-        const existente = await registro.pushManager.getSubscription();
-        const suscripcion =
-          existente ??
-          (await registro.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: aBytes(clavePublica),
-          }));
-
-        const plano = suscripcion.toJSON();
-        setEndpointLocal(suscripcion.endpoint);
-
-        contar(
-          await guardarSuscripcion({
-            endpoint: suscripcion.endpoint,
-            p256dh: plano.keys?.p256dh ?? "",
-            auth: plano.keys?.auth ?? "",
-            dispositivo: nombreDelNavegador(),
-          }),
-        );
-      } catch (fallo) {
-        setError(
-          fallo instanceof Error
-            ? `No se pudo activar: ${fallo.message}`
-            : "No se pudo activar en este dispositivo.",
-        );
+      if (!resultado.ok) {
+        setAviso(null);
+        setError(resultado.error);
+        return;
       }
+
+      marcarApagadoAca(false);
+      setEndpointLocal(resultado.suscripcion.endpoint);
+      contar(await guardarSuscripcion(resultado.suscripcion));
     });
   }
 
@@ -204,14 +135,17 @@ export function GestorAvisos({
 
     iniciar(async () => {
       try {
-        const registro = await navigator.serviceWorker.ready;
-        const suscripcion = await registro.pushManager.getSubscription();
-        const endpoint = suscripcion?.endpoint ?? endpointLocal;
+        const endpoint = (await desuscribir()) ?? endpointLocal;
 
-        await suscripcion?.unsubscribe();
+        // Antes que nada la marca: si no, el enganche automático del panel
+        // los volvería a prender en la próxima pantalla.
+        marcarApagadoAca(true);
         setEndpointLocal(null);
 
         if (endpoint) contar(await borrarSuscripcion(endpoint));
+        else {
+          contar({ ok: true, mensaje: "Avisos apagados en este dispositivo." });
+        }
       } catch (fallo) {
         setError(
           fallo instanceof Error
@@ -223,10 +157,19 @@ export function GestorAvisos({
   }
 
   function alternar(fila: FilaSuscripcion) {
-    iniciar(async () => contar(await cambiarSuscripcion(fila.id, !fila.activa)));
+    iniciar(async () => {
+      // Apagar el dispositivo desde el que se está mirando también deja la
+      // marca local, por lo mismo que quitarAca.
+      if (fila.endpoint === endpointLocal) marcarApagadoAca(fila.activa);
+      contar(await cambiarSuscripcion(fila.id, !fila.activa));
+    });
   }
 
   function quitar(fila: FilaSuscripcion) {
+    if (fila.endpoint === endpointLocal) {
+      quitarAca();
+      return;
+    }
     iniciar(async () => contar(await borrarSuscripcion(fila.endpoint)));
   }
 
@@ -245,8 +188,9 @@ export function GestorAvisos({
           <span className="titulo-seccion">Avisos</span>
         </div>
         <p className="contexto-tablero">
-          Un llamado nuevo avisa por dos caminos independientes. En un mismo
-          teléfono podés tener los dos, uno solo o ninguno.
+          Un llamado nuevo avisa por dos caminos independientes. Los avisos del
+          navegador vienen prendidos en cada dispositivo desde el que entrás;
+          acá se apagan donde molesten.
         </p>
       </div>
 
@@ -268,7 +212,7 @@ export function GestorAvisos({
         <div className="cabecera-seccion">
           <span className="titulo-seccion">Push en este dispositivo</span>
           {activoAca ? (
-            <Chip texto="Activo" nivel="NORMAL" />
+            <Chip texto="Prendido" nivel="NORMAL" />
           ) : (
             <Chip texto="Apagado" />
           )}
@@ -285,8 +229,8 @@ export function GestorAvisos({
               {activoAca
                 ? "Este dispositivo recibe un aviso por cada llamado nuevo, aunque el panel esté cerrado."
                 : permiso === "denied"
-                  ? "El navegador tiene bloqueadas las notificaciones para este sitio. Desbloquealas desde el candado de la barra de direcciones y volvé a intentar."
-                  : "Activalo para que este dispositivo reciba los llamados nuevos."}
+                  ? "El navegador tiene bloqueadas las notificaciones para este sitio. Desbloquealas desde el candado de la barra de direcciones y volvé a prenderlos."
+                  : "Los apagaste en este dispositivo. Se pueden volver a prender cuando quieras."}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -298,7 +242,7 @@ export function GestorAvisos({
                     disabled={pendiente}
                     onClick={quitarAca}
                   >
-                    Desactivar acá
+                    {pendiente ? "Apagando…" : "Desactivar en este dispositivo"}
                   </button>
                   <button
                     type="button"
@@ -316,7 +260,7 @@ export function GestorAvisos({
                   disabled={pendiente || soporte !== "si" || !hayClaves}
                   onClick={activarAca}
                 >
-                  {pendiente ? "Activando…" : "Activar en este dispositivo"}
+                  {pendiente ? "Prendiendo…" : "Volver a activar acá"}
                 </button>
               )}
             </div>
@@ -335,7 +279,7 @@ export function GestorAvisos({
 
         <Lista
           hayFilas={dispositivos.length > 0}
-          vacio="Todavía no activaste los avisos en ningún dispositivo."
+          vacio="Todavía no se registró ningún dispositivo con avisos."
         >
           {dispositivos.map((fila) => {
             const esteMismo = fila.endpoint === endpointLocal;

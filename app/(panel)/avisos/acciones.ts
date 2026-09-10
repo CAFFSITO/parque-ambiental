@@ -67,6 +67,67 @@ export async function guardarSuscripcion(
   return { ok: true, mensaje: "Este dispositivo va a recibir los avisos." };
 }
 
+/**
+ * Alta silenciosa del enganche automático del panel.
+ *
+ * Se diferencia de guardarSuscripcion en una cosa y es la importante: si la
+ * fila ya existe NO toca 'activa'. Así, un dispositivo apagado a mano sigue
+ * apagado por más que se entre al panel diez veces.
+ */
+export async function asegurarSuscripcion(
+  entrada: EntradaSuscripcion,
+): Promise<Resultado> {
+  const sesion = await exigirSesion();
+
+  const crudo = entrada as unknown as Record<string, unknown>;
+  const endpoint = texto(crudo?.endpoint);
+  const p256dh = texto(crudo?.p256dh, 200);
+  const auth = texto(crudo?.auth, 200);
+  const dispositivo = texto(crudo?.dispositivo, 120);
+
+  if (!endpoint.startsWith("https://") || !p256dh || !auth) {
+    return { ok: false, error: "La suscripción del navegador no es válida." };
+  }
+
+  const { data: existente } = await db()
+    .from("suscripciones_push")
+    .select("id")
+    .eq("endpoint", endpoint)
+    .maybeSingle()
+    .overrideTypes<{ id: number }, { merge: false }>();
+
+  if (existente) {
+    await db()
+      .from("suscripciones_push")
+      .update({
+        usuario_id: sesion.id,
+        p256dh,
+        auth,
+        dispositivo: dispositivo === "" ? null : dispositivo,
+      })
+      .eq("id", existente.id);
+
+    revalidatePath("/avisos");
+    return { ok: true };
+  }
+
+  const { error } = await db().from("suscripciones_push").insert({
+    usuario_id: sesion.id,
+    endpoint,
+    p256dh,
+    auth,
+    dispositivo: dispositivo === "" ? null : dispositivo,
+    activa: true,
+  });
+
+  if (error) {
+    return { ok: false, error: `No se pudo guardar: ${error.message}` };
+  }
+
+  revalidatePath("/avisos");
+  return { ok: true, mensaje: "Este dispositivo va a recibir los avisos." };
+}
+
 /** Baja definitiva: la usa el navegador cuando cancela la suscripción. */
 export async function borrarSuscripcion(endpoint: string): Promise<Resultado> {
   const sesion = await exigirSesion();

@@ -7,6 +7,10 @@
 //
 // Cada llamado es una fila compacta: primero el botón Atender, después lo
 // mínimo para decidir. El resto de la ficha aparece al desplegarla.
+//
+// El área no restringe a nadie: se puede crear y atender en cualquiera. Las
+// áreas a cargo (que pueden ser varias) solo ordenan —el servidor manda sus
+// llamados arriba— y se marcan con un chip para que se note por qué están ahí.
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -53,12 +57,14 @@ function nivelDeFila(llamado: Llamado): "EMERGENCIA" | "ADVERTENCIA" | "NINGUNO"
 export function GestorLlamados({
   llamados,
   areas,
+  areasPropias,
   sesion,
   filtros,
   truncado,
 }: {
   llamados: Llamado[];
   areas: Area[];
+  areasPropias: number[];
   sesion: Sesion;
   filtros: Filtros;
   truncado: boolean;
@@ -122,7 +128,9 @@ export function GestorLlamados({
   function abrirNuevo() {
     setErrorFicha(null);
     setFicha({
-      area_id: sesion.rol === "EMPLEADO" ? sesion.area_id : null,
+      // Arranca en la primera área a cargo porque es la apuesta más probable,
+      // pero se puede cambiar por cualquier otra.
+      area_id: areasPropias[0] ?? null,
       tipo: "NORMAL",
       motivo: MOTIVOS_MANUALES[0],
       detalle: "",
@@ -147,10 +155,7 @@ export function GestorLlamados({
     });
   }
 
-  const areaPropia =
-    sesion.rol === "EMPLEADO" && sesion.area_id !== null
-      ? areas.find((area) => area.id === sesion.area_id)
-      : undefined;
+  const mias = new Set(areasPropias);
 
   return (
     <div className="flex flex-col gap-3">
@@ -160,9 +165,10 @@ export function GestorLlamados({
           Llamados
         </h1>
         <div className="flex items-center gap-3">
-          {sesion.rol === "EMPLEADO" ? (
+          {areasPropias.length > 0 ? (
             <span className="rotulo">
-              Área {areaPropia?.codigo ?? SIN_DATO}
+              {areasPropias.length} área
+              {areasPropias.length === 1 ? "" : "s"} a cargo
             </span>
           ) : null}
           <span className="rotulo">
@@ -326,12 +332,17 @@ export function GestorLlamados({
               }
               titulo={llamado.motivo ?? SIN_DATO}
               marcas={
-                llamado.tipo === "EMERGENCIA" ? (
-                  <Chip
-                    texto="Emergencia"
-                    nivel={atendido ? "NINGUNO" : "EMERGENCIA"}
-                  />
-                ) : null
+                <>
+                  {llamado.area_id !== null && mias.has(llamado.area_id) ? (
+                    <Chip texto="A cargo" />
+                  ) : null}
+                  {llamado.tipo === "EMERGENCIA" ? (
+                    <Chip
+                      texto="Emergencia"
+                      nivel={atendido ? "NINGUNO" : "EMERGENCIA"}
+                    />
+                  ) : null}
+                </>
               }
               resumen={`${area?.codigo ?? SIN_DATO} · ${fechaHora(llamado.creado_en)}`}
               detalle={
@@ -412,48 +423,35 @@ export function GestorLlamados({
           <div className="flex flex-col gap-3">
             {errorFicha ? <Aviso texto={errorFicha} /> : null}
 
-            <Campo etiqueta="Área" htmlFor="n-area">
-              {sesion.rol === "EMPLEADO" ? (
-                <input
-                  id="n-area"
-                  className="campo"
-                  readOnly
-                  value={
-                    areaPropia
-                      ? `${areaPropia.codigo} — ${areaPropia.nombre}`
-                      : SIN_DATO
-                  }
-                />
-              ) : (
-                <Desplegable
-                  id="n-area"
-                  valor={ficha.area_id === null ? "" : String(ficha.area_id)}
-                  opciones={[
-                    { valor: "", etiqueta: "Elegí un área" },
-                    ...areas.map((area) => ({
-                      valor: String(area.id),
-                      etiqueta: `${area.codigo} — ${area.nombre}`,
-                    })),
-                  ]}
-                  alCambiar={(valor) =>
-                    setFicha((actual) =>
-                      actual
-                        ? {
-                            ...actual,
-                            area_id: valor === "" ? null : Number(valor),
-                          }
-                        : actual,
-                    )
-                  }
-                />
-              )}
+            <Campo
+              etiqueta="Área"
+              htmlFor="n-area"
+              ayuda="Cualquier área del parque, no solo las que tenés a cargo."
+            >
+              <Desplegable
+                id="n-area"
+                valor={ficha.area_id === null ? "" : String(ficha.area_id)}
+                opciones={[
+                  { valor: "", etiqueta: "Elegí un área" },
+                  ...areas.map((area) => ({
+                    valor: String(area.id),
+                    etiqueta: mias.has(area.id)
+                      ? `${area.codigo} — ${area.nombre} (a cargo)`
+                      : `${area.codigo} — ${area.nombre}`,
+                  })),
+                ]}
+                alCambiar={(valor) =>
+                  setFicha((actual) =>
+                    actual
+                      ? {
+                          ...actual,
+                          area_id: valor === "" ? null : Number(valor),
+                        }
+                      : actual,
+                  )
+                }
+              />
             </Campo>
-
-            {sesion.rol === "EMPLEADO" ? (
-              <p className="text-tenue">
-                El área queda fija en la tuya: el servidor ignora cualquier otra.
-              </p>
-            ) : null}
 
             <Campo etiqueta="Tipo" htmlFor="n-tipo">
               <Desplegable

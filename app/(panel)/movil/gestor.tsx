@@ -8,7 +8,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MOTIVOS_MANUALES, TIPOS_LLAMADO } from "@/lib/catalogos";
 import { fechaHora, SIN_DATO } from "@/lib/formato";
-import type { Area, Llamado, Sesion } from "@/lib/tipos";
+import type { Area, Llamado } from "@/lib/tipos";
 import { atenderLlamado, crearLlamado } from "../llamados/acciones";
 import { Aviso, Campo } from "../componentes/campos";
 import { Icono } from "../componentes/iconos";
@@ -42,11 +42,11 @@ function haceCuanto(desde: string): string {
 export function GestorMovil({
   llamados,
   areas,
-  sesion,
+  areasPropias,
 }: {
   llamados: Llamado[];
   areas: Area[];
-  sesion: Sesion;
+  areasPropias: number[];
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
@@ -85,7 +85,8 @@ export function GestorMovil({
   function abrirNuevo() {
     setError(null);
     setFicha({
-      area_id: sesion.rol === "EMPLEADO" ? sesion.area_id : null,
+      // Arranca en la primera área a cargo, pero se puede cambiar.
+      area_id: areasPropias[0] ?? null,
       tipo: "NORMAL",
       motivo: MOTIVOS_MANUALES[0],
       detalle: "",
@@ -108,10 +109,7 @@ export function GestorMovil({
     });
   }
 
-  const areaPropia =
-    sesion.area_id === null
-      ? undefined
-      : areas.find((area) => area.id === sesion.area_id);
+  const mias = new Set(areasPropias);
 
   return (
     <div className="solo-movil mx-auto flex w-full max-w-[420px] flex-col gap-3">
@@ -121,8 +119,8 @@ export function GestorMovil({
           Llamados abiertos
         </h1>
         <span className="rotulo">
-          {sesion.rol === "EMPLEADO"
-            ? (areaPropia?.codigo ?? SIN_DATO)
+          {areasPropias.length > 0
+            ? `${areasPropias.length} a cargo, primero`
             : "Todas"}
         </span>
       </div>
@@ -156,42 +154,30 @@ export function GestorMovil({
           {error ? <Aviso texto={error} /> : null}
 
           <Campo etiqueta="Área" htmlFor="m-area">
-            {sesion.rol === "EMPLEADO" ? (
-              <input
-                id="m-area"
-                className="campo"
-                readOnly
-                style={{ height: 44 }}
-                value={
-                  areaPropia
-                    ? `${areaPropia.codigo} — ${areaPropia.nombre}`
-                    : SIN_DATO
-                }
-              />
-            ) : (
-              <Desplegable
-                id="m-area"
-                estilo={{ height: 44 }}
-                valor={ficha.area_id === null ? "" : String(ficha.area_id)}
-                opciones={[
-                  { valor: "", etiqueta: "Elegí un área" },
-                  ...areas.map((area) => ({
-                    valor: String(area.id),
-                    etiqueta: `${area.codigo} — ${area.nombre}`,
-                  })),
-                ]}
-                alCambiar={(valor) =>
-                  setFicha((actual) =>
-                    actual
-                      ? {
-                          ...actual,
-                          area_id: valor === "" ? null : Number(valor),
-                        }
-                      : actual,
-                  )
-                }
-              />
-            )}
+            <Desplegable
+              id="m-area"
+              estilo={{ height: 44 }}
+              valor={ficha.area_id === null ? "" : String(ficha.area_id)}
+              opciones={[
+                { valor: "", etiqueta: "Elegí un área" },
+                ...areas.map((area) => ({
+                  valor: String(area.id),
+                  etiqueta: mias.has(area.id)
+                    ? `${area.codigo} — ${area.nombre} (a cargo)`
+                    : `${area.codigo} — ${area.nombre}`,
+                })),
+              ]}
+              alCambiar={(valor) =>
+                setFicha((actual) =>
+                  actual
+                    ? {
+                        ...actual,
+                        area_id: valor === "" ? null : Number(valor),
+                      }
+                    : actual,
+                )
+              }
+            />
           </Campo>
 
           <Campo etiqueta="Tipo" htmlFor="m-tipo">

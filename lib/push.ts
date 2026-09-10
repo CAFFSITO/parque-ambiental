@@ -153,14 +153,27 @@ async function enviarA(fila: FilaSuscripcion, texto: string): Promise<boolean> {
  * Devuelve a cuántas llegó. Nunca lanza.
  */
 export async function enviarPush(alerta: AlertaPush): Promise<number> {
-  if (!hayClaves()) return 0;
+  if (!hayClaves()) {
+    console.warn("[push] sin claves VAPID: no se manda nada");
+    return 0;
+  }
 
   const filas = await suscripcionesActivas();
-  if (filas.length === 0) return 0;
+  if (filas.length === 0) {
+    console.info("[push] no hay dispositivos suscriptos");
+    return 0;
+  }
 
   const texto = carga(alerta);
   const resultados = await Promise.all(filas.map((fila) => enviarA(fila, texto)));
-  return resultados.filter(Boolean).length;
+  const llegaron = resultados.filter(Boolean).length;
+
+  // Queda en el log del servidor: sin esto, un aviso que no llega no deja
+  // ninguna huella y no se sabe si falló el envío o el navegador.
+  console.info(
+    `[push] ${alerta.motivo}: enviado a ${llegaron} de ${filas.length}`,
+  );
+  return llegaron;
 }
 
 /** Igual que enviarPush pero acotado a los dispositivos de una persona. */

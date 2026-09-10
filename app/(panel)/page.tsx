@@ -1,10 +1,12 @@
 // app/(panel)/page.tsx
-// Tablero operativo. El rol EMPLEADO ve únicamente su área.
+// Tablero operativo. Todos ven todas las áreas; las que la persona tiene a
+// cargo aparecen primero en la lista de lecturas.
 // El uso de cookies() en getSesion() ya obliga a render dinámico.
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSesion } from "@/lib/auth";
+import { areasDelUsuario, areasPropiasPrimero } from "@/lib/areas-propias";
 import { revisarNodosCaidos } from "@/lib/alertas";
 import { db } from "@/lib/db";
 import { entero, fechaHora, numero, SIN_DATO } from "@/lib/formato";
@@ -156,9 +158,11 @@ export default async function PaginaTablero() {
   // recarga, y es idempotente gracias al antirrebote.
   await revisarNodosCaidos();
 
-  const filtroArea = sesion.rol === "EMPLEADO" ? sesion.area_id : null;
+  // Los indicadores cuentan el parque entero: el área a cargo ordena, no
+  // recorta.
+  const filtroArea = null;
 
-  let consultaAreas = db()
+  const consultaAreas = db()
     .from("areas")
     .select(
       "id, codigo, nombre, tipo, temp_min, temp_max, hum_min, hum_max, activa, creada_en",
@@ -166,18 +170,24 @@ export default async function PaginaTablero() {
     .eq("activa", true)
     .order("codigo", { ascending: true });
 
-  if (filtroArea !== null) consultaAreas = consultaAreas.eq("id", filtroArea);
+  const [
+    areasResultado,
+    emergencias,
+    noAtendidos,
+    emergenciasAbiertas,
+    lecturasHora,
+    areasPropias,
+  ] = await Promise.all([
+    consultaAreas.overrideTypes<Area[], { merge: false }>(),
+    areasConEmergenciaAbierta(filtroArea),
+    contarLlamados(filtroArea, false),
+    contarLlamados(filtroArea, true),
+    contarLecturasUltimaHora(filtroArea),
+    areasDelUsuario(sesion),
+  ]);
 
-  const [areasResultado, emergencias, noAtendidos, emergenciasAbiertas, lecturasHora] =
-    await Promise.all([
-      consultaAreas.overrideTypes<Area[], { merge: false }>(),
-      areasConEmergenciaAbierta(filtroArea),
-      contarLlamados(filtroArea, false),
-      contarLlamados(filtroArea, true),
-      contarLecturasUltimaHora(filtroArea),
-    ]);
-
-  const areas = areasResultado.data ?? [];
+  const areas = areasPropiasPrimero(areasResultado.data ?? [], areasPropias);
+  const mias = new Set(areasPropias);
   const lecturas = await Promise.all(areas.map((area) => ultimaLectura(area.id)));
 
   const filas: FilaTablero[] = areas.map((area, indice) => {
@@ -199,8 +209,8 @@ export default async function PaginaTablero() {
           </p>
         </div>
         <div className="contexto-tablero">
-          {sesion.rol === "EMPLEADO"
-            ? `Área asignada · ${areas[0]?.codigo ?? SIN_DATO} · ${generado}`
+          {areasPropias.length > 0
+            ? `Todas las áreas · ${areasPropias.length} a cargo, primero · ${generado}`
             : `Todas las áreas · ${generado}`}
         </div>
       </div>
@@ -252,7 +262,14 @@ export default async function PaginaTablero() {
                 </Link>
               }
               titulo={area.codigo}
-              marcas={nivel === "NORMAL" ? null : <Chip texto={nivel} nivel={nivel} />}
+              marcas={
+                <>
+                  {mias.has(area.id) ? <Chip texto="A cargo" /> : null}
+                  {nivel === "NORMAL" ? null : (
+                    <Chip texto={nivel} nivel={nivel} />
+                  )}
+                </>
+              }
               resumen={`${numero(lectura?.temperatura ?? null)} °C · ${numero(lectura?.humedad ?? null)} %`}
               detalle={
                 <>

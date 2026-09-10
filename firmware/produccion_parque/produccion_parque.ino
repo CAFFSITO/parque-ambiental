@@ -1,31 +1,38 @@
 /* =====================================================================
    nodo_parque_s3.ino
 
-   Parque Ambiental Municipal de Berisso
-   Nodo físico: NODO-INV-N-01
+   Proyecto NEXO - ROOTBOX
+   Nodo fisico: NODO-INV-N-01
+   Placa: ESP32-S3-Zero
 
-   PLACA
-   ESP32-S3-Zero
-
-   ARDUINO IDE
+   Arduino IDE
    Placa: ESP32S3 Dev Module
    USB CDC On Boot: Enabled
 
-   CONEXIONES QUE VA A USAR ESTE FIRMWARE
+   CONEXIONES
    DHT11         -> GPIO 5
-   Relé          -> GPIO 6
+   Rele          -> GPIO 6
    Buzzer activo -> GPIO 7
-   Botón         -> GPIO 10
+   LED rojo      -> GPIO 7 mediante resistencia de 470 ohm
+                   pata corta del LED -> GND
+   Boton         -> GPIO 10
+
+   ARQUITECTURA
+   - El firmware NO decide umbrales.
+   - El servidor decide rele=true/false y alarma=true/false.
+   - El servidor debe obtener el area real desde la base de datos
+     usando la identidad del dispositivo.
+   - El campo "area" se mantiene en el JSON SOLO por compatibilidad
+     con el backend actual. El backend nuevo debe ignorarlo al decidir
+     a que area pertenece el nodo.
+   - Si el servidor deja de responder durante 45 segundos despues de
+     haber respondido correctamente al menos una vez, el rele se apaga
+     como estado seguro.
 
    IMPORTANTE
-   Este firmware NO usa GPIO 19 ni GPIO 20 porque están asociados
-   al USB nativo del ESP32-S3.
-
-   Tampoco usamos LED interno. El estado se controla por Monitor Serie.
-
-   La lógica de temperatura y humedad NO vive acá.
-   El servidor recibe las lecturas, compara contra los umbrales
-   y responde si hay que activar relé o alarma.
+   Este rele fue probado fisicamente:
+   GPIO 6 HIGH -> rele ON
+   GPIO 6 LOW  -> rele OFF
    ===================================================================== */
 
 #include <WiFi.h>
@@ -36,7 +43,7 @@
 #include <time.h>
 
 /* =====================================================================
-   CONFIGURACIÓN — COMPLETAR ESTOS DATOS
+   CONFIGURACION
    ===================================================================== */
 
 // Wi-Fi
@@ -44,36 +51,34 @@ const char* WIFI_SSID = "NEXO";
 const char* WIFI_PASS = "hola1234";
 
 // Servidor
-// Ejemplo:
-// https://tu-proyecto.vercel.app/api/ingest
 const char* SERVIDOR = "https://parque-ambiental.vercel.app/api/ingest";
 
-
-// Tiene que ser exactamente la misma DEVICE_KEY configurada en Vercel.
+// Clave del dispositivo
 const char* DEVICE_KEY = "lpxv721";
 
 // Identidad del nodo
 const char* DISPOSITIVO = "NODO-INV-N-01";
-const char* AREA = "INV-N";
+
+// Compatibilidad temporal con el backend actual.
+// El backend nuevo debe determinar el area desde la base de datos.
+const char* AREA_COMPATIBILIDAD = "INV-N";
 
 /* =====================================================================
-   AJUSTES DE LOS MÓDULOS
+   AJUSTES DE MODULOS
    ===================================================================== */
 
-// Muchos módulos KY-019 se activan poniendo la señal en LOW.
-// Si el relé después funciona al revés, cambiar true por false.
-const bool RELE_ACTIVO_EN_BAJO = true;
+// Probado fisicamente: HIGH prende el rele.
+const bool RELE_ACTIVO_EN_BAJO = false;
 
-// El botón del proyecto queda normalmente en HIGH y al apretarlo pasa a LOW.
-// Si después funciona invertido, cambiar true por false.
+// El boton queda normalmente en HIGH y al apretarlo pasa a LOW.
 const bool BOTON_ACTIVO_EN_BAJO = true;
 
-// El buzzer activo normalmente suena con HIGH.
-// Si funciona invertido, cambiar false por true.
+// Buzzer activo y LED rojo comparten GPIO 7.
+// HIGH = buzzer/LED encendidos.
 const bool BUZZER_ACTIVO_EN_BAJO = false;
 
 /* =====================================================================
-   PINES — ESP32-S3-ZERO
+   PINES
    ===================================================================== */
 
 const int PIN_DHT = 5;
@@ -94,15 +99,16 @@ const unsigned long BUZZER_PULSO_MS = 200;
 const unsigned long BUZZER_PERIODO_MS = 2000;
 
 const unsigned long WIFI_TIMEOUT_MS = 20000;
-
 const uint16_t HTTP_TIMEOUT_MS = 6000;
+
+// Estado seguro del actuador si se pierde el servidor.
+const unsigned long SERVIDOR_FAILSAFE_MS = 45000;
 
 /* =====================================================================
    DHT11
    ===================================================================== */
 
 const int DHT_TIPO = DHT11;
-
 DHT dht(PIN_DHT, DHT_TIPO);
 
 /* =====================================================================
@@ -113,12 +119,11 @@ DHT dht(PIN_DHT, DHT_TIPO);
 const long ZONA_HORARIA_SEG = -3 * 3600;
 
 /* =====================================================================
-   ESTADO DE LAS LECTURAS
+   ESTADO DE LECTURAS
    ===================================================================== */
 
 float ultimaTemp = 0.0;
 float ultimaHum = 0.0;
-
 bool hayLecturaValida = false;
 
 /* =====================================================================
@@ -128,8 +133,12 @@ bool hayLecturaValida = false;
 bool releEncendido = false;
 bool alarmaActiva = false;
 
+bool servidorRespondioAlgunaVez = false;
+bool failsafeServidorAplicado = false;
+unsigned long ultimaRespuestaServidorMs = 0;
+
 /* =====================================================================
-   ESTADO DEL BOTÓN
+   ESTADO DEL BOTON
    ===================================================================== */
 
 String botonPendiente = "NINGUNO";
@@ -144,14 +153,14 @@ bool emergenciaYaDisparada = false;
 bool envioInmediato = false;
 
 /* =====================================================================
-   ESTADO DEL BUZZER
+   ESTADO DEL BUZZER + LED
    ===================================================================== */
 
 bool buzzerSonando = false;
 unsigned long buzzerCambioMs = 0;
 
 /* =====================================================================
-   ESTADO DEL WI-FI
+   ESTADO WI-FI
    ===================================================================== */
 
 bool wifiIntentando = false;
@@ -162,13 +171,13 @@ unsigned long wifiInicioIntento = 0;
 bool horaSincronizada = false;
 
 /* =====================================================================
-   CICLO DE ENVÍO
+   CICLO DE ENVIO
    ===================================================================== */
 
 unsigned long ultimoEnvioMs = 0;
 
 /* =====================================================================
-   RELÉ
+   RELE
    ===================================================================== */
 
 void aplicarRele(bool encendido) {
@@ -184,7 +193,7 @@ void aplicarRele(bool encendido) {
 }
 
 /* =====================================================================
-   BUZZER
+   BUZZER + LED
    ===================================================================== */
 
 void aplicarBuzzer(bool sonando) {
@@ -239,9 +248,6 @@ String marcaDeTiempo() {
 
 /* =====================================================================
    WI-FI
-
-   No reinicia la placa si se cae internet.
-   Intenta reconectar automáticamente.
    ===================================================================== */
 
 void atenderWiFi() {
@@ -310,15 +316,39 @@ void atenderWiFi() {
 }
 
 /* =====================================================================
-   BOTÓN
+   FAILSAFE DEL SERVIDOR
 
-   Pulsación corta:
-   NORMAL
+   Si alguna vez hubo una respuesta valida y luego pasan 45 segundos
+   sin otra respuesta valida, apaga el rele.
+   No cambia alarmaActiva: una alarma ya conocida sigue avisando.
+   ===================================================================== */
 
-   Pulsación de 2 segundos o más:
-   EMERGENCIA
+void atenderFailsafeServidor() {
+  if (!servidorRespondioAlgunaVez) {
+    return;
+  }
 
-   Sin delay().
+  if (millis() - ultimaRespuestaServidorMs < SERVIDOR_FAILSAFE_MS) {
+    failsafeServidorAplicado = false;
+    return;
+  }
+
+  if (!failsafeServidorAplicado) {
+    failsafeServidorAplicado = true;
+
+    releEncendido = false;
+    aplicarRele(false);
+
+    Serial.print("[");
+    Serial.print(marcaDeTiempo());
+    Serial.println(
+      "] FAILSAFE: servidor sin respuesta valida por 45 s. Rele OFF."
+    );
+  }
+}
+
+/* =====================================================================
+   BOTON
    ===================================================================== */
 
 void atenderBoton() {
@@ -335,7 +365,6 @@ void atenderBoton() {
   if (presionadoAhora != lecturaCrudaAnterior) {
     lecturaCrudaAnterior = presionadoAhora;
     ultimoRebote = millis();
-
     return;
   }
 
@@ -381,10 +410,10 @@ void atenderBoton() {
 }
 
 /* =====================================================================
-   BUZZER
+   BUZZER + LED
 
    Mientras haya alarma:
-   bip de 200 ms cada 2 segundos.
+   pulso de 200 ms cada 2 segundos.
    ===================================================================== */
 
 void atenderBuzzer() {
@@ -420,7 +449,7 @@ void atenderBuzzer() {
 }
 
 /* =====================================================================
-   LÍNEA DEL MONITOR SERIE
+   MONITOR SERIE
    ===================================================================== */
 
 void imprimirLinea(
@@ -465,7 +494,7 @@ void imprimirLinea(
 }
 
 /* =====================================================================
-   ENVÍO HTTPS AL SERVIDOR
+   ENVIO HTTPS
    ===================================================================== */
 
 void enviarLectura(
@@ -487,12 +516,9 @@ void enviarLectura(
   WiFiClientSecure cliente;
 
   /*
-     Para el prototipo usamos setInsecure().
-
-     HTTPS sigue cifrando la comunicación, pero no validamos
-     el certificado del servidor.
-
-     En producción real corresponde instalar la CA correcta.
+     PROTOTIPO:
+     HTTPS cifra el trafico, pero setInsecure() no valida la identidad
+     del servidor. Para produccion real hay que instalar la CA correcta.
   */
   cliente.setInsecure();
 
@@ -525,7 +551,10 @@ void enviarLectura(
   JsonDocument cuerpo;
 
   cuerpo["dispositivo"] = DISPOSITIVO;
-  cuerpo["area"] = AREA;
+
+  // Compatibilidad temporal.
+  // El backend nuevo debe ignorar este campo para asignar el area.
+  cuerpo["area"] = AREA_COMPATIBILIDAD;
 
   if (isnan(temp)) {
     cuerpo["temperatura"] = nullptr;
@@ -542,7 +571,6 @@ void enviarLectura(
   cuerpo["boton"] = botonPendiente;
 
   String json;
-
   serializeJson(cuerpo, json);
 
   Serial.print("[");
@@ -568,6 +596,11 @@ void enviarLectura(
         "respuesta del servidor ilegible"
       );
     } else {
+      // Solo una respuesta 200 con JSON valido confirma al servidor.
+      servidorRespondioAlgunaVez = true;
+      ultimaRespuestaServidorMs = millis();
+      failsafeServidorAplicado = false;
+
       releEncendido =
         datos["rele"] | false;
 
@@ -644,7 +677,7 @@ void enviarLectura(
 }
 
 /* =====================================================================
-   MEDICIÓN DHT11
+   MEDICION DHT11
    ===================================================================== */
 
 void medirYEnviar() {
@@ -692,7 +725,6 @@ void medirYEnviar() {
   else {
     ultimaTemp = temp;
     ultimaHum = hum;
-
     hayLecturaValida = true;
   }
 
@@ -710,11 +742,7 @@ void medirYEnviar() {
 void setup() {
   Serial.begin(115200);
 
-  /*
-     Ponemos las salidas en un estado seguro antes
-     de empezar Wi-Fi o leer sensores.
-  */
-
+  // Salidas en estado seguro antes de Wi-Fi.
   pinMode(
     PIN_RELE,
     OUTPUT
@@ -728,10 +756,6 @@ void setup() {
   );
 
   aplicarBuzzer(false);
-
-  /*
-     El botón utiliza la resistencia interna de la ESP32-S3.
-  */
 
   if (BOTON_ACTIVO_EN_BAJO) {
     pinMode(
@@ -747,11 +771,6 @@ void setup() {
 
   dht.begin();
 
-  /*
-     El USB serie nativo puede tardar un momento
-     después del arranque.
-  */
-
   unsigned long esperaSerie = millis();
 
   while (
@@ -765,11 +784,9 @@ void setup() {
   Serial.println(
     "============================================"
   );
-
   Serial.println(
-    " Parque Ambiental Municipal de Berisso"
+    " NEXO - ROOTBOX"
   );
-
   Serial.println(
     " ESP32-S3-Zero"
   );
@@ -777,31 +794,26 @@ void setup() {
   Serial.print(
     " Nodo: "
   );
-
   Serial.println(
     DISPOSITIVO
   );
 
   Serial.print(
-    " Area: "
-  );
-
-  Serial.println(
-    AREA
-  );
-
-  Serial.print(
     " Servidor: "
   );
-
   Serial.println(
     SERVIDOR
   );
 
   Serial.println(
-    " Pines: DHT=5 RELE=6 BUZZER=7 BOTON=10"
+    " Pines: DHT=5 RELE=6 BUZZER+LED=7 BOTON=10"
   );
-
+  Serial.println(
+    " Rele probado: HIGH=ON LOW=OFF"
+  );
+  Serial.println(
+    " Umbrales y automatizacion: SERVIDOR"
+  );
   Serial.println(
     "============================================"
   );
@@ -814,11 +826,6 @@ void setup() {
     false
   );
 
-  /*
-     Hace que intente mandar una lectura
-     prácticamente al arrancar.
-  */
-
   ultimoEnvioMs =
     millis() - INTERVALO_MS;
 }
@@ -829,6 +836,8 @@ void setup() {
 
 void loop() {
   atenderWiFi();
+
+  atenderFailsafeServidor();
 
   atenderBoton();
 

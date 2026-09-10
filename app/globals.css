@@ -189,18 +189,14 @@ input[type="range"] {
     gap: 12px;
   }
 
-  /* Pastilla clara para el isotipo: sobre el verde del panel el verde de la
-     marca no se leería; acá contrasta y no hay que recolorearlo. */
-  .marca-sigla {
-    display: grid;
-    width: 40px;
-    height: 40px;
+  /* Solo la palabra: el ancho lo pone ella, no un recuadro. Encerrada en un
+     cuadrado de 40 px la palabra no se leía, que es justamente lo que un
+     logotipo tiene que hacer. */
+  .marca-logotipo {
+    display: flex;
     flex: 0 0 auto;
-    place-items: center;
-    background: linear-gradient(145deg, var(--color-lino), var(--color-senal));
-    border: none;
-    border-radius: 13px 5px 13px 5px;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+    align-items: center;
+    filter: drop-shadow(0 4px 12px rgb(0 0 0 / 40%));
   }
 
   .marca-texto {
@@ -1761,9 +1757,10 @@ input[type="range"] {
     left: 14px;
   }
 
-  .marca-sigla {
-    width: 36px;
-    height: 36px;
+  /* En angosto la palabra se achica un punto para no comerse la barra. */
+  .marca-logotipo img {
+    height: 18px;
+    width: auto;
   }
 
   .usuario-identidad {

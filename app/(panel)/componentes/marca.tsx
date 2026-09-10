@@ -1,46 +1,38 @@
 // app/(panel)/componentes/marca.tsx
-// El isotipo del parque: la R con la hoja calada en la panza y el brote a la
-// izquierda del asta. Va inline y no como <img>: es el mismo vector de
-// public/logo.svg (el que alimenta los íconos de la PWA), pero dibujado en el
-// DOM no pide una request más ni pasa por el optimizador de imágenes, que no
-// toca SVG salvo que se habilite dangerouslyAllowSVG.
+// El logotipo de Rootbox: solo la palabra, sin la mancha verde.
 //
-// Los calados son huecos de una máscara, no blanco pintado: la marca se apoya
-// sobre la pastilla clara de la barra sin arrastrar un fondo propio.
+// El isologo completo entra en un cuadrado, y en la barra del panel un
+// cuadrado no puede pasar de unos 40 px: a ese tamaño la palabra queda
+// ilegible. Suelta, la misma altura alcanza para leerla, porque el ancho lo
+// pone la palabra y no el recuadro. La mancha sigue viva en el favicon y en
+// los íconos de la PWA, que sí son cuadrados.
+//
+// El vector es public/logotipo.svg, el mismo trazado de public/logo.svg
+// recortado al rectángulo de las letras. Va como archivo y con `unoptimized`
+// por lo mismo de siempre: el optimizador de Next no toca SVG, y un vector ya
+// es lo más liviano que se puede mandar.
+
+import Image from "next/image";
+
+/** Ancho contra alto del logotipo, medido sobre el vector. */
+const PROPORCION = 6.13;
 
 export function Marca({
-  tamano = 26,
-  color = "#2e9b41",
+  alto = 22,
   className,
 }: {
-  tamano?: number;
-  color?: string;
+  alto?: number;
   className?: string;
 }) {
   return (
-    <svg
+    <Image
       className={className}
-      width={tamano}
-      height={tamano}
-      viewBox="0 0 256 256"
-      role="img"
-      aria-label="Parque Ambiental"
-    >
-      <mask id="marca-parque">
-        <rect width="256" height="256" fill="#000" />
-        <path
-          fill="#fff"
-          d="M78 40h80c38 0 60 22 60 49 0 24-14 41-36 48l46 85h-56L130 140h-12v82H78Z"
-        />
-        <path fill="#000" d="M118 72h36c14 0 22 7 22 17s-8 17-22 17h-36Z" />
-        <path fill="#000" d="M100 156c4-44 38-78 98-88 4 44-30 80-98 88Z" />
-        <path fill="#fff" d="M102 138c-38 2-70 26-74 62 42 4 74-22 74-62Z" />
-        <path
-          fill="#000"
-          d="M100 142c-30 12-52 32-66 60l-4-2c14-30 38-50 68-62Z"
-        />
-      </mask>
-      <rect width="256" height="256" fill={color} mask="url(#marca-parque)" />
-    </svg>
+      src="/logotipo.svg"
+      alt="Rootbox"
+      width={Math.round(alto * PROPORCION)}
+      height={alto}
+      priority
+      unoptimized
+    />
   );
 }

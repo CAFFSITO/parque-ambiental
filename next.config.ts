@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // web-push arma la firma VAPID con los módulos de crypto de Node y hace
+  // requires dinámicos: empaquetado se rompe en tiempo de ejecución, y el
+  // fallo queda enterrado dentro del after() que manda el aviso.
+  serverExternalPackages: ["web-push"],
+
   experimental: {
     // Habilita forbidden() y app/forbidden.tsx, que devuelven un 403 real.
     authInterrupts: true,
