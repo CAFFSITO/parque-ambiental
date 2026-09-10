@@ -7,8 +7,10 @@
 import { useRouter } from "next/navigation";
 import { fechaHora, SIN_DATO } from "@/lib/formato";
 import type { Area, Llamado } from "@/lib/tipos";
-import type { FiltroReporte } from "@/lib/reportes";
-import { filtroAQueryString } from "@/lib/reportes";
+import {
+  filtroAQueryString,
+  type FiltroReporte,
+} from "@/lib/reportes-comunes";
 
 export const POR_PAGINA = 50;
 

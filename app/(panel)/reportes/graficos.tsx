@@ -21,9 +21,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { FilaClima, FilaDistribucion, FilaPorArea, FilaPorDia } from "@/lib/reportes";
+import type {
+  FilaClima,
+  FilaDistribucion,
+  FilaPorArea,
+  FilaPorDia,
+} from "@/lib/reportes-comunes";
 import { Desplegable } from "../componentes/desplegable";
-import { particion } from "@/lib/reportes";
+import { particion } from "@/lib/reportes-comunes";
 
 const VERDE = "#92a05b";
 const AMBAR = "#d7ae67";

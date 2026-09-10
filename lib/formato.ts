@@ -75,3 +75,24 @@ export function entero(valor: number | null | undefined): string {
   }
   return valor.toLocaleString("es-AR", { maximumFractionDigits: 0 });
 }
+
+/**
+ * Antigüedad en lenguaje corriente: "hace 12 s", "hace 4 min", "hace 2 h".
+ *
+ * Para un nodo, "hace 3 min" se entiende de un vistazo y una fecha completa no:
+ * lo que importa es si reportó recién o hace rato. La fecha exacta se sigue
+ * mostrando al lado con fechaHora(), para cuando hace falta precisión.
+ *
+ * Los cortes son los de la lectura, no los del reloj: hasta 90 segundos se
+ * cuenta en segundos, porque 90 es el umbral con el que la vigilancia declara
+ * caído a un nodo y ahí cada segundo significa algo.
+ */
+export function hace(segundos: number | null | undefined): string {
+  if (segundos === null || segundos === undefined || Number.isNaN(segundos)) {
+    return SIN_DATO;
+  }
+  if (segundos < 90) return `hace ${entero(segundos)} s`;
+  if (segundos < 5400) return `hace ${entero(Math.round(segundos / 60))} min`;
+  if (segundos < 172800) return `hace ${entero(Math.round(segundos / 3600))} h`;
+  return `hace ${entero(Math.round(segundos / 86400))} días`;
+}

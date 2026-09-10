@@ -2,6 +2,30 @@
 
 // app/(panel)/areas/acciones.ts
 // Toda acción arranca con exigirAdmin(): la verificación es del servidor.
+//
+// Esta pantalla configura DOS cosas que no hay que confundir:
+//
+//   * Los UMBRALES (temp_min, temp_max, hum_min, hum_max) definen la
+//     normalidad. Salirse de ellos genera un llamado, siempre, sin excepción.
+//   * La AUTOMATIZACIÓN (auto_temp_baja, auto_temp_alta, auto_hum_baja,
+//     auto_hum_alta) decide cuál de esos cuatro desvíos, además, enciende el
+//     actuador del nodo.
+//
+// Desmarcar una casilla apaga una bomba, nunca apaga una alarma. Ver
+// lib/automatizacion.ts y documents/contexto/50-alertas-vs-automatizacion.md.
+//
+// POR QUÉ NO HAY ACÁ UNA ACCIÓN DE ASIGNAR DISPOSITIVOS
+// La ficha del área permite asignar y desasignar nodos, pero esa operación NO
+// se implementa en este archivo: usa cambiarAreaDispositivo(), la misma Server
+// Action que la pantalla de Dispositivos.
+//
+// Es una decisión, no un olvido. La cardinalidad —un dispositivo tiene un área
+// vigente, y asignarlo a otra lo reasigna en vez de duplicarlo— está sostenida
+// por una sola columna escalar, dispositivos.area_id. Una segunda acción que
+// escribiera esa misma columna sería una segunda copia de la regla: dos lugares
+// donde validar el id, dos lugares donde decidir qué significa null, y dos
+// lugares que alguien va a tocar por separado. Con una sola acción, asignar
+// desde Áreas y asignar desde Dispositivos son literalmente la misma escritura.
 
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/lib/auth";
@@ -18,9 +42,22 @@ export type EntradaArea = {
   hum_min: number;
   hum_max: number;
   activa: boolean;
+  // Automatización del actuador. Ver sql/07_automatizacion_areas.sql.
+  auto_temp_baja: boolean;
+  auto_temp_alta: boolean;
+  auto_hum_baja: boolean;
+  auto_hum_alta: boolean;
 };
 
 const CODIGO_DUPLICADO = "23505";
+
+/** Las cuatro columnas de automatización, en el orden del formulario. */
+const CAMPOS_AUTOMATIZACION = [
+  "auto_temp_baja",
+  "auto_temp_alta",
+  "auto_hum_baja",
+  "auto_hum_alta",
+] as const;
 
 function refrescar(): void {
   revalidatePath("/areas");
@@ -41,6 +78,12 @@ function sanear(entrada: EntradaArea): EntradaArea {
   const numeroCampo = (clave: string): number =>
     typeof crudo?.[clave] === "number" ? (crudo[clave] as number) : Number.NaN;
 
+  // Los interruptores de automatización se saneen al revés que 'activa': lo
+  // que no venga explícitamente en true queda apagado. Un área nueva que
+  // llegue por HTTP sin estos campos no debería accionar nada por su cuenta:
+  // encender un actuador tiene que ser una decisión escrita, no un default.
+  const interruptor = (clave: string): boolean => crudo?.[clave] === true;
+
   return {
     codigo: texto("codigo"),
     nombre: texto("nombre"),
@@ -50,6 +93,10 @@ function sanear(entrada: EntradaArea): EntradaArea {
     hum_min: numeroCampo("hum_min"),
     hum_max: numeroCampo("hum_max"),
     activa: crudo?.activa !== false,
+    auto_temp_baja: interruptor("auto_temp_baja"),
+    auto_temp_alta: interruptor("auto_temp_alta"),
+    auto_hum_baja: interruptor("auto_hum_baja"),
+    auto_hum_alta: interruptor("auto_hum_alta"),
   };
 }
 
@@ -89,6 +136,15 @@ function validar(entrada: EntradaArea): string | null {
     return "La temperatura tiene que estar entre -50 y 100 °C.";
   }
 
+  // Después de sanear() los cuatro son booleanos por construcción. Se verifica
+  // igual, para que si alguien cambia sanear() y rompe esa garantía, falle acá
+  // y no escribiendo un null en una columna not null.
+  if (
+    CAMPOS_AUTOMATIZACION.some((campo) => typeof entrada[campo] !== "boolean")
+  ) {
+    return "La automatización tiene que ser sí o no en las cuatro condiciones.";
+  }
+
   return null;
 }
 
@@ -102,6 +158,10 @@ function aFila(entrada: EntradaArea) {
     hum_min: entrada.hum_min,
     hum_max: entrada.hum_max,
     activa: entrada.activa,
+    auto_temp_baja: entrada.auto_temp_baja,
+    auto_temp_alta: entrada.auto_temp_alta,
+    auto_hum_baja: entrada.auto_hum_baja,
+    auto_hum_alta: entrada.auto_hum_alta,
   };
 }
 
@@ -148,7 +208,10 @@ export async function actualizarArea(
   }
 
   refrescar();
-  return { ok: true, mensaje: "Área actualizada. Los umbrales ya rigen." };
+  return {
+    ok: true,
+    mensaje: "Área actualizada. Los umbrales y la automatización ya rigen.",
+  };
 }
 
 /** Baja lógica: el área queda con activa = false, nunca se borra la fila. */

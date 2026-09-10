@@ -3,6 +3,7 @@
 // este módulo desde un componente marcado con "use client".
 // No se usa Supabase Auth ni RLS; el control de acceso lo hace la app.
 
+import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Empleado } from "./tipos";
 

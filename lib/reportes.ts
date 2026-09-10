@@ -1,27 +1,44 @@
 // lib/reportes.ts
-// Filtros de reportes y lectura de las agregaciones.
+// Filtros de reportes y lectura de las agregaciones. SOLO servidor: importa
+// lib/db.ts, así que nunca debe importarse desde un componente "use client".
 //
 // Las sumas las hace Postgres (sql/03_reportes.sql) y llegan ya resueltas:
 // una decena de filas en vez de los cientos de llamados del rango.
+//
+// Los tipos y las dos funciones puras que también necesita el navegador viven
+// en lib/reportes-comunes.ts, que no importa nada del servidor. Acá se
+// reexportan para que quien ya los pedía a este módulo no tenga que cambiar
+// nada.
 
 import { db } from "./db";
+import {
+  FILTRO_VACIO,
+  filtroAQueryString,
+  particion,
+  porcentajeAtencion,
+  type FilaClima,
+  type FilaDistribucion,
+  type FilaPorArea,
+  type FilaPorDia,
+  type FiltroReporte,
+  type Resumen,
+} from "./reportes-comunes";
 import type { Llamado } from "./tipos";
 
+export {
+  FILTRO_VACIO,
+  filtroAQueryString,
+  particion,
+  porcentajeAtencion,
+  type FilaClima,
+  type FilaDistribucion,
+  type FilaPorArea,
+  type FilaPorDia,
+  type FiltroReporte,
+  type Resumen,
+};
+
 export type LlamadoDetalle = Llamado;
-
-export type FiltroReporte = {
-  area: string; // "" = todas
-  origen: string; // "" = todos
-  desde: string; // datetime-local "aaaa-mm-ddTHH:mm", "" = sin límite
-  hasta: string;
-};
-
-export const FILTRO_VACIO: FiltroReporte = {
-  area: "",
-  origen: "",
-  desde: "",
-  hasta: "",
-};
 
 const ORIGENES = ["SENSOR", "EMPLEADO"];
 
@@ -51,14 +68,6 @@ export function leerFiltro(
   };
 }
 
-export function filtroAQueryString(filtro: FiltroReporte): string {
-  const parametros = new URLSearchParams();
-  for (const [clave, valor] of Object.entries(filtro)) {
-    if (valor !== "") parametros.set(clave, valor);
-  }
-  return parametros.toString();
-}
-
 /**
  * Los datetime-local no traen zona. Se interpretan como hora de Argentina,
  * que es la que muestra todo el panel.
@@ -84,37 +93,6 @@ export function aParametros(filtro: FiltroReporte): ParametrosRpc {
     p_hasta: aInstante(filtro.hasta, true),
   };
 }
-
-export type Resumen = {
-  total: number;
-  atendidos: number;
-  no_atendidos: number;
-};
-
-export type FilaPorArea = {
-  codigo: string;
-  nombre: string;
-  normal: number;
-  emergencia: number;
-};
-
-export type FilaDistribucion = {
-  dimension: string;
-  etiqueta: string;
-  cantidad: number;
-};
-
-export type FilaPorDia = {
-  dia: string;
-  normal: number;
-  emergencia: number;
-};
-
-export type FilaClima = {
-  dia: string;
-  temp_prom: number | null;
-  hum_prom: number | null;
-};
 
 export type DatosReporte = {
   resumen: Resumen;
@@ -166,22 +144,6 @@ export async function cargarReporte(
       ? "Faltan las funciones de agregación. Ejecutá sql/03_reportes.sql en el SQL Editor de Supabase."
       : null,
   };
-}
-
-export function porcentajeAtencion(resumen: Resumen): number {
-  if (resumen.total === 0) return 0;
-  return Math.round((resumen.atendidos / resumen.total) * 1000) / 10;
-}
-
-/** Reparte la distribución en las tres particiones de la torta. */
-export function particion(
-  filas: FilaDistribucion[],
-  dimension: string,
-): { etiqueta: string; cantidad: number }[] {
-  return filas
-    .filter((fila) => fila.dimension === dimension)
-    .map((fila) => ({ etiqueta: fila.etiqueta, cantidad: Number(fila.cantidad) }))
-    .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
 }
 
 /**

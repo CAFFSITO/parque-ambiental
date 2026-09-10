@@ -3,8 +3,7 @@
 // ítems dependen del rol.
 
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { getSesion } from "@/lib/auth";
+import { exigirSesion } from "@/lib/auth";
 import type { Rol } from "@/lib/tipos";
 import { cerrarSesion } from "./acciones";
 import { AvisosAutomaticos } from "./avisos-automaticos";
@@ -40,8 +39,7 @@ export default async function LayoutPanel({
 }: {
   children: ReactNode;
 }) {
-  const sesion = await getSesion();
-  if (!sesion) redirect("/login");
+  const sesion = await exigirSesion();
 
   return (
     <div className="superficie-panel">

@@ -34,6 +34,7 @@ import {
 } from "./acciones";
 
 type Soporte = "midiendo" | "si" | "no";
+type SuscripcionVisible = Omit<FilaSuscripcion, "p256dh" | "auth">;
 
 export function GestorAvisos({
   sesion,
@@ -44,7 +45,7 @@ export function GestorAvisos({
   faltaMigracion,
 }: {
   sesion: Sesion;
-  dispositivos: FilaSuscripcion[];
+  dispositivos: SuscripcionVisible[];
   telegramActivo: boolean;
   clavePublica: string;
   hayClaves: boolean;
@@ -156,7 +157,7 @@ export function GestorAvisos({
     });
   }
 
-  function alternar(fila: FilaSuscripcion) {
+  function alternar(fila: SuscripcionVisible) {
     iniciar(async () => {
       // Apagar el dispositivo desde el que se está mirando también deja la
       // marca local, por lo mismo que quitarAca.
@@ -165,7 +166,7 @@ export function GestorAvisos({
     });
   }
 
-  function quitar(fila: FilaSuscripcion) {
+  function quitar(fila: SuscripcionVisible) {
     if (fila.endpoint === endpointLocal) {
       quitarAca();
       return;

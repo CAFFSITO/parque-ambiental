@@ -19,11 +19,11 @@ export default async function PaginaAvisos() {
     db()
       .from("suscripciones_push")
       .select(
-        "id, usuario_id, endpoint, p256dh, auth, dispositivo, activa, creada_en, usada_en",
+        "id, usuario_id, endpoint, dispositivo, activa, creada_en, usada_en",
       )
       .eq("usuario_id", sesion.id)
       .order("creada_en", { ascending: false })
-      .overrideTypes<FilaSuscripcion[], { merge: false }>(),
+      .overrideTypes<Omit<FilaSuscripcion, "p256dh" | "auth">[], { merge: false }>(),
     telegramActivo(),
   ]);
 

@@ -6,8 +6,10 @@
 
 import { useRouter } from "next/navigation";
 import type { Area } from "@/lib/tipos";
-import type { FiltroReporte } from "@/lib/reportes";
-import { filtroAQueryString } from "@/lib/reportes";
+import {
+  filtroAQueryString,
+  type FiltroReporte,
+} from "@/lib/reportes-comunes";
 import { Campo } from "../componentes/campos";
 import { Desplegable } from "../componentes/desplegable";
 import { CampoFecha } from "../componentes/fecha";

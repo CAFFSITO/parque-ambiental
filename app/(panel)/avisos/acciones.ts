@@ -56,11 +56,28 @@ export async function guardarSuscripcion(
       dispositivo: dispositivo === "" ? null : dispositivo,
       activa: true,
     },
-    { onConflict: "endpoint" },
+    // Nunca apropiarse de un endpoint existente. El update de abajo vuelve
+    // a comprobar el dueño, incluso si otra sesión ganó la inserción.
+    { onConflict: "endpoint", ignoreDuplicates: true },
   );
 
   if (error) {
     return { ok: false, error: `No se pudo guardar: ${error.message}` };
+  }
+
+  const { data: propia, error: errorActualizacion } = await db()
+    .from("suscripciones_push")
+    .update({ p256dh, auth, dispositivo: dispositivo || null, activa: true })
+    .eq("endpoint", endpoint)
+    .eq("usuario_id", sesion.id)
+    .select("id")
+    .maybeSingle();
+
+  if (errorActualizacion) {
+    return { ok: false, error: "No se pudo actualizar la suscripción." };
+  }
+  if (!propia) {
+    return { ok: false, error: "Esta suscripción pertenece a otra cuenta." };
   }
 
   revalidatePath("/avisos");
@@ -91,21 +108,28 @@ export async function asegurarSuscripcion(
 
   const { data: existente } = await db()
     .from("suscripciones_push")
-    .select("id")
+    .select("id, usuario_id")
     .eq("endpoint", endpoint)
     .maybeSingle()
-    .overrideTypes<{ id: number }, { merge: false }>();
+    .overrideTypes<{ id: number; usuario_id: number }, { merge: false }>();
 
   if (existente) {
-    await db()
+    if (existente.usuario_id !== sesion.id) {
+      return { ok: false, error: "Esta suscripción pertenece a otra cuenta." };
+    }
+    const { error } = await db()
       .from("suscripciones_push")
       .update({
-        usuario_id: sesion.id,
         p256dh,
         auth,
         dispositivo: dispositivo === "" ? null : dispositivo,
       })
-      .eq("id", existente.id);
+      .eq("id", existente.id)
+      .eq("usuario_id", sesion.id);
+
+    if (error) {
+      return { ok: false, error: "No se pudo actualizar la suscripción." };
+    }
 
     revalidatePath("/avisos");
     return { ok: true };
