@@ -481,16 +481,16 @@ export default async function PaginaTablero() {
         </section>
       ) : null}
 
-      {/* ---------------- Una tarjeta por área ---------------- */}
+      {/* ---------------- Una fila por área ----------------
+          Cada área es un rectángulo horizontal de ancho completo: a la
+          izquierda quién es y cómo está, en el medio los dos medidores, a la
+          derecha el sensor y el atajo a sus llamados. En angosto se apila. */}
       {filas.length === 0 ? (
         <section className="panel">
           <p className="lista-vacia">No hay áreas activas para mostrar.</p>
         </section>
       ) : (
-        <section
-          aria-label="Áreas"
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
-        >
+        <section aria-label="Áreas" className="flex flex-col gap-3">
           {filas.map(({ area, lectura, sensor, nivel, motivo }) => {
             const simulada =
               lectura?.dispositivo !== undefined &&
@@ -498,16 +498,18 @@ export default async function PaginaTablero() {
               naturalezaPorCodigo.get(lectura.dispositivo) === "SIMULADO";
 
             return (
-              <article
-                key={area.id}
-                id={`area-${area.id}`}
-                className={`panel flex flex-col gap-4 border-l-4 p-4 ${COLOR[nivel].borde}`}
-              >
-                <header className="flex items-start justify-between gap-3">
+              <article key={area.id} id={`area-${area.id}`} className="panel px-5 py-4">
+                <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)_auto] lg:gap-8">
+                  {/* Quién es y cómo está */}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[20px] leading-none font-semibold">
                         {area.codigo}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${COLOR[nivel].suave} ${COLOR[nivel].texto}`}
+                      >
+                        {ESTADO[nivel]}
                       </span>
                       {mias.has(area.id) ? <Chip texto="A cargo" /> : null}
                       {/* Un área cuyo sensor es simulado se dice a la vista:
@@ -518,72 +520,67 @@ export default async function PaginaTablero() {
                       ) : null}
                     </div>
                     <div className="mt-1 truncate text-tenue">{area.nombre}</div>
+                    {nivel === "NORMAL" ? null : (
+                      <p className={`mt-2 text-[13px] ${COLOR[nivel].texto}`}>{motivo}</p>
+                    )}
                   </div>
 
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${COLOR[nivel].suave} ${COLOR[nivel].texto}`}
-                  >
-                    {ESTADO[nivel]}
-                  </span>
-                </header>
-
-                {nivel === "NORMAL" ? null : (
-                  <p className={COLOR[nivel].texto}>{motivo}</p>
-                )}
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Medidor
-                    rotulo="Temperatura"
-                    valor={lectura?.temperatura ?? null}
-                    minimo={area.temp_min}
-                    maximo={area.temp_max}
-                    unidad="°C"
-                  />
-                  <Medidor
-                    rotulo="Humedad"
-                    valor={lectura?.humedad ?? null}
-                    minimo={area.hum_min}
-                    maximo={area.hum_max}
-                    unidad="%"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-texto/10 pt-3 text-[13px]">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${
-                        sensor.estado === "EN_LINEA"
-                          ? "bg-normal"
-                          : sensor.estado === "SIN_SENAL"
-                            ? "bg-advertencia"
-                            : "bg-tenue"
-                      }`}
-                      aria-hidden="true"
+                  {/* Los dos medidores, lado a lado */}
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <Medidor
+                      rotulo="Temperatura"
+                      valor={lectura?.temperatura ?? null}
+                      minimo={area.temp_min}
+                      maximo={area.temp_max}
+                      unidad="°C"
                     />
-                    <span className="truncate text-tenue">
-                      {sensor.estado === "SIN_DISPOSITIVO"
-                        ? "Sin sensor asignado"
-                        : `${sensor.dispositivo.codigo}${
-                            sensor.dispositivo.segundos_sin_reportar === null
-                              ? ""
-                              : ` · último dato ${hace(sensor.dispositivo.segundos_sin_reportar)}`
-                          }`}
-                    </span>
-                  </span>
+                    <Medidor
+                      rotulo="Humedad"
+                      valor={lectura?.humedad ?? null}
+                      minimo={area.hum_min}
+                      maximo={area.hum_max}
+                      unidad="%"
+                    />
+                  </div>
 
-                  <Link
-                    href={`/llamados?area=${area.id}`}
-                    className="boton-plano boton-chico shrink-0"
-                  >
-                    Llamados
-                  </Link>
+                  {/* Sensor y atajo */}
+                  <div className="flex items-center justify-between gap-3 text-[13px] lg:flex-col lg:items-end lg:justify-center">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${
+                          sensor.estado === "EN_LINEA"
+                            ? "bg-normal"
+                            : sensor.estado === "SIN_SENAL"
+                              ? "bg-advertencia"
+                              : "bg-tenue"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span className="truncate text-tenue">
+                        {sensor.estado === "SIN_DISPOSITIVO"
+                          ? "Sin sensor asignado"
+                          : `${sensor.dispositivo.codigo}${
+                              sensor.dispositivo.segundos_sin_reportar === null
+                                ? ""
+                                : ` · último dato ${hace(sensor.dispositivo.segundos_sin_reportar)}`
+                            }`}
+                      </span>
+                    </span>
+
+                    <Link
+                      href={`/llamados?area=${area.id}`}
+                      className="boton-plano boton-chico shrink-0"
+                    >
+                      Llamados
+                    </Link>
+                  </div>
                 </div>
 
-                <details className="text-[13px]">
+                <details className="mt-3 text-[13px]">
                   <summary className="cursor-pointer text-tenue select-none">
                     Más datos
                   </summary>
-                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr_auto_1fr]">
                     <dt className="text-tenue">Tipo</dt>
                     <dd>{area.tipo}</dd>
                     <dt className="text-tenue">Última lectura</dt>
