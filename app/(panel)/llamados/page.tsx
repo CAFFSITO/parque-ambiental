@@ -8,6 +8,7 @@
 import { exigirSesion } from "@/lib/auth";
 import { areasDelUsuario, propiasPrimero } from "@/lib/areas-propias";
 import { db } from "@/lib/db";
+import { leerMotivos } from "@/lib/motivos";
 import type { Area, Llamado } from "@/lib/tipos";
 import { GestorLlamados, type Filtros } from "./gestor";
 
@@ -66,7 +67,7 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
     consulta = consulta.lte("creado_en", `${filtros.hasta}T23:59:59`);
   }
 
-  const [llamadosResultado, areasResultado, areasPropias] = await Promise.all([
+  const [llamadosResultado, areasResultado, areasPropias, motivos] = await Promise.all([
     consulta.overrideTypes<Llamado[], { merge: false }>(),
     db()
       .from("areas")
@@ -76,6 +77,7 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
       .order("codigo", { ascending: true })
       .overrideTypes<Area[], { merge: false }>(),
     areasDelUsuario(sesion),
+    leerMotivos(),
   ]);
 
   const crudos = llamadosResultado.data ?? [];
@@ -88,6 +90,7 @@ export default async function PaginaLlamados(props: PageProps<"/llamados">) {
       sesion={sesion}
       filtros={filtros}
       truncado={crudos.length === TOPE_FILAS}
+      motivos={motivos}
     />
   );
 }

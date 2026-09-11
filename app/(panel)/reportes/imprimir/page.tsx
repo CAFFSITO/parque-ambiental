@@ -6,6 +6,7 @@
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { entero, fechaHora, numero, SIN_DATO } from "@/lib/formato";
+import { etiquetaEstado } from "@/lib/catalogos";
 import {
   cargarLlamados,
   cargarReporte,
@@ -196,7 +197,7 @@ export default async function PaginaImprimir(
                   <td>{llamado.tipo}</td>
                   <td>{llamado.origen}</td>
                   <td>{llamado.motivo ?? SIN_DATO}</td>
-                  <td>{llamado.estado}</td>
+                  <td>{etiquetaEstado(llamado.estado)}</td>
                   <td>{llamado.atendido_por ?? SIN_DATO}</td>
                   <td>
                     {llamado.atendido_en ? fechaHora(llamado.atendido_en) : SIN_DATO}

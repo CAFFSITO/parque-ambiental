@@ -6,10 +6,15 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MOTIVOS_MANUALES, TIPOS_LLAMADO } from "@/lib/catalogos";
+import { LARGO_MAXIMO_MOTIVO, TIPOS_LLAMADO } from "@/lib/catalogos";
+import type { MotivosPorTipo } from "@/lib/motivos";
 import { fechaHora, SIN_DATO } from "@/lib/formato";
 import type { Area, Llamado } from "@/lib/tipos";
-import { atenderLlamado, crearLlamado } from "../llamados/acciones";
+import {
+  atenderLlamado,
+  crearLlamado,
+  crearMotivo,
+} from "../llamados/acciones";
 import { Aviso, Campo } from "../componentes/campos";
 import { Icono } from "../componentes/iconos";
 import { Desplegable } from "../componentes/desplegable";
@@ -43,13 +48,27 @@ export function GestorMovil({
   llamados,
   areas,
   areasPropias,
+  motivos: motivosIniciales,
 }: {
   llamados: Llamado[];
   areas: Area[];
   areasPropias: number[];
+  /** Motivos de carga manual, separados por tipo. Ver lib/motivos.ts. */
+  motivos: MotivosPorTipo;
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
+
+  // Los motivos arrancan con lo que trajo el servidor y se actualizan en el
+  // acto cuando alguien crea uno, sin esperar al sondeo.
+  const [motivos, setMotivos] = useState<MotivosPorTipo>(motivosIniciales);
+  /** null = el campo de motivo nuevo está cerrado. */
+  const [nuevoMotivo, setNuevoMotivo] = useState<string | null>(null);
+
+  /** Solo los motivos del tipo elegido: NORMAL no ofrece los de emergencia. */
+  function motivosDe(tipo: string): string[] {
+    return tipo === "EMERGENCIA" ? motivos.EMERGENCIA : motivos.NORMAL;
+  }
 
   const [ficha, setFicha] = useState<FichaNueva | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +107,10 @@ export function GestorMovil({
       // Arranca en la primera área a cargo, pero se puede cambiar.
       area_id: areasPropias[0] ?? null,
       tipo: "NORMAL",
-      motivo: MOTIVOS_MANUALES[0],
+      motivo: motivosDe("NORMAL")[0] ?? "",
       detalle: "",
     });
+    setNuevoMotivo(null);
   }
 
   function guardar() {
@@ -106,6 +126,27 @@ export function GestorMovil({
       setFicha(null);
       setAviso(resultado.mensaje ?? "Llamado creado.");
       router.refresh();
+    });
+  }
+
+  /** Crea el motivo en el tipo elegido y lo deja seleccionado. */
+  function guardarMotivo() {
+    if (!ficha || nuevoMotivo === null) return;
+    const tipo = ficha.tipo;
+    const texto = nuevoMotivo;
+    setError(null);
+
+    iniciar(async () => {
+      const resultado = await crearMotivo(tipo, texto);
+      if (!resultado.ok) {
+        setError(resultado.error);
+        return;
+      }
+      setMotivos(resultado.motivos);
+      setFicha((actual) =>
+        actual ? { ...actual, motivo: resultado.motivo } : actual,
+      );
+      setNuevoMotivo(null);
     });
   }
 
@@ -191,27 +232,84 @@ export function GestorMovil({
               }))}
               alCambiar={(valor) =>
                 setFicha((actual) =>
-                  actual ? { ...actual, tipo: valor } : actual,
+                  actual
+                    ? {
+                        ...actual,
+                        tipo: valor,
+                        motivo: motivosDe(valor)[0] ?? "",
+                      }
+                    : actual,
                 )
               }
             />
           </Campo>
 
           <Campo etiqueta="Motivo" htmlFor="m-motivo">
-            <Desplegable
-              id="m-motivo"
-              estilo={{ height: 44 }}
-              valor={ficha.motivo}
-              opciones={MOTIVOS_MANUALES.map((motivo) => ({
-                valor: motivo,
-                etiqueta: motivo,
-              }))}
-              alCambiar={(valor) =>
-                setFicha((actual) =>
-                  actual ? { ...actual, motivo: valor } : actual,
-                )
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <Desplegable
+                id="m-motivo"
+                estilo={{ height: 44 }}
+                valor={ficha.motivo}
+                opciones={motivosDe(ficha.tipo).map((motivo) => ({
+                  valor: motivo,
+                  etiqueta: motivo,
+                }))}
+                alCambiar={(valor) =>
+                  setFicha((actual) =>
+                    actual ? { ...actual, motivo: valor } : actual,
+                  )
+                }
+              />
+
+              {nuevoMotivo === null ? (
+                <button
+                  type="button"
+                  className="boton-plano self-start"
+                  onClick={() => setNuevoMotivo("")}
+                  disabled={pendiente}
+                >
+                  + Crear motivo {ficha.tipo === "EMERGENCIA" ? "de emergencia" : "normal"}
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    className="campo min-w-0 flex-1" style={{ height: 44 }}
+                    value={nuevoMotivo}
+                    maxLength={LARGO_MAXIMO_MOTIVO}
+                    autoFocus
+                    aria-label="Motivo nuevo"
+                    placeholder={
+                      ficha.tipo === "EMERGENCIA"
+                        ? "Nuevo motivo de emergencia"
+                        : "Nuevo motivo normal"
+                    }
+                    onChange={(evento) => setNuevoMotivo(evento.target.value)}
+                    onKeyDown={(evento) => {
+                      if (evento.key === "Enter") {
+                        evento.preventDefault();
+                        guardarMotivo();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="boton" style={{ height: 44 }}
+                    onClick={guardarMotivo}
+                    disabled={pendiente}
+                  >
+                    Agregar
+                  </button>
+                  <button
+                    type="button"
+                    className="boton-plano" style={{ height: 44 }}
+                    onClick={() => setNuevoMotivo(null)}
+                    disabled={pendiente}
+                  >
+                    Descartar
+                  </button>
+                </div>
+              )}
+            </div>
           </Campo>
 
           <Campo etiqueta="Detalle" htmlFor="m-detalle">

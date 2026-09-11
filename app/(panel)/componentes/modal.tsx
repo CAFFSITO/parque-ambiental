@@ -112,6 +112,7 @@ export function ModalFicha({
   pie,
   alCerrar,
   ancho = 560,
+  cerrarEnCabecera = true,
 }: {
   titulo: string;
   subtitulo?: string;
@@ -119,6 +120,8 @@ export function ModalFicha({
   pie: ReactNode;
   alCerrar: () => void;
   ancho?: number;
+  /** Apagarlo cuando el pie ya tiene Cancelar: dos botones para lo mismo. */
+  cerrarEnCabecera?: boolean;
 }) {
   return (
     <Dialogo
@@ -127,6 +130,7 @@ export function ModalFicha({
       pie={pie}
       alCerrar={alCerrar}
       ancho={ancho}
+      cerrarEnCabecera={cerrarEnCabecera}
     >
       {children}
     </Dialogo>

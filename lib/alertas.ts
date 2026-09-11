@@ -6,7 +6,7 @@
 
 import { db } from "./db";
 import { MOTIVOS } from "./catalogos";
-import { fechaHora, numero } from "./formato";
+import { fechaHora, hace, numero } from "./formato";
 import { avisarNuevoLlamado } from "./avisos";
 import type { Area, OrigenLlamado, TipoLlamado } from "./tipos";
 
@@ -100,17 +100,20 @@ export function evaluarDesvios(
   return desvios;
 }
 
-/** Texto de detalle de un desvío, con la lectura que lo provocó. */
-export function detalleDeDesvio(
-  desvio: Desvio,
-  dispositivo: string,
-  momento: Date,
-): string {
+/**
+ * Texto de detalle de un desvío, en lenguaje de operador: qué se midió, cuál
+ * era el límite y cuándo. Llega tal cual a la pantalla, a Telegram y al push,
+ * así que no nombra aparatos ni nada del camino por el que llegó el dato.
+ */
+export function detalleDeDesvio(desvio: Desvio, momento: Date): string {
+  const magnitud = desvio.unidad === "°C" ? "Temperatura" : "Humedad";
+  const sentido =
+    desvio.medido > desvio.limite ? "por encima del máximo" : "por debajo del mínimo";
+
   return (
-    `${numero(desvio.medido)} ${desvio.unidad} contra un límite de ` +
-    `${numero(desvio.limite)} ${desvio.unidad} ` +
-    `(desvío ${numero(desvio.magnitud)} ${desvio.unidad}). ` +
-    `Reportado por ${dispositivo} el ${fechaHora(momento)}.`
+    `${magnitud} de ${numero(desvio.medido)} ${desvio.unidad}, ${sentido} ` +
+    `de ${numero(desvio.limite)} ${desvio.unidad}. ` +
+    `Medido el ${fechaHora(momento)}.`
   );
 }
 
@@ -420,8 +423,8 @@ export async function revisarNodosCaidos(
       origen: "SENSOR",
       motivo: MOTIVOS.SIN_SENAL,
       detalle:
-        `El nodo ${nodo.dispositivo} no reporta hace ${nodo.segundos} segundos. ` +
-        `Última lectura: ${fechaHora(nodo.ultima)}.`,
+        `El sensor del área dejó de enviar datos ${hace(nodo.segundos)}. ` +
+        `Último dato recibido: ${fechaHora(nodo.ultima)}.`,
       creadoPor: nodo.dispositivo,
     });
 

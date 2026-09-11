@@ -208,7 +208,7 @@ export async function simularLectura(
     return {
       ok: false,
       error:
-        `${dispositivo.codigo} está dado de baja: /api/ingest no lo autentica y ` +
+        `${dispositivo.codigo} está dado de baja: el sistema no lo acepta y ` +
         `su lectura no se guardaría. Reactivalo desde Dispositivos.`,
     };
   }
@@ -252,9 +252,11 @@ export async function simularLectura(
     });
   } catch (fallo) {
     const motivo = fallo instanceof Error ? fallo.message : "desconocido";
+    // El detalle técnico queda en el log del servidor, no en la pantalla.
+    console.error(`[simulador] no se pudo contactar a ${url}: ${motivo}`);
     return {
       ok: false,
-      error: `No se pudo llamar a ${url}: ${motivo}`,
+      error: "No se pudo contactar al sistema. Revisá la conexión y probá de nuevo.",
       llamado,
     };
   }
@@ -265,7 +267,7 @@ export async function simularLectura(
   } catch {
     return {
       ok: false,
-      error: `/api/ingest respondió ${respuestaHttp.status} sin JSON.`,
+      error: "El sistema no pudo procesar la lectura. Probá de nuevo.",
       estado: respuestaHttp.status,
       llamado,
     };
@@ -281,7 +283,10 @@ export async function simularLectura(
   if (!respuestaHttp.ok || respuesta.ok !== true) {
     return {
       ok: false,
-      error: `/api/ingest respondió ${respuestaHttp.status}: ${respuesta.error ?? "error"}`,
+      error:
+        respuestaHttp.status === 401
+          ? "El sistema no aceptó la credencial del dispositivo simulado. Probá de nuevo."
+          : `El sistema rechazó la lectura: ${respuesta.error ?? "motivo desconocido"}`,
       estado: respuestaHttp.status,
       llamado,
       respuesta,

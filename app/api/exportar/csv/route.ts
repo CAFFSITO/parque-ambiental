@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import { exigirAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fechaHora } from "@/lib/formato";
+import { etiquetaEstado } from "@/lib/catalogos";
 import { cargarLlamados, leerFiltro } from "@/lib/reportes";
 import type { Area } from "@/lib/tipos";
 
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         celda(area?.nombre ?? ""),
         celda(llamado.tipo),
         celda(llamado.origen),
-        celda(llamado.estado),
+        celda(etiquetaEstado(llamado.estado)),
         celda(llamado.motivo),
         celda(llamado.detalle),
         celda(llamado.creado_por),

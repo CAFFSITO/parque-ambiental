@@ -167,11 +167,10 @@ export function GestorDiagnostico({
       <section className="panel">
         <div className="flex flex-col gap-2 p-3">
           <p>
-            Esta pantalla manda una lectura a <code>/api/ingest</code> por HTTP,
-            con una credencial real de un dispositivo <strong>simulado</strong>.
-            No escribe en la base por atajo: pasa por la misma autenticación, la
-            misma resolución de área, los mismos umbrales y el mismo antirrebote
-            que atraviesa el nodo del invernadero.
+            Esta pantalla envía una lectura de prueba en nombre de un
+            dispositivo <strong>simulado</strong>, y el sistema la procesa igual
+            que una real: evalúa los umbrales del área, genera los llamados que
+            correspondan y decide el relé.
           </p>
           <p className="text-tenue">
             Solo se pueden simular dispositivos con naturaleza SIMULADO. Los
@@ -263,7 +262,7 @@ export function GestorDiagnostico({
 
               {elegido && !elegido.activo ? (
                 <Aviso
-                  texto="Este dispositivo está dado de baja: /api/ingest no lo autentica y la lectura no se guardaría. Reactivalo desde Dispositivos."
+                  texto="Este dispositivo está dado de baja: la lectura no se aceptaría. Reactivalo desde Dispositivos."
                   nivel="ADVERTENCIA"
                 />
               ) : null}
@@ -449,34 +448,15 @@ function ResultadoSimulacionPanel({
   return (
     <section className="panel">
       <div className="flex flex-wrap items-center gap-2 border-b border-borde px-3 py-2">
-        <span className="rotulo">Respuesta del servidor</span>
-        {resultado.estado !== undefined ? (
-          <Chip
-            texto={`HTTP ${resultado.estado}`}
-            nivel={resultado.ok ? "NORMAL" : "EMERGENCIA"}
-          />
-        ) : null}
+        <span className="rotulo">Resultado</span>
+        <Chip
+          texto={resultado.ok ? "Aceptada" : "Rechazada"}
+          nivel={resultado.ok ? "NORMAL" : "EMERGENCIA"}
+        />
       </div>
 
       <div className="flex flex-col gap-3 p-3">
         {!resultado.ok ? <Aviso texto={resultado.error} /> : null}
-
-        {resultado.llamado ? (
-          <div>
-            <div className="titulo-seccion mb-1">Petición generada</div>
-            <pre className="overflow-x-auto rounded-pab bg-panel-alto px-2 py-1.5 text-tenue whitespace-pre-wrap break-all">
-              {`${resultado.llamado.metodo} ${resultado.llamado.url}\n` +
-                Object.entries(resultado.llamado.cabeceras)
-                  .map(([nombre, valor]) => `${nombre}: ${valor}`)
-                  .join("\n") +
-                `\n\n${resultado.llamado.cuerpo}`}
-            </pre>
-            <p className="mt-1 text-tenue">
-              La clave va enmascarada a propósito: se muestra el prefijo, que es
-              para lo que existe. El secreto no sale del servidor.
-            </p>
-          </div>
-        ) : null}
 
         {resultado.ok ? (
           <>
@@ -500,7 +480,7 @@ function ResultadoSimulacionPanel({
                 "Lo que ves acá es la DECISIÓN del servidor, no un efecto físico. " +
                 "Esta pantalla no acciona ningún relé ni hace sonar ninguna sirena: " +
                 "el relé lo acciona el ESP32 cuando recibe esta misma respuesta en " +
-                "su próximo reporte, leyendo los campos rele y alarma. Con un nodo " +
+                "su próximo envío. Con un dispositivo " +
                 "simulado no hay ningún aparato del otro lado que la reciba."
               }
               nivel="NORMAL"
@@ -550,7 +530,7 @@ function ResultadoSimulacionPanel({
 
         {avisos.length > 0 ? (
           <div>
-            <div className="titulo-seccion mb-1">Avisos del servidor</div>
+            <div className="titulo-seccion mb-1">Observaciones</div>
             <ul className="flex flex-col gap-1">
               {avisos.map((aviso, indice) => (
                 <li key={indice} className="text-tenue">

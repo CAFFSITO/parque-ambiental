@@ -12,7 +12,7 @@
 import { revalidatePath } from "next/cache";
 import { exigirSesion } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { LISTA_MOTIVOS } from "@/lib/catalogos";
+import { agregarMotivo, leerMotivos, type MotivosPorTipo } from "@/lib/motivos";
 import { avisarNuevoLlamado } from "@/lib/avisos";
 import type { Resultado, TipoLlamado } from "@/lib/tipos";
 
@@ -142,8 +142,17 @@ export async function crearLlamado(
   if (!esTipo(tipo)) {
     return { ok: false, error: "El tipo tiene que ser NORMAL o EMERGENCIA." };
   }
-  if (!LISTA_MOTIVOS.includes(motivo)) {
-    return { ok: false, error: "El motivo no pertenece al catálogo." };
+  // El motivo tiene que ser de ESE tipo: la ficha solo ofrece los del tipo
+  // elegido, y la acción lo vuelve a exigir porque se puede invocar a mano.
+  const motivos = await leerMotivos();
+  if (!motivos[tipo].includes(motivo)) {
+    return {
+      ok: false,
+      error:
+        tipo === "NORMAL"
+          ? "Elegí un motivo de llamado normal."
+          : "Elegí un motivo de emergencia.",
+    };
   }
 
   // El área es la que se eligió, sea cual sea el rol.
@@ -186,4 +195,41 @@ export async function crearLlamado(
 
   refrescar();
   return { ok: true, mensaje: "Llamado creado." };
+}
+
+export type ResultadoMotivo =
+  | { ok: true; mensaje: string; motivo: string; motivos: MotivosPorTipo }
+  | { ok: false; error: string };
+
+/**
+ * Crea un motivo dentro de un tipo, desde la misma ficha de nuevo llamado.
+ * Cualquiera con sesión puede, igual que cualquiera puede crear un llamado.
+ * Las reglas —un motivo pertenece a un solo tipo, y los del sistema no se
+ * cargan a mano— viven en lib/motivos.ts.
+ */
+export async function crearMotivo(
+  tipo: string,
+  texto: string,
+): Promise<ResultadoMotivo> {
+  const sesion = await exigirSesion();
+
+  if (typeof tipo !== "string" || !esTipo(tipo)) {
+    return { ok: false, error: "El tipo tiene que ser NORMAL o EMERGENCIA." };
+  }
+  if (typeof texto !== "string") {
+    return { ok: false, error: "Escribí el motivo." };
+  }
+
+  const resultado = await agregarMotivo(tipo, texto, sesion.usuario);
+  if (!resultado.ok) return resultado;
+
+  revalidatePath("/llamados");
+  revalidatePath("/movil");
+
+  return {
+    ok: true,
+    mensaje: `Motivo "${resultado.motivo}" agregado.`,
+    motivo: resultado.motivo,
+    motivos: resultado.motivos,
+  };
 }

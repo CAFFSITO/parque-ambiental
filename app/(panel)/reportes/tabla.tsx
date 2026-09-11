@@ -6,6 +6,7 @@
 
 import { useRouter } from "next/navigation";
 import { fechaHora, SIN_DATO } from "@/lib/formato";
+import { etiquetaEstado } from "@/lib/catalogos";
 import type { Area, Llamado } from "@/lib/tipos";
 import {
   filtroAQueryString,
@@ -120,7 +121,7 @@ export function TablaDetalle({
                   <td className="text-tenue">{llamado.origen}</td>
                   <td>{llamado.motivo ?? SIN_DATO}</td>
                   <td className={atendido ? "text-tenue" : "text-texto"}>
-                    {llamado.estado}
+                    {etiquetaEstado(llamado.estado)}
                   </td>
                   <td className="text-tenue">
                     {llamado.atendido_por ?? SIN_DATO}

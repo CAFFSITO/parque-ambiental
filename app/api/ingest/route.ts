@@ -501,7 +501,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         tipo: desvio.tipo,
         origen: "SENSOR",
         motivo: desvio.motivo,
-        detalle: detalleDeDesvio(desvio, dispositivo.codigo, momento),
+        detalle: detalleDeDesvio(desvio, momento),
         creadoPor: dispositivo.codigo,
       });
 
@@ -521,10 +521,10 @@ export async function POST(request: NextRequest): Promise<Response> {
         origen: "EMPLEADO",
         motivo,
         detalle:
-          `Accionado desde ${dispositivo.codigo} en ${area.nombre} ` +
-          `el ${fechaHora(momento)}. ` +
-          `Lectura del momento: ${numero(temperatura)} °C, ` +
-          `${numero(humedad)} %.`,
+          `Pedido con el botón en ${area.nombre} el ${fechaHora(momento)}.` +
+          (temperatura === null && humedad === null
+            ? ""
+            : ` En ese momento: ${numero(temperatura)} °C y ${numero(humedad)} % de humedad.`),
         creadoPor: dispositivo.codigo,
       });
 

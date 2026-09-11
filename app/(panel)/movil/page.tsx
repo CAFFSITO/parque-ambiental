@@ -6,6 +6,7 @@
 import { exigirSesion } from "@/lib/auth";
 import { areasDelUsuario, propiasPrimero } from "@/lib/areas-propias";
 import { db } from "@/lib/db";
+import { leerMotivos } from "@/lib/motivos";
 import type { Area, Llamado } from "@/lib/tipos";
 import { GestorMovil } from "./gestor";
 
@@ -29,7 +30,7 @@ export default async function PaginaMovil() {
     .order("creado_en", { ascending: false })
     .limit(TOPE);
 
-  const [llamadosResultado, areasResultado, areasPropias] = await Promise.all([
+  const [llamadosResultado, areasResultado, areasPropias, motivos] = await Promise.all([
     consulta.overrideTypes<Llamado[], { merge: false }>(),
     db()
       .from("areas")
@@ -39,6 +40,7 @@ export default async function PaginaMovil() {
       .order("codigo", { ascending: true })
       .overrideTypes<Area[], { merge: false }>(),
     areasDelUsuario(sesion),
+    leerMotivos(),
   ]);
 
   return (
@@ -46,6 +48,7 @@ export default async function PaginaMovil() {
       llamados={propiasPrimero(llamadosResultado.data ?? [], areasPropias)}
       areas={areasResultado.data ?? []}
       areasPropias={areasPropias}
+      motivos={motivos}
     />
   );
 }

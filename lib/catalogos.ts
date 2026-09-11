@@ -152,18 +152,31 @@ export const MOTIVOS = {
 export const LISTA_MOTIVOS: readonly string[] = Object.values(MOTIVOS);
 
 /**
- * Motivos que puede elegir una persona al cargar un llamado a mano. Los que
- * quedan afuera los genera el servidor a partir de las lecturas del nodo.
+ * Motivos que se ofrecen al cargar un llamado a mano, separados por tipo.
+ * Elegir NORMAL muestra solo los de la izquierda; EMERGENCIA, solo los de la
+ * derecha. Son la base: cada tipo puede sumar los suyos desde la misma ficha
+ * (se guardan en la tabla ajustes, ver lib/motivos.ts).
  */
-export const MOTIVOS_MANUALES: readonly string[] = [
-  MOTIVOS.ASISTENCIA,
-  MOTIVOS.RIEGO,
-  MOTIVOS.ENERGIA,
-  MOTIVOS.INSUMOS,
-  MOTIVOS.PLAGA,
-  MOTIVOS.BOTON_EMERGENCIA,
-];
+export const MOTIVOS_MANUALES_POR_TIPO: Record<'NORMAL' | 'EMERGENCIA', readonly string[]> = {
+  NORMAL: [MOTIVOS.ASISTENCIA, MOTIVOS.INSUMOS, MOTIVOS.RIEGO, MOTIVOS.PLAGA],
+  EMERGENCIA: [MOTIVOS.BOTON_EMERGENCIA, MOTIVOS.ENERGIA],
+};
+
+/** Largo máximo de un motivo creado a mano. */
+export const LARGO_MAXIMO_MOTIVO = 80;
 
 export const TIPOS_LLAMADO: readonly string[] = ['NORMAL', 'EMERGENCIA'];
 export const ORIGENES_LLAMADO: readonly string[] = ['SENSOR', 'EMPLEADO'];
 export const ESTADOS_LLAMADO: readonly string[] = ['NO_ATENDIDO', 'ATENDIDO'];
+
+/**
+ * Cómo se lee el estado de un llamado en pantalla. En la base sigue siendo
+ * NO_ATENDIDO / ATENDIDO —es lo que filtran las consultas y las funciones de
+ * reportes—; esto cambia solo lo que ve la persona. Cualquier otro valor pasa
+ * tal cual, así se puede usar sobre las etiquetas mezcladas de la torta.
+ */
+export function etiquetaEstado(estado: string): string {
+  if (estado === 'NO_ATENDIDO') return 'No Atendido';
+  if (estado === 'ATENDIDO') return 'Atendido';
+  return estado;
+}

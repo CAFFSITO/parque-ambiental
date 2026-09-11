@@ -29,6 +29,7 @@ import type {
 } from "@/lib/reportes-comunes";
 import { Desplegable } from "../componentes/desplegable";
 import { particion } from "@/lib/reportes-comunes";
+import { etiquetaEstado } from "@/lib/catalogos";
 
 const VERDE = "#92a05b";
 const AMBAR = "#d7ae67";
@@ -152,7 +153,12 @@ export function GraficoDistribucion({
 }) {
   const [dimension, setDimension] = useState(dimensionFija ?? "estado");
   const activa = dimensionFija ?? dimension;
-  const filas = particion(datos, activa);
+  // La etiqueta cruda sigue eligiendo el color; el nombre legible es lo que
+  // se escribe en la torta y en el tooltip.
+  const filas = particion(datos, activa).map((fila) => ({
+    ...fila,
+    nombre: etiquetaEstado(fila.etiqueta),
+  }));
 
   const selector = dimensionFija ? undefined : (
     <Desplegable
@@ -181,7 +187,7 @@ export function GraficoDistribucion({
             <Pie
               data={filas}
               dataKey="cantidad"
-              nameKey="etiqueta"
+              nameKey="nombre"
               innerRadius="45%"
               outerRadius="75%"
               isAnimationActive={false}

@@ -472,7 +472,7 @@ export function GestorDispositivos({
                           ? "Dar de baja el dispositivo"
                           : "Reactivar el dispositivo",
                         mensaje: dispositivo.activo
-                          ? `${dispositivo.codigo} deja de autenticarse: /api/ingest va a descartar sus lecturas y su relé queda apagado. No se borra ningún dato histórico.`
+                          ? `${dispositivo.codigo} deja de ser aceptado: sus datos dejan de guardarse y su relé queda apagado. No se borra ningún dato histórico.`
                           : `${dispositivo.codigo} vuelve a poder autenticarse y a recibir órdenes.`,
                         textoConfirmar: dispositivo.activo
                           ? "Dar de baja"
@@ -875,7 +875,7 @@ export function GestorDispositivos({
                             setCredenciales(null);
                             setConfirmacion({
                               titulo: "Revocar la credencial",
-                              mensaje: `La credencial deja de servir en el acto. El nodo ${dispositivo.codigo} va a empezar a recibir 401 en cada reporte y, como un 401 no rearma su failsafe, su relé se apaga solo a los 45 segundos. La fila no se borra: queda como registro de auditoría.`,
+                              mensaje: `La credencial deja de servir en el acto. ${dispositivo.codigo} no va a poder enviar más datos con ella, y su relé se apaga solo en menos de un minuto. La credencial no se borra: queda registrada.`,
                               textoConfirmar: "Revocar",
                               peligro: true,
                               ejecutar: () =>
@@ -914,7 +914,7 @@ export function GestorDispositivos({
             <Campo
               etiqueta={`Secreto de ${secreto.codigo}`}
               htmlFor="c-secreto"
-              ayuda="Grabalo en el firmware del nodo, en la constante DEVICE_KEY, y volvé a compilar."
+              ayuda="Cargalo en el dispositivo antes de cerrar esta ventana."
             >
               <input
                 id="c-secreto"

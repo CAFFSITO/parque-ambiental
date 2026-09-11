@@ -262,19 +262,20 @@ describe("decidirAntirrebote", () => {
 describe("detalleDeDesvio", () => {
   const MOMENTO = new Date("2026-09-10T14:30:00.000Z");
 
-  it("dice la lectura, el límite, el desvío, el nodo y la hora", () => {
-    const texto = detalleDeDesvio(unico(27, 70), "NODO-INV-N-01", MOMENTO);
+  it("dice la medición, el límite y la hora, en lenguaje de operador", () => {
+    const texto = detalleDeDesvio(unico(27, 70), MOMENTO);
 
-    expect(texto).toContain("27,0 °C");
-    expect(texto).toContain("25,0 °C");
-    expect(texto).toContain("2,0 °C");
-    expect(texto).toContain("NODO-INV-N-01");
+    expect(texto).toContain("Temperatura de 27,0 °C");
+    expect(texto).toContain("por encima del máximo de 25,0 °C");
+    // Llega a la pantalla, a Telegram y al push: sin jerga técnica.
+    expect(texto).not.toContain("NODO");
+    expect(texto).not.toContain("Reportado");
     // Formateado en hora de Argentina, como todo el panel.
     expect(texto).toContain("10/09/2026 11:30");
   });
 
   it("usa la unidad correcta para la humedad", () => {
-    const texto = detalleDeDesvio(unico(22, 48), "SIM-INV-N", MOMENTO);
+    const texto = detalleDeDesvio(unico(22, 48), MOMENTO);
     expect(texto).toContain("48,0 %");
     expect(texto).toContain("60,0 %");
     expect(texto).not.toContain("°C");

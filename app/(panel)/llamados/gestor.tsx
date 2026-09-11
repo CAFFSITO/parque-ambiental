@@ -16,10 +16,12 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ESTADOS_LLAMADO,
-  MOTIVOS_MANUALES,
+  etiquetaEstado,
+  LARGO_MAXIMO_MOTIVO,
   ORIGENES_LLAMADO,
   TIPOS_LLAMADO,
 } from "@/lib/catalogos";
+import type { MotivosPorTipo } from "@/lib/motivos";
 import { fechaHora, SIN_DATO } from "@/lib/formato";
 import type { Area, Llamado, Sesion } from "@/lib/tipos";
 import { Aviso, Campo } from "../componentes/campos";
@@ -28,7 +30,12 @@ import { Icono } from "../componentes/iconos";
 import { CampoFecha } from "../componentes/fecha";
 import { Chip, Dato, FilaDesplegable, Lista } from "../componentes/lista";
 import { ModalFicha } from "../componentes/modal";
-import { atenderLlamado, cancelarAtencion, crearLlamado } from "./acciones";
+import {
+  atenderLlamado,
+  cancelarAtencion,
+  crearLlamado,
+  crearMotivo,
+} from "./acciones";
 
 const MS_SONDEO = 10_000;
 
@@ -61,6 +68,7 @@ export function GestorLlamados({
   sesion,
   filtros,
   truncado,
+  motivos: motivosIniciales,
 }: {
   llamados: Llamado[];
   areas: Area[];
@@ -68,9 +76,22 @@ export function GestorLlamados({
   sesion: Sesion;
   filtros: Filtros;
   truncado: boolean;
+  /** Motivos de carga manual, separados por tipo. Ver lib/motivos.ts. */
+  motivos: MotivosPorTipo;
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
+
+  // Los motivos arrancan con lo que trajo el servidor y se actualizan en el
+  // acto cuando alguien crea uno, sin esperar al sondeo.
+  const [motivos, setMotivos] = useState<MotivosPorTipo>(motivosIniciales);
+  /** null = el campo de motivo nuevo está cerrado. */
+  const [nuevoMotivo, setNuevoMotivo] = useState<string | null>(null);
+
+  /** Solo los motivos del tipo elegido: NORMAL no ofrece los de emergencia. */
+  function motivosDe(tipo: string): string[] {
+    return tipo === "EMERGENCIA" ? motivos.EMERGENCIA : motivos.NORMAL;
+  }
 
   const [ficha, setFicha] = useState<FichaNueva | null>(null);
   const [errorFicha, setErrorFicha] = useState<string | null>(null);
@@ -132,9 +153,10 @@ export function GestorLlamados({
       // pero se puede cambiar por cualquier otra.
       area_id: areasPropias[0] ?? null,
       tipo: "NORMAL",
-      motivo: MOTIVOS_MANUALES[0],
+      motivo: motivosDe("NORMAL")[0] ?? "",
       detalle: "",
     });
+    setNuevoMotivo(null);
   }
 
   function guardarNuevo() {
@@ -152,6 +174,27 @@ export function GestorLlamados({
       setFicha(null);
       setAviso(resultado.mensaje ?? "Listo.");
       router.refresh();
+    });
+  }
+
+  /** Crea el motivo en el tipo elegido y lo deja seleccionado. */
+  function guardarMotivo() {
+    if (!ficha || nuevoMotivo === null) return;
+    const tipo = ficha.tipo;
+    const texto = nuevoMotivo;
+    setErrorFicha(null);
+
+    iniciar(async () => {
+      const resultado = await crearMotivo(tipo, texto);
+      if (!resultado.ok) {
+        setErrorFicha(resultado.error);
+        return;
+      }
+      setMotivos(resultado.motivos);
+      setFicha((actual) =>
+        actual ? { ...actual, motivo: resultado.motivo } : actual,
+      );
+      setNuevoMotivo(null);
     });
   }
 
@@ -249,7 +292,7 @@ export function GestorLlamados({
                 { valor: "", etiqueta: "Todos" },
                 ...ESTADOS_LLAMADO.map((estado) => ({
                   valor: estado,
-                  etiqueta: estado,
+                  etiqueta: etiquetaEstado(estado),
                 })),
               ]}
               alCambiar={(valor) => cambiarFiltro("estado", valor)}
@@ -355,7 +398,7 @@ export function GestorLlamados({
                   </Dato>
                   <Dato rotulo="Tipo">{llamado.tipo}</Dato>
                   <Dato rotulo="Origen">{llamado.origen}</Dato>
-                  <Dato rotulo="Estado">{llamado.estado}</Dato>
+                  <Dato rotulo="Estado">{etiquetaEstado(llamado.estado)}</Dato>
                   <Dato rotulo="Creado por">
                     {llamado.creado_por ?? SIN_DATO}
                   </Dato>
@@ -399,6 +442,7 @@ export function GestorLlamados({
           titulo="Nuevo llamado"
           subtitulo="Carga manual"
           alCerrar={() => setFicha(null)}
+          cerrarEnCabecera={false}
           pie={
             <>
               <button
@@ -463,26 +507,86 @@ export function GestorLlamados({
                 }))}
                 alCambiar={(valor) =>
                   setFicha((actual) =>
-                    actual ? { ...actual, tipo: valor } : actual,
+                    actual
+                      ? {
+                          ...actual,
+                          tipo: valor,
+                          // Al cambiar de tipo, el motivo pasa al primero del
+                          // tipo nuevo: uno de emergencia no puede quedar
+                          // colgado en un llamado normal.
+                          motivo: motivosDe(valor)[0] ?? "",
+                        }
+                      : actual,
                   )
                 }
               />
             </Campo>
 
             <Campo etiqueta="Motivo" htmlFor="n-motivo">
-              <Desplegable
-                id="n-motivo"
-                valor={ficha.motivo}
-                opciones={MOTIVOS_MANUALES.map((motivo) => ({
-                  valor: motivo,
-                  etiqueta: motivo,
-                }))}
-                alCambiar={(valor) =>
-                  setFicha((actual) =>
-                    actual ? { ...actual, motivo: valor } : actual,
-                  )
-                }
-              />
+              <div className="flex flex-col gap-2">
+                <Desplegable
+                  id="n-motivo"
+                  valor={ficha.motivo}
+                  opciones={motivosDe(ficha.tipo).map((motivo) => ({
+                    valor: motivo,
+                    etiqueta: motivo,
+                  }))}
+                  alCambiar={(valor) =>
+                    setFicha((actual) =>
+                      actual ? { ...actual, motivo: valor } : actual,
+                    )
+                  }
+                />
+
+                {nuevoMotivo === null ? (
+                  <button
+                    type="button"
+                    className="boton-plano self-start"
+                    onClick={() => setNuevoMotivo("")}
+                    disabled={pendiente}
+                  >
+                    + Crear motivo {ficha.tipo === "EMERGENCIA" ? "de emergencia" : "normal"}
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      className="campo min-w-0 flex-1"
+                      value={nuevoMotivo}
+                      maxLength={LARGO_MAXIMO_MOTIVO}
+                      autoFocus
+                      aria-label="Motivo nuevo"
+                      placeholder={
+                        ficha.tipo === "EMERGENCIA"
+                          ? "Nuevo motivo de emergencia"
+                          : "Nuevo motivo normal"
+                      }
+                      onChange={(evento) => setNuevoMotivo(evento.target.value)}
+                      onKeyDown={(evento) => {
+                        if (evento.key === "Enter") {
+                          evento.preventDefault();
+                          guardarMotivo();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="boton"
+                      onClick={guardarMotivo}
+                      disabled={pendiente}
+                    >
+                      Agregar
+                    </button>
+                    <button
+                      type="button"
+                      className="boton-plano"
+                      onClick={() => setNuevoMotivo(null)}
+                      disabled={pendiente}
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                )}
+              </div>
             </Campo>
 
             <Campo etiqueta="Detalle" htmlFor="n-detalle">

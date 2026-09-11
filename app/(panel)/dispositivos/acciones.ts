@@ -356,6 +356,6 @@ export async function revocarCredencialDispositivo(
   return {
     ok: true,
     mensaje:
-      "Credencial revocada. El nodo que la use va a recibir 401 y su relé se apaga por failsafe a los 45 segundos.",
+      "Credencial revocada. El dispositivo que la use deja de poder enviar datos, y su relé se apaga solo en menos de un minuto.",
   };
 }
