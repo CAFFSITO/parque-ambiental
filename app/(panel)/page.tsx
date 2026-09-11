@@ -16,7 +16,7 @@ import type {
   Lectura,
   NivelEstado,
 } from "@/lib/tipos";
-import { Chip } from "./componentes/lista";
+import { Chip, Dato, FilaDesplegable, Lista } from "./componentes/lista";
 
 /**
  * El estado del sensor de un área se mide con SEGUNDOS_SIN_SENAL, el MISMO
@@ -102,13 +102,9 @@ function evaluar(
   }
 
   if (sensor.estado === "SIN_SENAL") {
-    const segundos = sensor.dispositivo.segundos_sin_reportar;
     return {
       nivel: "ADVERTENCIA",
-      motivo:
-        segundos === null
-          ? "El sensor todavía no envió ninguna lectura"
-          : `El sensor dejó de enviar datos ${hace(segundos)}`,
+      motivo: `Sensor sin señal ${hace(sensor.dispositivo.segundos_sin_reportar)}`,
     };
   }
 
@@ -195,145 +191,22 @@ async function areasConEmergenciaAbierta(
   return conjunto;
 }
 
-// =====================================================================
-// PRESENTACIÓN
-//
-// Mismos datos, otra disposición. Las consultas, la vigilancia y el semáforo
-// de cada área de arriba no se tocaron.
-//
-//   * Un MARCADOR de una sola pieza con los cuatro números a 52 px, separados
-//     por líneas, en vez de cuatro cajas sueltas.
-//   * Una BARRA DE EMERGENCIAS que aparece solo si hay alguna, y nombra las
-//     áreas: dice dónde ir, no solo cuántas son.
-//   * Una TARJETA POR ÁREA con dos medidores de rango: la banda es lo
-//     permitido y la marca es la lectura.
-//
-// Todo es de servidor: no hay JavaScript nuevo en el navegador.
-// =====================================================================
-
-/** Clases por nivel. Escritas enteras para que Tailwind las encuentre. */
-const COLOR: Record<NivelEstado, { texto: string; borde: string; suave: string; punto: string }> = {
-  NORMAL: {
-    texto: "text-normal",
-    borde: "border-normal/50",
-    suave: "bg-normal/10",
-    punto: "bg-normal",
-  },
-  ADVERTENCIA: {
-    texto: "text-advertencia",
-    borde: "border-advertencia/60",
-    suave: "bg-advertencia/10",
-    punto: "bg-advertencia",
-  },
-  EMERGENCIA: {
-    texto: "text-emergencia",
-    borde: "border-emergencia/70",
-    suave: "bg-emergencia/10",
-    punto: "bg-emergencia",
-  },
-};
-
-/** Lo que dice la etiqueta de estado de cada tarjeta. */
-const ESTADO: Record<NivelEstado, string> = {
-  NORMAL: "En rango",
-  ADVERTENCIA: "Revisar",
-  EMERGENCIA: "Emergencia",
-};
-
-/**
- * Posición de la banda permitida y de la lectura dentro de un medidor.
- *
- * La escala se abre alrededor del rango —medio rango de margen a cada lado— y
- * se estira si la lectura cae más afuera, así la marca nunca se sale del
- * medidor. Devuelve porcentajes listos para CSS.
- */
-function escalaDeMedidor(
-  minimo: number,
-  maximo: number,
-  valor: number | null,
-): { banda: [number, number]; marca: number | null } {
-  const min = Number(minimo);
-  const max = Number(maximo);
-  const margen = Math.max((max - min) / 2, 1);
-
-  let desde = min - margen;
-  let hasta = max + margen;
-  if (valor !== null) {
-    desde = Math.min(desde, valor - margen / 4);
-    hasta = Math.max(hasta, valor + margen / 4);
-  }
-
-  const total = hasta - desde || 1;
-  const pct = (x: number) => Math.min(100, Math.max(0, ((x - desde) / total) * 100));
-
-  return {
-    banda: [pct(min), pct(max)],
-    marca: valor === null ? null : pct(valor),
-  };
-}
-
-function Medidor({
+function Indicador({
   rotulo,
   valor,
-  minimo,
-  maximo,
-  unidad,
+  nivel,
 }: {
   rotulo: string;
-  valor: number | null;
-  minimo: number;
-  maximo: number;
-  unidad: string;
+  valor: number;
+  nivel: NivelEstado;
 }) {
-  const { banda, marca } = escalaDeMedidor(minimo, maximo, valor);
-  const afuera =
-    valor !== null && (valor < Number(minimo) || valor > Number(maximo));
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="rotulo">{rotulo}</span>
-        {valor === null ? (
-          <span className="text-[13px] text-tenue">Sin dato</span>
-        ) : (
-          <span
-            className={`text-[26px] leading-none font-extrabold tracking-[-0.03em] ${
-              afuera ? "text-emergencia" : "text-texto"
-            }`}
-          >
-            {numero(valor)}
-            <span className="ml-0.5 text-[13px] font-normal text-tenue">{unidad}</span>
-          </span>
-        )}
+    <div className="panel panel-kpi" data-nivel={nivel}>
+      <div className="kpi-cabecera">
+        <div className="rotulo">{rotulo}</div>
+        <span className="kpi-marca" aria-hidden="true" />
       </div>
-
-      <div
-        className="relative h-2.5 rounded-full bg-panel-suave"
-        role="img"
-        aria-label={
-          valor === null
-            ? `${rotulo}: sin dato. Rango permitido ${numero(minimo, 0)} a ${numero(maximo, 0)} ${unidad}`
-            : `${rotulo}: ${numero(valor)} ${unidad}. Rango permitido ${numero(minimo, 0)} a ${numero(maximo, 0)} ${unidad}`
-        }
-      >
-        <div
-          className="absolute inset-y-0 rounded-full bg-normal/35"
-          style={{ left: `${banda[0]}%`, width: `${banda[1] - banda[0]}%` }}
-        />
-        {marca !== null ? (
-          <div
-            className={`absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
-              afuera ? "bg-emergencia" : "bg-texto"
-            }`}
-            style={{ left: `${marca}%` }}
-          />
-        ) : null}
-      </div>
-
-      <div className="flex justify-between text-[11px] text-tenue">
-        <span>mín {numero(minimo, 0)}</span>
-        <span>máx {numero(maximo, 0)}</span>
-      </div>
+      <div className="kpi-valor">{entero(valor)}</div>
     </div>
   );
 }
@@ -411,202 +284,151 @@ export default async function PaginaTablero() {
   const areasEnAlerta = filas.filter((fila) => fila.nivel !== "NORMAL").length;
   const generado = fechaHora(new Date());
 
-  // Las áreas con emergencia, por código, para decir dónde y no solo cuántas.
-  const conEmergencia = filas
-    .filter(({ area }) => emergencias.has(area.id))
-    .map(({ area }) => area.codigo);
-
-  const marcador = [
-    { rotulo: "Llamados sin atender", valor: noAtendidos, nivel: noAtendidos > 0 ? "ADVERTENCIA" : "NORMAL" },
-    { rotulo: "Emergencias abiertas", valor: emergenciasAbiertas, nivel: emergenciasAbiertas > 0 ? "EMERGENCIA" : "NORMAL" },
-    { rotulo: "Áreas con alerta", valor: areasEnAlerta, nivel: areasEnAlerta > 0 ? "ADVERTENCIA" : "NORMAL" },
-    { rotulo: "Lecturas última hora", valor: lecturasHora, nivel: lecturasHora === 0 ? "ADVERTENCIA" : "NORMAL" },
-  ] as const;
-
   return (
-    <div className="flex flex-col gap-5">
-      {/* ---------------- Encabezado ---------------- */}
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-        <h1 className="text-[26px] leading-none font-semibold">Tablero</h1>
-        <span className="rotulo">
+    <div className="flex flex-col gap-6">
+      <div className="encabezado-tablero">
+        <div>
+          <h1 className="titulo-tablero">Estadisticas del parque</h1>
+          <p className="subtitulo-tablero">
+            Lecturas, alertas y actividad operativa reunidas en una vista clara.
+          </p>
+        </div>
+        <div className="contexto-tablero">
           {areasPropias.length > 0
-            ? `${filas.length} áreas activas · ${areasPropias.length} a cargo primero · ${generado}`
-            : `${filas.length} áreas activas · ${generado}`}
-        </span>
+            ? `Todas las áreas · ${areasPropias.length} a cargo, primero · ${generado}`
+            : `Todas las áreas · ${generado}`}
+        </div>
       </div>
 
-      {/* ---------------- Marcador: una pieza, cuatro números ---------------- */}
-      <section
-        aria-label="Indicadores"
-        className="panel grid grid-cols-2 lg:grid-cols-4"
-      >
-        {marcador.map(({ rotulo, valor, nivel }, indice) => (
-          <div
-            key={rotulo}
-            className={`flex flex-col justify-between gap-5 p-5 ${
-              indice % 2 === 1 ? "border-l border-texto/10" : ""
-            } ${indice >= 2 ? "border-t border-texto/10 lg:border-t-0" : ""} ${
-              indice === 2 ? "lg:border-l" : ""
-            }`}
-          >
-            <span className="rotulo">{rotulo}</span>
-            <span
-              className={`text-[44px] leading-[0.8] font-extrabold tracking-[-0.05em] sm:text-[52px] ${COLOR[nivel].texto}`}
-            >
-              {entero(valor)}
-            </span>
-          </div>
-        ))}
-      </section>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Indicador
+          rotulo="Llamados no atendidos"
+          valor={noAtendidos}
+          nivel={noAtendidos > 0 ? "ADVERTENCIA" : "NORMAL"}
+        />
+        <Indicador
+          rotulo="Emergencias abiertas"
+          valor={emergenciasAbiertas}
+          nivel={emergenciasAbiertas > 0 ? "EMERGENCIA" : "NORMAL"}
+        />
+        <Indicador
+          rotulo="Áreas con alerta"
+          valor={areasEnAlerta}
+          nivel={areasEnAlerta > 0 ? "ADVERTENCIA" : "NORMAL"}
+        />
+        <Indicador
+          rotulo="Lecturas última hora"
+          valor={lecturasHora}
+          nivel={lecturasHora === 0 ? "ADVERTENCIA" : "NORMAL"}
+        />
+      </div>
 
-      {/* ---------------- Emergencias: solo si hay ---------------- */}
-      {emergenciasAbiertas > 0 ? (
-        <section
-          className={`flex flex-wrap items-center justify-between gap-3 rounded-pab border px-4 py-3 ${COLOR.EMERGENCIA.borde} ${COLOR.EMERGENCIA.suave}`}
+      <div>
+        <div className="cabecera-seccion">
+          <span className="titulo-seccion">Última lectura por área</span>
+          <span className="rotulo">{filas.length} áreas</span>
+        </div>
+
+        <Lista
+          hayFilas={filas.length > 0}
+          vacio="No hay áreas activas para mostrar."
         >
-          <p className="text-emergencia">
-            <strong>
-              {emergenciasAbiertas === 1
-                ? "1 emergencia sin atender"
-                : `${entero(emergenciasAbiertas)} emergencias sin atender`}
-            </strong>
-            {conEmergencia.length > 0 ? ` en ${conEmergencia.join(", ")}` : ""}
-          </p>
-          <Link
-            href="/llamados?tipo=EMERGENCIA&estado=NO_ATENDIDO"
-            className="boton shrink-0"
-          >
-            Ver emergencias
-          </Link>
-        </section>
-      ) : null}
-
-      {/* ---------------- Una fila por área ----------------
-          Cada área es un rectángulo horizontal de ancho completo: a la
-          izquierda quién es y cómo está, en el medio los dos medidores, a la
-          derecha el sensor y el atajo a sus llamados. En angosto se apila. */}
-      {filas.length === 0 ? (
-        <section className="panel">
-          <p className="lista-vacia">No hay áreas activas para mostrar.</p>
-        </section>
-      ) : (
-        <section aria-label="Áreas" className="flex flex-col gap-3">
-          {filas.map(({ area, lectura, sensor, nivel, motivo }) => {
-            const simulada =
-              lectura?.dispositivo !== undefined &&
-              lectura.dispositivo !== null &&
-              naturalezaPorCodigo.get(lectura.dispositivo) === "SIMULADO";
-
-            return (
-              <article key={area.id} id={`area-${area.id}`} className="panel px-5 py-4">
-                <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)_auto] lg:gap-8">
-                  {/* Quién es y cómo está */}
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[20px] leading-none font-semibold">
-                        {area.codigo}
-                      </span>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${COLOR[nivel].suave} ${COLOR[nivel].texto}`}
-                      >
-                        {ESTADO[nivel]}
-                      </span>
-                      {mias.has(area.id) ? <Chip texto="A cargo" /> : null}
-                      {/* Un área cuyo sensor es simulado se dice a la vista:
-                          quien mira el tablero tiene que saber que esos
-                          números no salieron de un aparato. */}
-                      {sensor.dispositivo?.naturaleza === "SIMULADO" ? (
-                        <Chip texto="Simulado" nivel="ADVERTENCIA" />
-                      ) : null}
-                    </div>
-                    <div className="mt-1 truncate text-tenue">{area.nombre}</div>
-                    {nivel === "NORMAL" ? null : (
-                      <p className={`mt-2 text-[13px] ${COLOR[nivel].texto}`}>{motivo}</p>
-                    )}
-                  </div>
-
-                  {/* Los dos medidores, lado a lado */}
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Medidor
-                      rotulo="Temperatura"
-                      valor={lectura?.temperatura ?? null}
-                      minimo={area.temp_min}
-                      maximo={area.temp_max}
-                      unidad="°C"
-                    />
-                    <Medidor
-                      rotulo="Humedad"
-                      valor={lectura?.humedad ?? null}
-                      minimo={area.hum_min}
-                      maximo={area.hum_max}
-                      unidad="%"
-                    />
-                  </div>
-
-                  {/* Sensor y atajo */}
-                  <div className="flex items-center justify-between gap-3 text-[13px] lg:flex-col lg:items-end lg:justify-center">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${
-                          sensor.estado === "EN_LINEA"
-                            ? "bg-normal"
-                            : sensor.estado === "SIN_SENAL"
-                              ? "bg-advertencia"
-                              : "bg-tenue"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span className="truncate text-tenue">
-                        {sensor.estado === "SIN_DISPOSITIVO"
-                          ? "Sin sensor asignado"
-                          : `${sensor.dispositivo.codigo}${
-                              sensor.dispositivo.segundos_sin_reportar === null
-                                ? ""
-                                : ` · último dato ${hace(sensor.dispositivo.segundos_sin_reportar)}`
-                            }`}
-                      </span>
+          {filas.map(({ area, lectura, sensor, nivel, motivo }) => (
+            <FilaDesplegable
+              key={area.id}
+              clave={String(area.id)}
+              nivel={nivel}
+              accion={
+                <Link
+                  href={`/llamados?area=${area.id}`}
+                  className="boton-plano boton-chico"
+                >
+                  Llamados
+                </Link>
+              }
+              titulo={area.codigo}
+              marcas={
+                <>
+                  {mias.has(area.id) ? <Chip texto="A cargo" /> : null}
+                  {/* Un área cuyo sensor es simulado se dice en la fila
+                      cerrada, no solo adentro de la ficha: quien mira el
+                      tablero tiene que saber, sin abrir nada, que esos
+                      números no salieron de un aparato. */}
+                  {sensor.dispositivo?.naturaleza === "SIMULADO" ? (
+                    <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                  ) : null}
+                  {nivel === "NORMAL" ? null : (
+                    <Chip texto={nivel} nivel={nivel} />
+                  )}
+                </>
+              }
+              resumen={`${numero(lectura?.temperatura ?? null)} °C · ${numero(lectura?.humedad ?? null)} %`}
+              detalle={
+                <>
+                  <Dato rotulo="Área">{area.nombre}</Dato>
+                  <Dato rotulo="Tipo">{area.tipo}</Dato>
+                  <Dato rotulo="Observación">{motivo}</Dato>
+                  <Dato rotulo="Temperatura">
+                    {numero(lectura?.temperatura ?? null)} °C
+                    <span className="text-tenue">
+                      {" "}
+                      (rango {numero(area.temp_min, 0)} –{" "}
+                      {numero(area.temp_max, 0)})
                     </span>
-
-                    <Link
-                      href={`/llamados?area=${area.id}`}
-                      className="boton-plano boton-chico shrink-0"
-                    >
-                      Llamados
-                    </Link>
-                  </div>
-                </div>
-
-                <details className="mt-3 text-[13px]">
-                  <summary className="cursor-pointer text-tenue select-none">
-                    Más datos
-                  </summary>
-                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr_auto_1fr]">
-                    <dt className="text-tenue">Tipo</dt>
-                    <dd>{area.tipo}</dd>
-                    <dt className="text-tenue">Última lectura</dt>
-                    <dd>{fechaHora(lectura?.tomada_en ?? null)}</dd>
-                    <dt className="text-tenue">Sensor sin señal a los</dt>
-                    <dd>{SEGUNDOS_SIN_SENAL} s</dd>
-                    <dt className="text-tenue">Dispositivo de la lectura</dt>
-                    <dd>
-                      {lectura?.dispositivo ?? SIN_DATO}
-                      {/* La lectura mostrada puede venir de otro nodo del área,
-                          no necesariamente del que evaluó el semáforo: la
-                          naturaleza se resuelve por el código de la lectura. */}
-                      {simulada ? (
-                        <>
+                  </Dato>
+                  <Dato rotulo="Humedad">
+                    {numero(lectura?.humedad ?? null)} %
+                    <span className="text-tenue">
+                      {" "}
+                      (rango {numero(area.hum_min, 0)} –{" "}
+                      {numero(area.hum_max, 0)})
+                    </span>
+                  </Dato>
+                  <Dato rotulo="Fecha">
+                    {fechaHora(lectura?.tomada_en ?? null)}
+                  </Dato>
+                  <Dato rotulo="Sensor" destacado>
+                    {sensor.estado === "SIN_DISPOSITIVO" ? (
+                      "Sin dispositivo asignado"
+                    ) : (
+                      <>
+                        {sensor.dispositivo.codigo} ·{" "}
+                        {sensor.estado === "EN_LINEA" ? "en línea" : "sin señal"}
+                        {sensor.dispositivo.naturaleza === "SIMULADO" ? (
+                          <>
+                            {" "}
+                            <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                          </>
+                        ) : null}
+                        <span className="text-tenue">
                           {" "}
-                          <Chip texto="Simulado" nivel="ADVERTENCIA" />
-                        </>
-                      ) : null}
-                    </dd>
-                  </dl>
-                </details>
-              </article>
-            );
-          })}
-        </section>
-      )}
+                          ({hace(sensor.dispositivo.segundos_sin_reportar)} ·
+                          umbral {SEGUNDOS_SIN_SENAL} s)
+                        </span>
+                      </>
+                    )}
+                  </Dato>
+                  <Dato rotulo="Dispositivo de la lectura">
+                    {lectura?.dispositivo ?? SIN_DATO}
+                    {/* La lectura mostrada puede venir de otro nodo del área,
+                        no necesariamente del que evaluó el semáforo. Por eso
+                        la naturaleza se resuelve por el código de la lectura y
+                        no se hereda del sensor de arriba. */}
+                    {lectura?.dispositivo !== undefined &&
+                    lectura.dispositivo !== null &&
+                    naturalezaPorCodigo.get(lectura.dispositivo) === "SIMULADO" ? (
+                      <>
+                        {" "}
+                        <Chip texto="Simulado" nivel="ADVERTENCIA" />
+                      </>
+                    ) : null}
+                  </Dato>
+                </>
+              }
+            />
+          ))}
+        </Lista>
+      </div>
     </div>
   );
 }
